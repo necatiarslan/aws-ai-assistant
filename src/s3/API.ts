@@ -20,7 +20,7 @@ export async function GetCredentials() {
 
   try {
     if (Session.Current) {
-      process.env.AWS_PROFILE = Session.Current.ActiveProfile;
+      process.env.AWS_PROFILE = Session.Current.AwsProfile;
     }
     // Get credentials using the default provider chain.
     const provider = fromNodeProviderChain({ignoreCache: true});

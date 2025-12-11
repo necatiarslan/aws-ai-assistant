@@ -30,7 +30,7 @@
         "title": "Aws AI Assistant:List Profiles"
       },
       {
-        "command": "aws-ai-assistant.SetActiveProfile",
+        "command": "aws-ai-assistant.SetAwsProfile",
         "title": "Aws AI Assistant:Set Active Profile"
       },
       {

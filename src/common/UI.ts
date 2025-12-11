@@ -64,7 +64,7 @@ export function showWarningMessage(message: string): void {
   vscode.window.showWarningMessage(message);
 }
 
-export function showErrorMessage(message: string, error: Error): void {
+export function showErrorMessage(message: string, error: Error | undefined): void {
   if (error) {
     vscode.window.showErrorMessage(message + NEW_LINE + error.name + NEW_LINE + error.message);
   }

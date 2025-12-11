@@ -66,9 +66,9 @@ export class StatusBarItem {
                 ui.logToOutput('StatusBarItem.GetCredentials IniData Found');
                 this.IniData = profileData;
 
-                if(Session.Current && !this.Profiles.includes(Session.Current?.ActiveProfile) && this.Profiles.length > 0)
+                if(Session.Current && !this.Profiles.includes(Session.Current?.AwsProfile) && this.Profiles.length > 0)
                 {
-                    Session.Current!.ActiveProfile = this.Profiles[0];
+                    Session.Current!.AwsProfile = this.Profiles[0];
                     Session.Current!.SaveState();
                 }
 
@@ -108,14 +108,14 @@ export class StatusBarItem {
         return this.Profiles.includes("default");
     }
 
-    public SetActiveProfile(){
+    public SetAwsProfile(){
         ui.logToOutput('StatusBarItem.SetAwsLoginCommand Started');
         if(this.Profiles && this.Profiles.length > 0)
         {
             let selected = vscode.window.showQuickPick(this.Profiles, {canPickMany:false, placeHolder: 'Select Profile'});
             selected.then(value=>{
                 if(value){
-                    Session.Current!.ActiveProfile = value;
+                    Session.Current!.AwsProfile = value;
                     this.ShowLoading();
                     Session.Current!.SaveState();
                 }
@@ -168,7 +168,7 @@ export class StatusBarItem {
             this.Text = "$(copilot) Aws $(check)";
         }
 
-        this.ToolTip += "\nProfile: " + (Session.Current?.ActiveProfile || "default");
+        this.ToolTip += "\nProfile: " + (Session.Current?.AwsProfile || "default");
         this.ToolTip += "\nRegion: " + (Session.Current?.AwsRegion || "us-east-1");
         this.ToolTip += "\nEndPoint: " + (Session.Current?.AwsEndPoint || "aws default");
 
@@ -194,7 +194,7 @@ export class StatusBarItem {
             let canConnect = await api.TestAwsConnectivity();
             if (canConnect)
             {
-                ui.showInfoMessage("Successfully Connect to AWS with User " + Session.Current?.ActiveProfile);
+                ui.showInfoMessage("Successfully Connect to AWS with User " + Session.Current?.AwsProfile);
             }
         }
         else

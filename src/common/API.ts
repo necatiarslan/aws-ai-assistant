@@ -10,6 +10,7 @@ import { Session } from './Session';
 
 let CurrentCredentials: AwsCredentialIdentity | undefined = undefined;
 
+
 export async function StartConnection() {
   ui.logToOutput("Starting Connection");
   CurrentCredentials = await GetCredentials();
@@ -47,7 +48,7 @@ export async function GetCredentials(): Promise<AwsCredentialIdentity | undefine
 
   try {
     if (Session.Current){
-      process.env.AWS_PROFILE = Session.Current.ActiveProfile;
+      process.env.AWS_PROFILE = Session.Current.AwsProfile;
     }
 
     const provider = fromNodeProviderChain({ignoreCache: true});

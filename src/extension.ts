@@ -3,6 +3,7 @@ import * as ui from './common/UI';
 import * as StatusBar from './statusbar/StatusBarItem';
 import { Session } from './common/Session';
 import { registerS3BucketsTool } from './language_tools/S3BucketsTool';
+import * as stsAPI from './sts/API';
 
 export function activate(context: vscode.ExtensionContext) {
 	ui.logToOutput('Aws AI Assistant is now active!');
@@ -16,42 +17,12 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// Command to set AWS Endpoint
 	vscode.commands.registerCommand('aws-ai-assistant.SetAwsEndpoint', async () => {
-		const current = Session.Current?.AwsEndPoint || '';
-		const value = await vscode.window.showInputBox({
-			prompt: 'Enter AWS Endpoint URL (e.g., https://s3.amazonaws.com or custom S3-compatible endpoint)',
-			placeHolder: 'https://example-endpoint',
-			value: current,
-		});
-		if (value !== undefined) {
-			if (!Session.Current) {
-				ui.showErrorMessage('Session not initialized', new Error('No session'));
-				return;
-			}
-			Session.Current.AwsEndPoint = value.trim() || undefined;
-			Session.Current.SaveState();
-			ui.showInfoMessage('AWS Endpoint updated');
-			ui.logToOutput('AWS Endpoint set to ' + (Session.Current.AwsEndPoint || 'undefined'));
-		}
+		Session.Current?.SetAwsEndpoint();
 	});
 
 	// Command to set default AWS Region
 	vscode.commands.registerCommand('aws-ai-assistant.SetDefaultRegion', async () => {
-		const current = Session.Current?.AwsRegion || 'us-east-1';
-		const value = await vscode.window.showInputBox({
-			prompt: 'Enter default AWS region',
-			placeHolder: 'us-east-1',
-			value: current,
-		});
-		if (value !== undefined) {
-			if (!Session.Current) {
-				ui.showErrorMessage('Session not initialized', new Error('No session'));
-				return;
-			}
-			Session.Current.AwsRegion = value.trim() || 'us-east-1';
-			Session.Current.SaveState();
-			ui.showInfoMessage('Default AWS Region updated');
-			ui.logToOutput('AWS Region set to ' + (Session.Current.AwsRegion || 'us-east-1'));
-		}
+		Session.Current?.SetAwsRegion();
 	});
 	
 	vscode.commands.registerCommand('aws-ai-assistant.RefreshCredentials', () => {
@@ -62,12 +33,17 @@ export function activate(context: vscode.ExtensionContext) {
 		StatusBar.StatusBarItem.Current.ListAwsProfiles();
 	});
 
-	vscode.commands.registerCommand('aws-ai-assistant.SetActiveProfile', () => {
-		StatusBar.StatusBarItem.Current.SetActiveProfile();
+	vscode.commands.registerCommand('aws-ai-assistant.SetAwsProfile', () => {
+		StatusBar.StatusBarItem.Current.SetAwsProfile();
 	});
 
-	vscode.commands.registerCommand('aws-ai-assistant.TestAwsConnectivity', () => {
-		StatusBar.StatusBarItem.Current.TestAwsConnectivity();
+	vscode.commands.registerCommand('aws-ai-assistant.TestAwsConnectivity', async () => {
+		let result = await stsAPI.TestAwsConnection();
+		if (result.isSuccessful) {
+			ui.showInfoMessage('AWS connectivity test successful.');
+		} else {
+			ui.showErrorMessage('AWS connectivity test failed.', result.error);
+		}
 	});
 
 }
