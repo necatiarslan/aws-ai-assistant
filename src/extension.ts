@@ -1,11 +1,13 @@
 import * as vscode from 'vscode';
-import * as ui from './access/UI';
+import * as ui from './common/UI';
 import * as StatusBar from './access/StatusBarItem';
+import { Session } from './common/Session';
 
 export function activate(context: vscode.ExtensionContext) {
 	ui.logToOutput('Aws AI Assistant is now active!');
 
-	
+	Session.Current = new Session(context);
+
 	new StatusBar.StatusBarItem(context);
 	
 	vscode.commands.registerCommand('aws-ai-assistant.RefreshCredentials', () => {

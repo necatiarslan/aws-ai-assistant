@@ -6,7 +6,7 @@ import { ParsedIniData, AwsCredentialIdentity } from "@aws-sdk/types";
 import { CloudWatchLogsClient, DescribeLogGroupsCommand } from "@aws-sdk/client-cloudwatch-logs";
 import * as ui from './UI';
 import { fromNodeProviderChain, fromIni } from "@aws-sdk/credential-providers";
-import * as StatusBarItem from './StatusBarItem';
+import { Session } from './Session';
 
 let CurrentCredentials: AwsCredentialIdentity | undefined = undefined;
 
@@ -46,8 +46,8 @@ export async function GetCredentials(): Promise<AwsCredentialIdentity | undefine
   }
 
   try {
-    if (StatusBarItem.StatusBarItem.Current){
-      process.env.AWS_PROFILE = StatusBarItem.StatusBarItem.Current.ActiveProfile;
+    if (Session.Current){
+      process.env.AWS_PROFILE = Session.Current.ActiveProfile;
     }
 
     const provider = fromNodeProviderChain({ignoreCache: true});

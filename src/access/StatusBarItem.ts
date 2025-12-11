@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import * as vscode from 'vscode';
-import * as api from './API';
-import * as ui from './UI';
+import * as api from '../common/API';
+import * as ui from '../common/UI';
 import { ParsedIniData } from "@aws-sdk/types";
 import { existsSync } from 'fs';
+import { Session } from '../common/Session';
 
 export class StatusBarItem {
 
@@ -17,7 +18,6 @@ export class StatusBarItem {
     public Text: string = StatusBarItem.LoadingText;
     public ToolTip:string = "Loading ...";
 
-    public ActiveProfile:string = "default";
     public IniData:ParsedIniData | undefined;
     public AwsLoginShellCommand:string | undefined;
     public AwsLoginShellCommandList:{[key:string]:string|undefined;} = {};
@@ -137,7 +137,7 @@ export class StatusBarItem {
             let canConnect = await api.TestAwsConnectivity();
             if (canConnect)
             {
-                ui.showInfoMessage("Successfully Connect to AWS with User " + this.ActiveProfile);
+                ui.showInfoMessage("Successfully Connect to AWS with User " + Session.Current?.ActiveProfile);
             }
         }
         else
@@ -156,11 +156,11 @@ export class StatusBarItem {
     {
         let result:string | undefined;
 
-        if(this.IniData)
+        if(this.IniData && Session.Current)
         {
-            if(this.IniData[this.ActiveProfile] && this.IniData[this.ActiveProfile]["token_expiration"])
+            if(this.IniData[Session.Current?.ActiveProfile] && this.IniData[Session.Current?.ActiveProfile]["token_expiration"])
             {
-                result = this.IniData[this.ActiveProfile]["token_expiration"];
+                result = this.IniData[Session.Current?.ActiveProfile]["token_expiration"];
             }            
         }
 
@@ -230,9 +230,9 @@ export class StatusBarItem {
                 ui.logToOutput('StatusBarItem.GetCredentials IniData Found');
                 this.IniData = profileData;
 
-                if(!this.Profiles.includes(this.ActiveProfile) && this.Profiles.length > 0)
+                if(Session.Current && !this.Profiles.includes(Session.Current?.ActiveProfile) && this.Profiles.length > 0)
                 {
-                    this.ActiveProfile = this.Profiles[0];
+                    Session.Current!.ActiveProfile = this.Profiles[0];
                     this.SaveState();
                 }
 
@@ -268,20 +268,20 @@ export class StatusBarItem {
         ui.logToOutput('StatusBarItem.SetDefaultCredentials Started');
         
         //active profile is default so no need to update
-        if (this.ActiveProfile === "default")
+        if (Session.Current?.ActiveProfile === "default")
         {
             return;
         }
 
         if(this.IniData)
         {
-            if(this.IniData[this.ActiveProfile] && this.IniData["default"])
+            if(Session.Current && this.IniData[Session.Current?.ActiveProfile] && this.IniData["default"])
             {
-                var aws_access_key_id = this.GetCredentialValue(this.ActiveProfile, "aws_access_key_id");
-                var aws_secret_access_key = this.GetCredentialValue(this.ActiveProfile, "aws_secret_access_key");
-                var aws_session_token = this.GetCredentialValue(this.ActiveProfile, "aws_session_token");
-                var aws_security_token = this.GetCredentialValue(this.ActiveProfile, "aws_security_token");
-                var token_expiration = this.GetCredentialValue(this.ActiveProfile, "token_expiration"); 
+                var aws_access_key_id = this.GetCredentialValue(Session.Current?.ActiveProfile, "aws_access_key_id");
+                var aws_secret_access_key = this.GetCredentialValue(Session.Current?.ActiveProfile, "aws_secret_access_key");
+                var aws_session_token = this.GetCredentialValue(Session.Current?.ActiveProfile, "aws_session_token");
+                var aws_security_token = this.GetCredentialValue(Session.Current?.ActiveProfile, "aws_security_token");
+                var token_expiration = this.GetCredentialValue(Session.Current?.ActiveProfile, "token_expiration"); 
                 
                 api.SetCredentials('default', aws_access_key_id, aws_secret_access_key, aws_session_token, aws_security_token, token_expiration);
                 ui.logToOutput('StatusBarItem.SetDefaultCredentials Credentials copied to defauld profile');
@@ -310,12 +310,12 @@ export class StatusBarItem {
             if(shellCommand.length>0)
             {
                 this.AwsLoginShellCommand = shellCommand;
-                this.AwsLoginShellCommandList[this.ActiveProfile] = shellCommand;
+                this.AwsLoginShellCommandList[Session.Current?.ActiveProfile || ""] = shellCommand;
             }
             else
             {
                 this.AwsLoginShellCommand = undefined;
-                this.AwsLoginShellCommandList[this.ActiveProfile] = undefined;
+                this.AwsLoginShellCommandList[Session.Current?.ActiveProfile || ""] = undefined;
             }
             this.SaveState();
         }
@@ -334,8 +334,8 @@ export class StatusBarItem {
             let selected = vscode.window.showQuickPick(this.Profiles, {canPickMany:false, placeHolder: 'Select Profile'});
             selected.then(value=>{
                 if(value){
-                    this.ActiveProfile = value;
-                    this.AwsLoginShellCommand = this.GetAwsLoginCommand(this.ActiveProfile);
+                    Session.Current!.ActiveProfile = value;
+                    this.AwsLoginShellCommand = this.GetAwsLoginCommand(Session.Current!.ActiveProfile);
                     this.ShowLoading();
                     this.GetCredentials();
                     this.SaveState();
@@ -351,13 +351,13 @@ export class StatusBarItem {
     public ShowActiveCredentials(){
         ui.logToOutput('StatusBarItem.ShowActiveCredentials Started');
 
-        ui.showOutputMessage("ActiveProfile: " + this.ActiveProfile, "");
+        ui.showOutputMessage("ActiveProfile: " + Session.Current?.ActiveProfile, "");
         if(this.HasIniCredentials)
         {
             //ui.showOutputMessage(this.Credentials);
             if(this.IniData)
             {
-                ui.showOutputMessage(this.IniData[this.ActiveProfile], "", false);
+                ui.showOutputMessage(this.IniData[Session.Current?.ActiveProfile || ""], "", false);
             }
         }
         else
@@ -493,7 +493,7 @@ export class StatusBarItem {
         }
         else if(this.HasIniCredentials && this.HasExpiration && this.IsExpired)
         {
-            this.ToolTip = "Profile:" + this.ActiveProfile + " Expired !!!";
+            this.ToolTip = "Profile:" + Session.Current?.ActiveProfile + " Expired !!!";
             this.Text = "$(cloud) Expired";
             if(this.AwsLoginShellCommand)
             {
@@ -504,12 +504,12 @@ export class StatusBarItem {
         }
         else if(this.HasIniCredentials && this.HasExpiration && !this.IsExpired)
         {
-            this.ToolTip = "Profile:" + this.ActiveProfile + " will expire on " + this.ExpirationDateString;
+            this.ToolTip = "Profile:" + Session.Current?.ActiveProfile + " will expire on " + this.ExpirationDateString;
             this.Text = "$(cloud) Expire In " + this.ExpireTime;
         }
         else if (this.HasIniCredentials && !this.HasExpiration)
         {
-            this.ToolTip = "Profile:" + this.ActiveProfile;
+            this.ToolTip = "Profile:" + Session.Current?.ActiveProfile;
             this.Text = "$(cloud) Aws $(check)";
         }
         else
@@ -545,7 +545,7 @@ export class StatusBarItem {
             if(StatusBarItem.Current.ExpirationDateString && StatusBarItem.Current.IsExpired)
             {
                 let expireDate = new Date(StatusBarItem.Current.ExpirationDateString);   
-                StatusBarItem.Current.ToolTip = "Profile:" + StatusBarItem.Current.ActiveProfile + " Expired !!!";
+                StatusBarItem.Current.ToolTip = "Profile:" + Session.Current?.ActiveProfile + " Expired !!!";
                 StatusBarItem.Current.ToolTip += "\nExpire Time:" + expireDate.toLocaleDateString() + " - " + expireDate.toLocaleTimeString();
                 StatusBarItem.Current.Text = "$(cloud) Expired";
 
@@ -565,7 +565,7 @@ export class StatusBarItem {
             }
             else 
             {
-                StatusBarItem.Current.ToolTip = "Profile:" + StatusBarItem.Current.ActiveProfile;
+                StatusBarItem.Current.ToolTip = "Profile:" + Session.Current?.ActiveProfile;
                 StatusBarItem.Current.Text = "$(cloud) Expire In " + StatusBarItem.Current.ExpireTime;
 
                 if(StatusBarItem.Current.IsAutoLoginPaused)
@@ -647,7 +647,7 @@ export class StatusBarItem {
     public SaveState() {
 		ui.logToOutput('StatusBarItem.SaveState Started');
 		try {
-			this.context.globalState.update('ActiveProfile', this.ActiveProfile);
+			this.context.globalState.update('ActiveProfile', Session.Current?.ActiveProfile);
             this.context.globalState.update('AwsLoginShellCommand', this.AwsLoginShellCommand);
             this.context.globalState.update('AwsLoginShellCommandList', this.AwsLoginShellCommandList);
             this.context.globalState.update('IsCopyCredentialsToDefaultProfile', this.IsCopyCredentialsToDefaultProfile);
@@ -660,7 +660,7 @@ export class StatusBarItem {
 		ui.logToOutput('StatusBarItem.LoadState Started');
 		try {
 			let ActiveProfileTemp:string | undefined  = this.context.globalState.get('ActiveProfile');
-			if (ActiveProfileTemp) { this.ActiveProfile = ActiveProfileTemp; }
+			if (ActiveProfileTemp) { Session.Current!.ActiveProfile = ActiveProfileTemp; }
 
             let AwsLoginShellCommandTemp:string | undefined  = this.context.globalState.get('AwsLoginShellCommand');
 			if (AwsLoginShellCommandTemp) { this.AwsLoginShellCommand = AwsLoginShellCommandTemp; }
