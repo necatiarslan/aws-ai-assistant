@@ -3,6 +3,8 @@ import * as ui from './common/UI';
 import * as StatusBar from './statusbar/StatusBarItem';
 import { Session } from './common/Session';
 import { registerS3BucketsTool } from './language_tools/S3BucketsTool';
+import { registerChatParticipant } from './language_tools/ChatParticipant';
+import { TestAwsConnectionTool } from './language_tools/TestAwsConnectionTool';
 import * as stsAPI from './sts/API';
 
 export function activate(context: vscode.ExtensionContext) {
@@ -11,6 +13,16 @@ export function activate(context: vscode.ExtensionContext) {
 	Session.Current = new Session(context);
 
 	new StatusBar.StatusBarItem(context);
+
+	// Register chat participant
+	const chatParticipant = registerChatParticipant(context);
+	context.subscriptions.push(chatParticipant);
+	ui.logToOutput('Chat participant registered');
+
+	// Register language model tools
+	const testAwsConnectionTool = vscode.lm.registerTool('aws-ai-assistant_testAwsConnection', new TestAwsConnectionTool());
+	context.subscriptions.push(testAwsConnectionTool);
+	ui.logToOutput('Language model tools registered');
 
 	// Register language tools
 	registerS3BucketsTool(context);
