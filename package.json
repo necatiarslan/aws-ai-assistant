@@ -26,48 +26,24 @@
         "title": "Aws AI Assistant:Refresh Credentials"
       },
       {
-        "command": "aws-ai-assistant.SetAwsLoginCommand",
-        "title": "Aws AI Assistant:Set Login Command"
-      },
-      {
         "command": "aws-ai-assistant.ListAwsProfiles",
         "title": "Aws AI Assistant:List Profiles"
-      },
-      {
-        "command": "aws-ai-assistant.RunLoginCommand",
-        "title": "Aws AI Assistant:Run Login Command"
-      },
-      {
-        "command": "aws-ai-assistant.PauseAutoLogin",
-        "title": "Aws AI Assistant:Pause/UnPause Auto Login"
       },
       {
         "command": "aws-ai-assistant.SetActiveProfile",
         "title": "Aws AI Assistant:Set Active Profile"
       },
       {
-        "command": "aws-ai-assistant.ShowActiveCredentials",
-        "title": "Aws AI Assistant:Show Active Credentials"
-      },
-      {
-        "command": "aws-ai-assistant.ShowDefaultCredentials",
-        "title": "Aws AI Assistant:Show Default Credentials"
-      },
-      {
-        "command": "aws-ai-assistant.OpenCredentialsFile",
-        "title": "Aws AI Assistant:Open Credentials File"
-      },
-      {
-        "command": "aws-ai-assistant.OpenConfigFile",
-        "title": "Aws AI Assistant:Open Config File"
-      },
-      {
         "command": "aws-ai-assistant.TestAwsConnectivity",
         "title": "Aws AI Assistant:Test Aws Connectivity With Active User"
       },
       {
-        "command": "aws-ai-assistant.CopyCredentialsToDefaultProfile",
-        "title": "Aws AI Assistant:Copy Credentials To Default Profile"
+        "command": "aws-ai-assistant.SetAwsEndpoint",
+        "title": "Aws AI Assistant:Set AWS Endpoint"
+      },
+      {
+        "command": "aws-ai-assistant.SetDefaultRegion",
+        "title": "Aws AI Assistant:Set Default AWS Region"
       }
     ]
   },
@@ -94,6 +70,9 @@
   },
   "dependencies": {
     "@aws-sdk/client-cloudwatch-logs": "^3.948.0",
+    "@aws-sdk/client-iam": "^3.948.0",
+    "@aws-sdk/client-s3": "^3.948.0",
+    "@aws-sdk/client-sts": "^3.948.0",
     "@aws-sdk/credential-provider-node": "^3.948.0",
     "@aws-sdk/credential-providers": "^3.948.0",
     "@aws-sdk/types": "^3.936.0"

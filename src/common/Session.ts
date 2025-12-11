@@ -7,6 +7,8 @@ export class Session {
     public Context: vscode.ExtensionContext;
     public ExtensionUri: vscode.Uri;
     public ActiveProfile:string = "default";
+    public AwsEndPoint: string | undefined;
+	public AwsRegion: string | undefined;
 
 	public constructor(context: vscode.ExtensionContext) {
 		Session.Current = this;
@@ -18,19 +20,24 @@ export class Session {
     public SaveState() {
         ui.logToOutput('Saving state...');
         
-        // this.Context.globalState.update('apiUrl', this.Server?.apiUrl);
-        // this.Context.globalState.update('apiUserName', this.Server?.apiUserName);
-        // this.Context.globalState.update('apiPassword', this.Server?.apiPassword);
-        // this.Context.globalState.update('serverList', this.ServerList);
+        try 
+        {
+            this.Context.globalState.update('ActiveProfile', Session.Current?.ActiveProfile);
+        } catch (error) {
+            ui.logToOutput("StatusBarItem.SaveState Error !!!");
+        }
     }
 
     public LoadState() {
         ui.logToOutput('Loading state...');
 
-        // const apiUrlTemp: string = this.Context.globalState.get('apiUrl') || '';
-        // const apiUserNameTemp: string = this.Context.globalState.get('apiUserName') || '';
-        // const apiPasswordTemp: string = this.Context.globalState.get('apiPassword') || '';
+        try {
+            let ActiveProfileTemp:string | undefined  = this.Context.globalState.get('ActiveProfile');
+            if (ActiveProfileTemp) { Session.Current!.ActiveProfile = ActiveProfileTemp; }
 
+        } catch (error) {
+            ui.logToOutput("dagTreeView.LoadState Error !!!");
+        }
     }
 
 

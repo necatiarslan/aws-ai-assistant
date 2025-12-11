@@ -162,3 +162,8 @@ export function isValidDate(dateString: string): boolean {
   }
   return d.toISOString().slice(0, 10) === dateString;
 }
+
+export function SanitizeFileName(filename: string): string {
+  // Replace invalid characters with underscores
+  return filename.replace(/[<>:"/\\|?*\x00-\x1F]/g, '_').replace(/[\u{80}-\u{9F}]/gu, '_');
+}
