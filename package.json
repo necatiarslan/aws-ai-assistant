@@ -512,6 +512,111 @@
             }
           }
         }
+      },
+      {
+        "name": "aws-ai-assistant_stepfunc",
+        "toolReferenceName": "stepFunc",
+        "displayName": "Step Functions Tool",
+        "modelDescription": "Execute AWS Step Functions commands. ALWAYS provide params object. Examples: ListStateMachines {command:'ListStateMachines', params:{maxResults:10}}. StartExecution {command:'StartExecution', params:{stateMachineArn:'arn:aws:states:...', input:'{\\\"key\\\":\\\"value\\\"}'}}. DescribeExecution {command:'DescribeExecution', params:{executionArn:'arn:aws:states:...'}}.",
+        "userDescription": "Manage and run AWS Step Functions state machines",
+        "tags": [
+          "aws",
+          "stepfunctions",
+          "workflow",
+          "state-machine"
+        ],
+        "canBeReferencedInPrompt": true,
+        "icon": "$(circuit-board)",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "command",
+            "params"
+          ],
+          "properties": {
+            "command": {
+              "type": "string",
+              "enum": [
+                "DescribeExecution",
+                "DescribeStateMachine",
+                "ListExecutions",
+                "ListStateMachines",
+                "StartExecution",
+                "UpdateStateMachine"
+              ],
+              "description": "The Step Functions command to execute"
+            },
+            "params": {
+              "type": "object",
+              "description": "REQUIRED parameters object. Always include this even if empty. Provide stateMachineArn/executionArn as needed.",
+              "properties": {
+                "executionArn": {
+                  "type": "string",
+                  "description": "Execution ARN (REQUIRED for DescribeExecution)"
+                },
+                "stateMachineArn": {
+                  "type": "string",
+                  "description": "State machine ARN (REQUIRED for DescribeStateMachine, StartExecution, UpdateStateMachine; optional for ListExecutions)"
+                },
+                "maxResults": {
+                  "type": "number",
+                  "description": "Maximum items to return where supported (optional)"
+                },
+                "nextToken": {
+                  "type": "string",
+                  "description": "Pagination token (optional)"
+                },
+                "statusFilter": {
+                  "type": "string",
+                  "enum": [
+                    "RUNNING",
+                    "SUCCEEDED",
+                    "FAILED",
+                    "TIMED_OUT",
+                    "ABORTED"
+                  ],
+                  "description": "Filter executions by status (optional for ListExecutions)"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Execution name (optional for StartExecution)"
+                },
+                "input": {
+                  "type": "string",
+                  "description": "JSON string input for execution (optional for StartExecution)"
+                },
+                "traceHeader": {
+                  "type": "string",
+                  "description": "X-Ray trace header (optional for StartExecution)"
+                },
+                "definition": {
+                  "type": "string",
+                  "description": "State machine definition in Amazon States Language (optional for UpdateStateMachine)"
+                },
+                "roleArn": {
+                  "type": "string",
+                  "description": "IAM role ARN for the state machine (optional for UpdateStateMachine)"
+                },
+                "loggingConfiguration": {
+                  "type": "object",
+                  "description": "Logging configuration object (optional for UpdateStateMachine)"
+                },
+                "tracingConfiguration": {
+                  "type": "object",
+                  "description": "Tracing configuration object (optional for UpdateStateMachine)"
+                },
+                "publish": {
+                  "type": "boolean",
+                  "description": "Set true to publish a new version (optional for UpdateStateMachine)"
+                },
+                "versionDescription": {
+                  "type": "string",
+                  "description": "Description for the published version (optional for UpdateStateMachine)"
+                }
+              }
+            }
+          }
+        }
       }
     ],
     "commands": [
@@ -567,6 +672,7 @@
     "@aws-sdk/client-iam": "^3.948.0",
     "@aws-sdk/client-lambda": "^3.948.0",
     "@aws-sdk/client-s3": "^3.948.0",
+    "@aws-sdk/client-sfn": "^3.948.0",
     "@aws-sdk/client-sts": "^3.948.0",
     "@aws-sdk/credential-provider-node": "^3.948.0",
     "@aws-sdk/credential-providers": "^3.948.0",
