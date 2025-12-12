@@ -31,7 +31,7 @@
     ],
     "languageModelTools": [
       {
-        "name": "aws-ai-assistant_testAwsConnection",
+        "name": "testAwsConnection",
         "toolReferenceName": "testAwsConnection",
         "displayName": "Test AWS Connection",
         "modelDescription": "Tests AWS connectivity using STS GetCallerIdentity. Returns true if the connection is successful.",
@@ -55,7 +55,7 @@
         }
       },
       {
-        "name": "aws-ai-assistant_session",
+        "name": "session",
         "toolReferenceName": "session",
         "displayName": "Session Tool",
         "modelDescription": "Get or set AWS session values (AwsProfile, AwsEndPoint, AwsRegion). Use command GetSession to read current values. Use SetSession with params to update any of AwsProfile, AwsEndPoint, AwsRegion.",
@@ -105,7 +105,7 @@
         }
       },
       {
-        "name": "aws-ai-assistant_s3",
+        "name": "s3",
         "toolReferenceName": "s3Generic",
         "displayName": "S3 Generic Tool",
         "modelDescription": "Execute S3 commands. ALWAYS provide params object. Examples: ListObjectsV2 {command:'ListObjectsV2', params:{Bucket:'bucket-name'}}. PutObject {command:'PutObject', params:{Bucket:'name', Key:'path', Body:'content'}}. DeleteObject {command:'DeleteObject', params:{Bucket:'name', Key:'path'}}. CopyObject {command:'CopyObject', params:{Bucket:'name', CopySource:'/bucket/key', Key:'new-path'}}.",
@@ -215,7 +215,7 @@
         }
       },
       {
-        "name": "aws-ai-assistant_fileOperations",
+        "name": "fileOperations",
         "toolReferenceName": "fileOperations",
         "displayName": "File Operations Tool",
         "modelDescription": "Perform file operations: ReadFile to read file content, ReadFileStream to get file metadata, ReadFileAsBase64 to read as Base64, GetFileInfo to get file statistics, ListFiles to list directory contents, ZipTextFile to create a zip archive of a file or directory.",
@@ -279,7 +279,7 @@
         }
       },
       {
-        "name": "aws-ai-assistant_cloudWatchLogs",
+        "name": "cloudWatchLogs",
         "toolReferenceName": "cloudWatchLogs",
         "displayName": "CloudWatch Logs Tool",
         "modelDescription": "Execute CloudWatch Logs commands. ALWAYS provide params object. Examples: DescribeLogGroups {command:'DescribeLogGroups', params:{logGroupNamePrefix:'app'}}. DescribeLogStreams {command:'DescribeLogStreams', params:{logGroupName:'my-group'}}. GetLogEvents {command:'GetLogEvents', params:{logGroupName:'my-group', logStreamName:'stream', limit:50}}.",
@@ -366,7 +366,7 @@
         }
       },
       {
-        "name": "aws-ai-assistant_lambda",
+        "name": "lambda",
         "toolReferenceName": "lambda",
         "displayName": "Lambda Tool",
         "modelDescription": "Execute AWS Lambda commands. ALWAYS provide params object. Examples: ListFunctions {command:'ListFunctions', params:{MaxItems:10}}. GetFunction {command:'GetFunction', params:{FunctionName:'my-function'}}. Invoke {command:'Invoke', params:{FunctionName:'my-function', Payload:'{\"key\":\"value\"}'}}",
@@ -514,7 +514,7 @@
         }
       },
       {
-        "name": "aws-ai-assistant_stepfunc",
+        "name": "stepfunc",
         "toolReferenceName": "stepFunc",
         "displayName": "Step Functions Tool",
         "modelDescription": "Execute AWS Step Functions commands. ALWAYS provide params object. Examples: ListStateMachines {command:'ListStateMachines', params:{maxResults:10}}. StartExecution {command:'StartExecution', params:{stateMachineArn:'arn:aws:states:...', input:'{\\\"key\\\":\\\"value\\\"}'}}. DescribeExecution {command:'DescribeExecution', params:{executionArn:'arn:aws:states:...'}}.",
@@ -617,6 +617,146 @@
             }
           }
         }
+      },
+      {
+        "name": "glue",
+        "toolReferenceName": "glue",
+        "displayName": "Glue Tool",
+        "modelDescription": "Execute AWS Glue commands. ALWAYS provide params object. Examples: ListJobs {command:'ListJobs', params:{MaxResults:10}}. CreateJob {command:'CreateJob', params:{Name:'my-job', Role:'arn:aws:iam::...:role/...', Command:{Name:'glueetl'}}}. StartJobRun {command:'StartJobRun', params:{JobName:'my-job'}}.",
+        "userDescription": "Manage and run AWS Glue ETL jobs and triggers",
+        "tags": [
+          "aws",
+          "glue",
+          "etl",
+          "jobs",
+          "triggers"
+        ],
+        "canBeReferencedInPrompt": true,
+        "icon": "$(database)",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "command",
+            "params"
+          ],
+          "properties": {
+            "command": {
+              "type": "string",
+              "enum": [
+                "CreateJob",
+                "GetJob",
+                "GetJobRun",
+                "GetJobRuns",
+                "GetTags",
+                "GetTrigger",
+                "GetTriggers",
+                "ListJobs",
+                "ListTriggers",
+                "StartJobRun"
+              ],
+              "description": "The Glue command to execute"
+            },
+            "params": {
+              "type": "object",
+              "description": "REQUIRED parameters object. Always include this even if empty. Provide Name/JobName/ResourceArn as needed.",
+              "properties": {
+                "Name": {
+                  "type": "string",
+                  "description": "Job or trigger name (REQUIRED for CreateJob, GetJob, GetTrigger, StartJobRun)"
+                },
+                "JobName": {
+                  "type": "string",
+                  "description": "Job name (REQUIRED for GetJobRun, GetJobRuns, StartJobRun)"
+                },
+                "RunId": {
+                  "type": "string",
+                  "description": "Job run ID (REQUIRED for GetJobRun)"
+                },
+                "ResourceArn": {
+                  "type": "string",
+                  "description": "Resource ARN (REQUIRED for GetTags)"
+                },
+                "Role": {
+                  "type": "string",
+                  "description": "IAM role ARN (REQUIRED for CreateJob)"
+                },
+                "Command": {
+                  "type": "object",
+                  "description": "Command configuration object (REQUIRED for CreateJob, should include Name property)"
+                },
+                "Description": {
+                  "type": "string",
+                  "description": "Job description (optional for CreateJob)"
+                },
+                "LogUri": {
+                  "type": "string",
+                  "description": "S3 URI for job logs (optional for CreateJob)"
+                },
+                "DefaultArguments": {
+                  "type": "object",
+                  "description": "Default job arguments (optional for CreateJob)"
+                },
+                "MaxRetries": {
+                  "type": "number",
+                  "description": "Maximum retries (optional for CreateJob)"
+                },
+                "Timeout": {
+                  "type": "number",
+                  "description": "Job timeout in minutes (optional)"
+                },
+                "MaxCapacity": {
+                  "type": "number",
+                  "description": "Maximum capacity for DPU units (optional)"
+                },
+                "WorkerType": {
+                  "type": "string",
+                  "enum": ["Standard", "G.1X", "G.2X", "G.025X"],
+                  "description": "Worker type (optional for CreateJob)"
+                },
+                "NumberOfWorkers": {
+                  "type": "number",
+                  "description": "Number of workers (optional for CreateJob)"
+                },
+                "Tags": {
+                  "type": "object",
+                  "description": "Key-value tags (optional for CreateJob)"
+                },
+                "JobRunId": {
+                  "type": "string",
+                  "description": "Job run ID (optional for StartJobRun)"
+                },
+                "Arguments": {
+                  "type": "object",
+                  "description": "Job run arguments (optional for StartJobRun)"
+                },
+                "AllocatedCapacity": {
+                  "type": "number",
+                  "description": "Allocated capacity for the job run (optional)"
+                },
+                "SecurityConfiguration": {
+                  "type": "string",
+                  "description": "Security configuration name (optional for StartJobRun)"
+                },
+                "nextToken": {
+                  "type": "string",
+                  "description": "Pagination token (optional)"
+                },
+                "MaxResults": {
+                  "type": "number",
+                  "description": "Maximum items to return (optional)"
+                },
+                "DependencyJobName": {
+                  "type": "string",
+                  "description": "Filter by dependent job name (optional for GetTriggers)"
+                },
+                "DependentJobName": {
+                  "type": "string",
+                  "description": "Filter by dependent job name (optional for ListTriggers)"
+                }
+              }
+            }
+          }
+        }
       }
     ],
     "commands": [
@@ -669,6 +809,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-cloudwatch-logs": "^3.948.0",
+    "@aws-sdk/client-glue": "^3.948.0",
     "@aws-sdk/client-iam": "^3.948.0",
     "@aws-sdk/client-lambda": "^3.948.0",
     "@aws-sdk/client-s3": "^3.948.0",

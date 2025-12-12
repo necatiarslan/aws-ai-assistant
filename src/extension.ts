@@ -11,6 +11,7 @@ import { SessionTool } from './common/SessionTool';
 import { CloudWatchLogTool } from './cloudwatch/CloudWatchLogTool';
 import { LambdaTool } from './lambda/LambdaTool';
 import { StepFuncTool } from './stepfunc/StepFuncTool';
+import { GlueTool } from './glue/GlueTool';
 
 export function activate(context: vscode.ExtensionContext) {
 	ui.logToOutput('Aws AI Assistant is now active!');
@@ -22,13 +23,14 @@ export function activate(context: vscode.ExtensionContext) {
 	
 	// Register language model tools
 	context.subscriptions.push(
-		vscode.lm.registerTool('aws-ai-assistant_testAwsConnection', new TestAwsConnectionTool()),
-		vscode.lm.registerTool('aws-ai-assistant_s3', new S3Tool()),
-		vscode.lm.registerTool('aws-ai-assistant_fileOperations', new FileOperationsTool()),
-		vscode.lm.registerTool('aws-ai-assistant_session', new SessionTool()),
-		vscode.lm.registerTool('aws-ai-assistant_cloudWatchLogs', new CloudWatchLogTool()),
-		vscode.lm.registerTool('aws-ai-assistant_lambda', new LambdaTool()),
-		vscode.lm.registerTool('aws-ai-assistant_stepfunc', new StepFuncTool())
+		vscode.lm.registerTool('testAwsConnection', new TestAwsConnectionTool()),
+		vscode.lm.registerTool('s3', new S3Tool()),
+		vscode.lm.registerTool('fileOperations', new FileOperationsTool()),
+		vscode.lm.registerTool('session', new SessionTool()),
+		vscode.lm.registerTool('cloudWatchLogs', new CloudWatchLogTool()),
+		vscode.lm.registerTool('lambda', new LambdaTool()),
+		vscode.lm.registerTool('stepfunc', new StepFuncTool()),
+		vscode.lm.registerTool('glue', new GlueTool())
 	);
 
 	ui.logToOutput('Language model tools registered');
