@@ -15,10 +15,8 @@ export class TestAwsConnectionTool implements vscode.LanguageModelTool<TestAwsCo
     try {
       // Get region from session if not provided in input
       const region = options.input?.region || Session.Current?.AwsRegion || 'us-east-1';
-      const awsProfile = Session.Current?.AwsProfile || 'default';
-      const awsEndpoint = Session.Current?.AwsEndPoint || 'default';
 
-      ui.logToOutput(`TestAwsConnection: Testing AWS connectivity (profile=${awsProfile}, region=${region}, endpoint=${awsEndpoint})`);
+      ui.logToOutput(`TestAwsConnection: Testing AWS connectivity (region=${region})`);
 
       const result = await stsAPI.TestAwsConnection(region);
       
@@ -26,9 +24,7 @@ export class TestAwsConnectionTool implements vscode.LanguageModelTool<TestAwsCo
         const response = {
           success: true,
           message: 'AWS connectivity test successful',
-          profile: awsProfile,
-          region: region,
-          endpoint: awsEndpoint
+          region: region
         };
         ui.logToOutput('TestAwsConnection: AWS connectivity test successful');
         return new vscode.LanguageModelToolResult([
@@ -39,9 +35,7 @@ export class TestAwsConnectionTool implements vscode.LanguageModelTool<TestAwsCo
           success: false,
           message: 'AWS connectivity test failed',
           error: result.error?.message || 'Unknown error',
-          profile: awsProfile,
           region: region,
-          endpoint: awsEndpoint
         };
         ui.logToOutput('TestAwsConnection: AWS connectivity test failed', result.error);
         return new vscode.LanguageModelToolResult([

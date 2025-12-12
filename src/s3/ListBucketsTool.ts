@@ -14,10 +14,8 @@ export class ListBucketsTool implements vscode.LanguageModelTool<ListBucketsInpu
   ): Promise<vscode.LanguageModelToolResult> {
     try {
       const bucketName = options.input?.bucketName;
-      const awsProfile = Session.Current?.AwsProfile || 'default';
-      const awsRegion = Session.Current?.AwsRegion || 'us-east-1';
 
-      ui.logToOutput(`ListBucketsTool: Fetching buckets list (profile=${awsProfile}, region=${awsRegion}, bucketName=${bucketName || 'all'})`);
+      ui.logToOutput(`ListBucketsTool: Fetching buckets list (bucketName=${bucketName || 'all'})`);
 
       const result = await s3API.GetBucketList(bucketName);
       
@@ -25,8 +23,6 @@ export class ListBucketsTool implements vscode.LanguageModelTool<ListBucketsInpu
         const response = {
           success: true,
           message: 'Buckets list retrieved successfully',
-          profile: awsProfile,
-          region: awsRegion,
           buckets: result.result,
           count: result.result?.length || 0
         };
@@ -39,8 +35,6 @@ export class ListBucketsTool implements vscode.LanguageModelTool<ListBucketsInpu
           success: false,
           message: 'Failed to retrieve buckets list',
           error: result.error?.message || 'Unknown error',
-          profile: awsProfile,
-          region: awsRegion
         };
         ui.logToOutput('ListBucketsTool: Failed to retrieve buckets list', result.error);
         return new vscode.LanguageModelToolResult([
