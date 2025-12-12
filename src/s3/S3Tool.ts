@@ -44,7 +44,7 @@ type S3Command =
   | 'GetBucketPolicy';
 
 // Input interface - command + params object
-interface S3GenericToolInput {
+interface S3ToolInput {
   command: S3Command;
   params: Record<string, any>;
 }
@@ -112,14 +112,14 @@ interface GetBucketPolicyParams {
   Bucket: string;
 }
 
-export class S3GenericTool implements vscode.LanguageModelTool<S3GenericToolInput> {
+export class S3Tool implements vscode.LanguageModelTool<S3ToolInput> {
   
   /**
    * Get AWS credentials with caching
    */
   private async getCredentials(): Promise<AwsCredentialIdentity | undefined> {
     if (CurrentCredentials !== undefined) {
-      ui.logToOutput(`S3GenericTool: Using cached credentials (AccessKeyId=${CurrentCredentials.accessKeyId})`);
+      ui.logToOutput(`S3Tool: Using cached credentials (AccessKeyId=${CurrentCredentials.accessKeyId})`);
       return CurrentCredentials;
     }
 
@@ -135,10 +135,10 @@ export class S3GenericTool implements vscode.LanguageModelTool<S3GenericToolInpu
         throw new Error('AWS credentials not found');
       }
 
-      ui.logToOutput(`S3GenericTool: Credentials loaded (AccessKeyId=${CurrentCredentials.accessKeyId})`);
+      ui.logToOutput(`S3Tool: Credentials loaded (AccessKeyId=${CurrentCredentials.accessKeyId})`);
       return CurrentCredentials;
     } catch (error: any) {
-      ui.logToOutput('S3GenericTool: Failed to get credentials', error);
+      ui.logToOutput('S3Tool: Failed to get credentials', error);
       throw error;
     }
   }
@@ -160,7 +160,7 @@ export class S3GenericTool implements vscode.LanguageModelTool<S3GenericToolInpu
       region: Session.Current?.AwsRegion,
     });
 
-    ui.logToOutput(`S3GenericTool: S3 client created (region=${Session.Current?.AwsRegion})`);
+    ui.logToOutput(`S3Tool: S3 client created (region=${Session.Current?.AwsRegion})`);
     return CurrentS3Client;
   }
 
@@ -249,8 +249,8 @@ export class S3GenericTool implements vscode.LanguageModelTool<S3GenericToolInpu
    * Main command dispatcher - easily extensible
    */
   private async executeCommand(command: S3Command, params: Record<string, any>): Promise<any> {
-    ui.logToOutput(`S3GenericTool: Executing command: ${command}`);
-    ui.logToOutput(`S3GenericTool: Command parameters: ${JSON.stringify(params)}`);
+    ui.logToOutput(`S3Tool: Executing command: ${command}`);
+    ui.logToOutput(`S3Tool: Command parameters: ${JSON.stringify(params)}`);
 
     switch (command) {
       case 'HeadBucket':
@@ -289,13 +289,13 @@ export class S3GenericTool implements vscode.LanguageModelTool<S3GenericToolInpu
    * Tool invocation entry point
    */
   async invoke(
-    options: vscode.LanguageModelToolInvocationOptions<S3GenericToolInput>,
+    options: vscode.LanguageModelToolInvocationOptions<S3ToolInput>,
     token: vscode.CancellationToken
   ): Promise<vscode.LanguageModelToolResult> {
     const { command, params } = options.input;
 
     try {
-      ui.logToOutput(`S3GenericTool: Executing ${command} with params: ${JSON.stringify(params)}`);
+      ui.logToOutput(`S3Tool: Executing ${command} with params: ${JSON.stringify(params)}`);
 
       // Execute the command
       const result = await this.executeCommand(command, params);
@@ -312,7 +312,7 @@ export class S3GenericTool implements vscode.LanguageModelTool<S3GenericToolInpu
         }
       };
 
-      ui.logToOutput(`S3GenericTool: ${command} completed successfully`);
+      ui.logToOutput(`S3Tool: ${command} completed successfully`);
       
       return new vscode.LanguageModelToolResult([
         new vscode.LanguageModelTextPart(JSON.stringify(response, null, 2))
@@ -331,7 +331,7 @@ export class S3GenericTool implements vscode.LanguageModelTool<S3GenericToolInpu
         }
       };
 
-      ui.logToOutput(`S3GenericTool: ${command} failed`, error);
+      ui.logToOutput(`S3Tool: ${command} failed`, error);
       
       return new vscode.LanguageModelToolResult([
         new vscode.LanguageModelTextPart(JSON.stringify(errorResponse, null, 2))

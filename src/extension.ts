@@ -5,30 +5,27 @@ import { Session } from './common/Session';
 import { TestAwsConnectionTool } from './sts/TestAwsConnectionTool';
 import * as stsAPI from './sts/API';
 import { AIHandler } from './chat/AIHandler';
-import { S3GenericTool } from './s3/S3GenericTool';
+import { S3Tool as S3Tool } from './s3/S3Tool';
 import { FileOperationsTool } from './common/FileOperationsTool';
 import { SessionTool } from './common/SessionTool';
+import { CloudWatchLogTool } from './cloudwatch/CloudWatchLogTool';
 
 export function activate(context: vscode.ExtensionContext) {
 	ui.logToOutput('Aws AI Assistant is now active!');
 
 	new Session(context);
 	new AIHandler();
-	new StatusBarItem(context);
+	new StatusBarItem();
 
 	
 	// Register language model tools
-	const testAwsConnectionTool = vscode.lm.registerTool('aws-ai-assistant_testAwsConnection', new TestAwsConnectionTool());
-	context.subscriptions.push(testAwsConnectionTool);
-
-	const s3GenericTool = vscode.lm.registerTool('aws-ai-assistant_s3Generic', new S3GenericTool());
-	context.subscriptions.push(s3GenericTool);
-
-	const fileOperationsTool = vscode.lm.registerTool('aws-ai-assistant_fileOperations', new FileOperationsTool());
-	context.subscriptions.push(fileOperationsTool);
-
-	const sessionTool = vscode.lm.registerTool('aws-ai-assistant_session', new SessionTool());
-	context.subscriptions.push(sessionTool);
+	context.subscriptions.push(
+		vscode.lm.registerTool('aws-ai-assistant_testAwsConnection', new TestAwsConnectionTool()),
+		vscode.lm.registerTool('aws-ai-assistant_s3', new S3Tool()),
+		vscode.lm.registerTool('aws-ai-assistant_fileOperations', new FileOperationsTool()),
+		vscode.lm.registerTool('aws-ai-assistant_session', new SessionTool()),
+		vscode.lm.registerTool('aws-ai-assistant_cloudWatchLogs', new CloudWatchLogTool())
+	);
 
 	ui.logToOutput('Language model tools registered');
 
