@@ -35,16 +35,113 @@ export class AIHandler {
         }
       },
       {
-        name: 'aws-ai-assistant_listBuckets',
+        name: 'aws-ai-assistant_s3Generic',
         description:
-          'Lists S3 buckets with optional filtering by bucket name.',
+          'Execute S3 commands. IMPORTANT: Always provide the params object with required fields. HeadBucket: {Bucket}. HeadObject: {Bucket, Key}. ListBuckets: {}. ListObjectsV2: {Bucket, Prefix?}. ListObjectVersions: {Bucket, Prefix?}. GetBucketPolicy: {Bucket}. PutObject: {Bucket, Key, Body?}. DeleteObject: {Bucket, Key}. CopyObject: {Bucket, CopySource, Key}.',
         inputSchema: {
           type: 'object',
+          required: ['command', 'params'],
           properties: {
-            bucketName: {
+            command: {
               type: 'string',
-              description:
-                'Optional bucket name to filter results. If not specified, lists all buckets.'
+              enum: ['HeadBucket', 'HeadObject', 'ListBuckets', 'ListObjectsV2', 'ListObjectVersions', 'GetBucketPolicy', 'PutObject', 'DeleteObject', 'CopyObject'],
+              description: 'The S3 command to execute'
+            },
+            params: {
+              type: 'object',
+              description: 'REQUIRED parameters object. For ListObjectsV2: MUST include {"Bucket": "bucket-name"}. For PutObject: {Bucket, Key, Body?}. For DeleteObject: {Bucket, Key}. For CopyObject: {Bucket, CopySource, Key}.',
+              properties: {
+                Bucket: {
+                  type: 'string',
+                  description: 'Bucket name (required for all commands except ListBuckets)'
+                },
+                Key: {
+                  type: 'string',
+                  description: 'Object key (required for most commands)'
+                },
+                CopySource: {
+                  type: 'string',
+                  description: 'Source object path for copy (required for CopyObject, format: /bucket/key)'
+                },
+                Body: {
+                  type: 'string',
+                  description: 'Object content as string or base64 (optional for PutObject)'
+                },
+                Prefix: {
+                  type: 'string',
+                  description: 'Filter by prefix (optional for ListObjectsV2, ListObjectVersions)'
+                },
+                Delimiter: {
+                  type: 'string',
+                  description: 'Delimiter for grouping keys (optional)'
+                },
+                MaxKeys: {
+                  type: 'number',
+                  description: 'Maximum keys to return (optional)'
+                },
+                ContinuationToken: {
+                  type: 'string',
+                  description: 'Pagination token (optional)'
+                },
+                StartAfter: {
+                  type: 'string',
+                  description: 'Start listing after this key (optional)'
+                },
+                ContentType: {
+                  type: 'string',
+                  description: 'MIME type for PutObject (optional)'
+                },
+                Metadata: {
+                  type: 'object',
+                  description: 'Custom metadata for object (optional)'
+                },
+                VersionId: {
+                  type: 'string',
+                  description: 'Version ID (optional for HeadObject, DeleteObject)'
+                },
+                MetadataDirective: {
+                  type: 'string',
+                  description: 'How to handle metadata in CopyObject: COPY or REPLACE (optional)'
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        name: 'aws-ai-assistant_fileOperations',
+        description:
+          'Perform file operations: ReadFile (read file content), ReadFileStream (get file info and stream), ReadFileAsBase64 (read file as Base64), GetFileInfo (get file statistics), ListFiles (list directory contents).',
+        inputSchema: {
+          type: 'object',
+          required: ['command', 'params'],
+          properties: {
+            command: {
+              type: 'string',
+              enum: ['ReadFile', 'ReadFileStream', 'ReadFileAsBase64', 'GetFileInfo', 'ListFiles'],
+              description: 'The file operation command to execute'
+            },
+            params: {
+              type: 'object',
+              description: 'Command parameters. ReadFile: {filePath, encoding?}. ReadFileStream: {filePath}. ReadFileAsBase64: {filePath}. GetFileInfo: {filePath}. ListFiles: {dirPath, recursive?}',
+              properties: {
+                filePath: {
+                  type: 'string',
+                  description: 'File path (required for ReadFile, ReadFileStream, ReadFileAsBase64, GetFileInfo)'
+                },
+                dirPath: {
+                  type: 'string',
+                  description: 'Directory path (required for ListFiles)'
+                },
+                encoding: {
+                  type: 'string',
+                  description: 'File encoding for ReadFile (optional, default: utf8). Examples: utf8, ascii, base64'
+                },
+                recursive: {
+                  type: 'boolean',
+                  description: 'Recursively list files in subdirectories (optional for ListFiles, default: false)'
+                }
+              }
             }
           }
         }

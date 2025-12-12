@@ -7,10 +7,10 @@ var logsOutputChannel: vscode.OutputChannel;
 
 var NEW_LINE:string = "\n\n";
 
-export function showOutputMessage(message: any, popupMessage: string = "Results are printed to OUTPUT / AwsAccess-Extension", clearPrevMessages:boolean=true): void {
+export function showOutputMessage(message: any, popupMessage: string = "Results are printed to OUTPUT / AwsAssistant-Extension", clearPrevMessages:boolean=true): void {
 
   if (!outputChannel) {
-    outputChannel = vscode.window.createOutputChannel("AwsAccess-Extension");
+    outputChannel = vscode.window.createOutputChannel("AwsAssistant-Extension");
   }
 
   if(clearPrevMessages)
@@ -36,7 +36,7 @@ export function logToOutput(message: any, error?: Error): void {
   let now = new Date().toLocaleString();
 
   if (!logsOutputChannel) {
-    logsOutputChannel = vscode.window.createOutputChannel("AwsAccess-Log");
+    logsOutputChannel = vscode.window.createOutputChannel("AwsAssistant-Log");
   }
 
   if (typeof message === "object") {

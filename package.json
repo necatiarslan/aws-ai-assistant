@@ -55,24 +55,170 @@
         }
       },
       {
-        "name": "aws-ai-assistant_listBuckets",
-        "toolReferenceName": "listBuckets",
-        "displayName": "List S3 Buckets",
-        "modelDescription": "Lists S3 buckets with optional filtering by bucket name.",
-        "userDescription": "List your AWS S3 buckets with optional filtering",
+        "name": "aws-ai-assistant_s3Generic",
+        "toolReferenceName": "s3Generic",
+        "displayName": "S3 Generic Tool",
+        "modelDescription": "Execute S3 commands. ALWAYS provide params object. Examples: ListObjectsV2 {command:'ListObjectsV2', params:{Bucket:'bucket-name'}}. PutObject {command:'PutObject', params:{Bucket:'name', Key:'path', Body:'content'}}. DeleteObject {command:'DeleteObject', params:{Bucket:'name', Key:'path'}}. CopyObject {command:'CopyObject', params:{Bucket:'name', CopySource:'/bucket/key', Key:'new-path'}}.",
+        "userDescription": "Execute S3 commands including read, write, and delete operations",
         "tags": [
           "aws",
           "s3",
-          "buckets"
+          "bucket",
+          "object",
+          "generic",
+          "upload",
+          "download",
+          "delete",
+          "copy"
         ],
         "canBeReferencedInPrompt": true,
         "icon": "$(database)",
         "inputSchema": {
           "type": "object",
+          "required": [
+            "command",
+            "params"
+          ],
           "properties": {
-            "bucketName": {
+            "command": {
               "type": "string",
-              "description": "Optional bucket name to filter results. If not specified, lists all buckets."
+              "enum": [
+                "HeadBucket",
+                "HeadObject",
+                "ListBuckets",
+                "ListObjectsV2",
+                "ListObjectVersions",
+                "GetBucketPolicy",
+                "PutObject",
+                "DeleteObject",
+                "CopyObject"
+              ],
+              "description": "The S3 command to execute"
+            },
+            "params": {
+              "type": "object",
+              "description": "REQUIRED parameters object. Always include this even if empty. For write operations ensure Bucket and Key are provided.",
+              "properties": {
+                "Bucket": {
+                  "type": "string",
+                  "description": "Bucket name (REQUIRED for all commands except ListBuckets)"
+                },
+                "Key": {
+                  "type": "string",
+                  "description": "Object key path (REQUIRED for HeadObject, PutObject, DeleteObject, CopyObject)"
+                },
+                "CopySource": {
+                  "type": "string",
+                  "description": "Source object path for copy command (REQUIRED for CopyObject, format: /bucket/key)"
+                },
+                "Body": {
+                  "type": "string",
+                  "description": "Object content as string or base64 (optional for PutObject)"
+                },
+                "ContentType": {
+                  "type": "string",
+                  "description": "MIME type for the object (optional for PutObject)"
+                },
+                "Prefix": {
+                  "type": "string",
+                  "description": "Filter objects by prefix path (optional for ListObjectsV2, ListObjectVersions)"
+                },
+                "Delimiter": {
+                  "type": "string",
+                  "description": "Delimiter character for grouping keys, typically / (optional)"
+                },
+                "MaxKeys": {
+                  "type": "number",
+                  "description": "Maximum number of keys to return (optional, default 1000)"
+                },
+                "ContinuationToken": {
+                  "type": "string",
+                  "description": "Token for pagination from previous response (optional)"
+                },
+                "StartAfter": {
+                  "type": "string",
+                  "description": "Start listing after this key name (optional)"
+                },
+                "VersionId": {
+                  "type": "string",
+                  "description": "Specific version ID of object (optional for HeadObject, DeleteObject)"
+                },
+                "KeyMarker": {
+                  "type": "string",
+                  "description": "Key marker for version pagination (optional for ListObjectVersions)"
+                },
+                "VersionIdMarker": {
+                  "type": "string",
+                  "description": "Version ID marker for pagination (optional for ListObjectVersions)"
+                },
+                "Metadata": {
+                  "type": "object",
+                  "description": "Custom metadata key-value pairs (optional for PutObject, CopyObject)"
+                },
+                "MetadataDirective": {
+                  "type": "string",
+                  "description": "How to handle metadata in CopyObject: COPY or REPLACE (optional)"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "aws-ai-assistant_fileOperations",
+        "toolReferenceName": "fileOperations",
+        "displayName": "File Operations Tool",
+        "modelDescription": "Perform file operations: ReadFile to read file content, ReadFileStream to get file metadata, ReadFileAsBase64 to read as Base64, GetFileInfo to get file statistics, ListFiles to list directory contents.",
+        "userDescription": "Read and manage files with various encoding and format options",
+        "tags": [
+          "file",
+          "read",
+          "write",
+          "operations",
+          "filesystem",
+          "base64"
+        ],
+        "canBeReferencedInPrompt": true,
+        "icon": "$(file)",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "command",
+            "params"
+          ],
+          "properties": {
+            "command": {
+              "type": "string",
+              "enum": [
+                "ReadFile",
+                "ReadFileStream",
+                "ReadFileAsBase64",
+                "GetFileInfo",
+                "ListFiles"
+              ],
+              "description": "The file operation command to execute"
+            },
+            "params": {
+              "type": "object",
+              "description": "Command parameters. ReadFile: {filePath, encoding?}. ReadFileStream: {filePath}. ReadFileAsBase64: {filePath}. GetFileInfo: {filePath}. ListFiles: {dirPath, recursive?}",
+              "properties": {
+                "filePath": {
+                  "type": "string",
+                  "description": "File path (required for ReadFile, ReadFileStream, ReadFileAsBase64, GetFileInfo)"
+                },
+                "dirPath": {
+                  "type": "string",
+                  "description": "Directory path (required for ListFiles)"
+                },
+                "encoding": {
+                  "type": "string",
+                  "description": "File encoding for ReadFile (optional, default: utf8). Examples: utf8, ascii, base64, utf16le"
+                },
+                "recursive": {
+                  "type": "boolean",
+                  "description": "Recursively list files in subdirectories (optional for ListFiles, default: false)"
+                }
+              }
             }
           }
         }

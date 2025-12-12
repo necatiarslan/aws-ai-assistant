@@ -6,7 +6,8 @@ import { registerChatParticipant } from './chat/ChatParticipant';
 import { TestAwsConnectionTool } from './sts/TestAwsConnectionTool';
 import * as stsAPI from './sts/API';
 import { AIHandler } from './chat/AIHandler';
-import { ListBucketsTool } from './s3/ListBucketsTool';
+import { S3GenericTool } from './s3/S3GenericTool';
+import { FileOperationsTool } from './common/FileOperationsTool';
 
 export function activate(context: vscode.ExtensionContext) {
 	ui.logToOutput('Aws AI Assistant is now active!');
@@ -25,8 +26,11 @@ export function activate(context: vscode.ExtensionContext) {
 	const testAwsConnectionTool = vscode.lm.registerTool('aws-ai-assistant_testAwsConnection', new TestAwsConnectionTool());
 	context.subscriptions.push(testAwsConnectionTool);
 
-	const listBucketsTool = vscode.lm.registerTool('aws-ai-assistant_listBuckets', new ListBucketsTool());
-	context.subscriptions.push(listBucketsTool);
+	const s3GenericTool = vscode.lm.registerTool('aws-ai-assistant_s3Generic', new S3GenericTool());
+	context.subscriptions.push(s3GenericTool);
+
+	const fileOperationsTool = vscode.lm.registerTool('aws-ai-assistant_fileOperations', new FileOperationsTool());
+	context.subscriptions.push(fileOperationsTool);
 
 	ui.logToOutput('Language model tools registered');
 

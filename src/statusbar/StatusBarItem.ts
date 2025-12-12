@@ -11,7 +11,7 @@ export class StatusBarItem {
     public static LoadingText:string = "$(copilot) Aws $(sync~spin)";
     public static Current: StatusBarItem;
     public context: vscode.ExtensionContext;
-    public awsAccessStatusBarItem: vscode.StatusBarItem;
+    public awsAssistantStatusBarItem: vscode.StatusBarItem;
     // public awsRefreshStatusBarItem: vscode.StatusBarItem;
     public awsProfileStatusBarItem: vscode.StatusBarItem;
 
@@ -30,12 +30,12 @@ export class StatusBarItem {
         const statusBarClickedCommand = 'aws-ai-assistant.statusBarClicked';
         context.subscriptions.push(vscode.commands.registerCommand(statusBarClickedCommand, StatusBarItem.StatusBarClicked));
 
-        this.awsAccessStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 2);
-        this.awsAccessStatusBarItem.command = statusBarClickedCommand;
-        this.awsAccessStatusBarItem.text = StatusBarItem.LoadingText;
-        this.awsAccessStatusBarItem.tooltip = this.ToolTip;
-        context.subscriptions.push(this.awsAccessStatusBarItem);
-        this.awsAccessStatusBarItem.show();
+        this.awsAssistantStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 2);
+        this.awsAssistantStatusBarItem.command = statusBarClickedCommand;
+        this.awsAssistantStatusBarItem.text = StatusBarItem.LoadingText;
+        this.awsAssistantStatusBarItem.tooltip = this.ToolTip;
+        context.subscriptions.push(this.awsAssistantStatusBarItem);
+        this.awsAssistantStatusBarItem.show();
 
         // const refreshButtonClickedCommand = 'aws-ai-assistant.refreshButtonClicked';
         // context.subscriptions.push(vscode.commands.registerCommand(refreshButtonClickedCommand, StatusBarItem.RefreshButtonClicked));
@@ -142,7 +142,7 @@ export class StatusBarItem {
 
     public ShowLoading(){
         ui.logToOutput('StatusBarItem.ShowLoading Started');
-        this.awsAccessStatusBarItem.text = StatusBarItem.LoadingText;
+        this.awsAssistantStatusBarItem.text = StatusBarItem.LoadingText;
     }
 
     public RefreshText(){
@@ -172,8 +172,8 @@ export class StatusBarItem {
         this.ToolTip += "\nRegion: " + (Session.Current?.AwsRegion || "us-east-1");
         this.ToolTip += "\nEndPoint: " + (Session.Current?.AwsEndPoint || "aws default");
 
-        this.awsAccessStatusBarItem.tooltip = this.ToolTip;
-        this.awsAccessStatusBarItem.text = this.Text;
+        this.awsAssistantStatusBarItem.tooltip = this.ToolTip;
+        this.awsAssistantStatusBarItem.text = this.Text;
     }
 
     public GetBoolChar(value:boolean){
