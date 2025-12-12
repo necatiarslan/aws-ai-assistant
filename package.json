@@ -55,6 +55,56 @@
         }
       },
       {
+        "name": "aws-ai-assistant_session",
+        "toolReferenceName": "session",
+        "displayName": "Session Tool",
+        "modelDescription": "Get or set AWS session values (AwsProfile, AwsEndPoint, AwsRegion). Use command GetSession to read current values. Use SetSession with params to update any of AwsProfile, AwsEndPoint, AwsRegion.",
+        "userDescription": "Manage AWS session profile, endpoint, and region",
+        "tags": [
+          "aws",
+          "session",
+          "profile",
+          "region",
+          "endpoint"
+        ],
+        "canBeReferencedInPrompt": true,
+        "icon": "$(gear)",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "command"
+          ],
+          "properties": {
+            "command": {
+              "type": "string",
+              "enum": [
+                "GetSession",
+                "SetSession"
+              ],
+              "description": "Use GetSession to read current values. Use SetSession to update session values."
+            },
+            "params": {
+              "type": "object",
+              "description": "Parameters for SetSession. Omit to leave unchanged.",
+              "properties": {
+                "AwsProfile": {
+                  "type": "string",
+                  "description": "AWS profile name to set (optional)"
+                },
+                "AwsEndPoint": {
+                  "type": "string",
+                  "description": "Custom AWS/S3-compatible endpoint to set (optional)"
+                },
+                "AwsRegion": {
+                  "type": "string",
+                  "description": "AWS region to set (optional, default us-east-1 if set to empty)"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
         "name": "aws-ai-assistant_s3Generic",
         "toolReferenceName": "s3Generic",
         "displayName": "S3 Generic Tool",

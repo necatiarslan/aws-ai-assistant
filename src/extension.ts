@@ -7,6 +7,7 @@ import * as stsAPI from './sts/API';
 import { AIHandler } from './chat/AIHandler';
 import { S3GenericTool } from './s3/S3GenericTool';
 import { FileOperationsTool } from './common/FileOperationsTool';
+import { SessionTool } from './common/SessionTool';
 
 export function activate(context: vscode.ExtensionContext) {
 	ui.logToOutput('Aws AI Assistant is now active!');
@@ -25,6 +26,9 @@ export function activate(context: vscode.ExtensionContext) {
 
 	const fileOperationsTool = vscode.lm.registerTool('aws-ai-assistant_fileOperations', new FileOperationsTool());
 	context.subscriptions.push(fileOperationsTool);
+
+	const sessionTool = vscode.lm.registerTool('aws-ai-assistant_session', new SessionTool());
+	context.subscriptions.push(sessionTool);
 
 	ui.logToOutput('Language model tools registered');
 
