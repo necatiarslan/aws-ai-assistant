@@ -1,8 +1,7 @@
 import * as vscode from 'vscode';
 import * as ui from './common/UI';
-import * as StatusBar from './statusbar/StatusBarItem';
+import { StatusBarItem } from './statusbar/StatusBarItem';
 import { Session } from './common/Session';
-import { registerChatParticipant } from './chat/ChatParticipant';
 import { TestAwsConnectionTool } from './sts/TestAwsConnectionTool';
 import * as stsAPI from './sts/API';
 import { AIHandler } from './chat/AIHandler';
@@ -12,16 +11,11 @@ import { FileOperationsTool } from './common/FileOperationsTool';
 export function activate(context: vscode.ExtensionContext) {
 	ui.logToOutput('Aws AI Assistant is now active!');
 
-	Session.Current = new Session(context);
-	AIHandler.Current = new AIHandler();
+	new Session(context);
+	new AIHandler();
+	new StatusBarItem(context);
 
-	new StatusBar.StatusBarItem(context);
-
-	// Register chat participant
-	const chatParticipant = registerChatParticipant(context);
-	context.subscriptions.push(chatParticipant);
-	ui.logToOutput('Chat participant registered');
-
+	
 	// Register language model tools
 	const testAwsConnectionTool = vscode.lm.registerTool('aws-ai-assistant_testAwsConnection', new TestAwsConnectionTool());
 	context.subscriptions.push(testAwsConnectionTool);
@@ -45,15 +39,15 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 	
 	vscode.commands.registerCommand('aws-ai-assistant.RefreshCredentials', () => {
-		StatusBar.StatusBarItem.Current.GetCredentials();
+		StatusBarItem.Current.GetCredentials();
 	});
 
 	vscode.commands.registerCommand('aws-ai-assistant.ListAwsProfiles', () => {
-		StatusBar.StatusBarItem.Current.ListAwsProfiles();
+		StatusBarItem.Current.ListAwsProfiles();
 	});
 
 	vscode.commands.registerCommand('aws-ai-assistant.SetAwsProfile', () => {
-		StatusBar.StatusBarItem.Current.SetAwsProfile();
+		StatusBarItem.Current.SetAwsProfile();
 	});
 
 	vscode.commands.registerCommand('aws-ai-assistant.TestAwsConnectivity', async () => {

@@ -1,12 +1,27 @@
 import * as vscode from 'vscode';
 import * as ui from '../common/UI';
 import { Session } from '../common/Session';
+import * as fs from 'fs';
+import * as path from 'path';
+
+const PARTICIPANT_ID = 'aws-ai-assistant.chat';
 
 export class AIHandler {
   public static Current: AIHandler;
 
   constructor() {
     AIHandler.Current = this;
+    this.registerChatParticipant();
+  }
+
+  
+  public registerChatParticipant(): void {
+    const participant = vscode.chat.createChatParticipant(PARTICIPANT_ID, this.aIHandler.bind(AIHandler.Current));
+    if(!Session.Current){ return; }
+
+    const context: vscode.ExtensionContext = Session.Current?.Context
+    participant.iconPath = vscode.Uri.joinPath(context.extensionUri, 'media', 'aws-assistant-icon.png');
+    context.subscriptions.push(participant);
   }
 
   public async aIHandler(
@@ -16,137 +31,8 @@ export class AIHandler {
     token: vscode.CancellationToken
   ): Promise<void> {
     // 1. Define the tools we want to expose to the model
-    // These must match the definitions in package.json
-    const tools: vscode.LanguageModelChatTool[] = [
-      {
-        name: 'aws-ai-assistant_testAwsConnection',
-        description:
-          'Tests AWS connectivity using STS GetCallerIdentity. Returns true if the connection is successful.',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            region: {
-              type: 'string',
-              description:
-                'The AWS region to test. If not specified, uses the current session region.',
-              default: 'us-east-1'
-            }
-          }
-        }
-      },
-      {
-        name: 'aws-ai-assistant_s3Generic',
-        description:
-          'Execute S3 commands. IMPORTANT: Always provide the params object with required fields. HeadBucket: {Bucket}. HeadObject: {Bucket, Key}. ListBuckets: {}. ListObjectsV2: {Bucket, Prefix?}. ListObjectVersions: {Bucket, Prefix?}. GetBucketPolicy: {Bucket}. PutObject: {Bucket, Key, Body?}. DeleteObject: {Bucket, Key}. CopyObject: {Bucket, CopySource, Key}.',
-        inputSchema: {
-          type: 'object',
-          required: ['command', 'params'],
-          properties: {
-            command: {
-              type: 'string',
-              enum: ['HeadBucket', 'HeadObject', 'ListBuckets', 'ListObjectsV2', 'ListObjectVersions', 'GetBucketPolicy', 'PutObject', 'DeleteObject', 'CopyObject'],
-              description: 'The S3 command to execute'
-            },
-            params: {
-              type: 'object',
-              description: 'REQUIRED parameters object. For ListObjectsV2: MUST include {"Bucket": "bucket-name"}. For PutObject: {Bucket, Key, Body?}. For DeleteObject: {Bucket, Key}. For CopyObject: {Bucket, CopySource, Key}.',
-              properties: {
-                Bucket: {
-                  type: 'string',
-                  description: 'Bucket name (required for all commands except ListBuckets)'
-                },
-                Key: {
-                  type: 'string',
-                  description: 'Object key (required for most commands)'
-                },
-                CopySource: {
-                  type: 'string',
-                  description: 'Source object path for copy (required for CopyObject, format: /bucket/key)'
-                },
-                Body: {
-                  type: 'string',
-                  description: 'Object content as string or base64 (optional for PutObject)'
-                },
-                Prefix: {
-                  type: 'string',
-                  description: 'Filter by prefix (optional for ListObjectsV2, ListObjectVersions)'
-                },
-                Delimiter: {
-                  type: 'string',
-                  description: 'Delimiter for grouping keys (optional)'
-                },
-                MaxKeys: {
-                  type: 'number',
-                  description: 'Maximum keys to return (optional)'
-                },
-                ContinuationToken: {
-                  type: 'string',
-                  description: 'Pagination token (optional)'
-                },
-                StartAfter: {
-                  type: 'string',
-                  description: 'Start listing after this key (optional)'
-                },
-                ContentType: {
-                  type: 'string',
-                  description: 'MIME type for PutObject (optional)'
-                },
-                Metadata: {
-                  type: 'object',
-                  description: 'Custom metadata for object (optional)'
-                },
-                VersionId: {
-                  type: 'string',
-                  description: 'Version ID (optional for HeadObject, DeleteObject)'
-                },
-                MetadataDirective: {
-                  type: 'string',
-                  description: 'How to handle metadata in CopyObject: COPY or REPLACE (optional)'
-                }
-              }
-            }
-          }
-        }
-      },
-      {
-        name: 'aws-ai-assistant_fileOperations',
-        description:
-          'Perform file operations: ReadFile (read file content), ReadFileStream (get file info and stream), ReadFileAsBase64 (read file as Base64), GetFileInfo (get file statistics), ListFiles (list directory contents).',
-        inputSchema: {
-          type: 'object',
-          required: ['command', 'params'],
-          properties: {
-            command: {
-              type: 'string',
-              enum: ['ReadFile', 'ReadFileStream', 'ReadFileAsBase64', 'GetFileInfo', 'ListFiles'],
-              description: 'The file operation command to execute'
-            },
-            params: {
-              type: 'object',
-              description: 'Command parameters. ReadFile: {filePath, encoding?}. ReadFileStream: {filePath}. ReadFileAsBase64: {filePath}. GetFileInfo: {filePath}. ListFiles: {dirPath, recursive?}',
-              properties: {
-                filePath: {
-                  type: 'string',
-                  description: 'File path (required for ReadFile, ReadFileStream, ReadFileAsBase64, GetFileInfo)'
-                },
-                dirPath: {
-                  type: 'string',
-                  description: 'Directory path (required for ListFiles)'
-                },
-                encoding: {
-                  type: 'string',
-                  description: 'File encoding for ReadFile (optional, default: utf8). Examples: utf8, ascii, base64'
-                },
-                recursive: {
-                  type: 'boolean',
-                  description: 'Recursively list files in subdirectories (optional for ListFiles, default: false)'
-                }
-              }
-            }
-          }
-        }
-      }
-    ];
+    // Read directly from package.json to keep definitions in sync
+    const tools: vscode.LanguageModelChatTool[] = this.getToolsFromPackageJson();
 
     // 2. Construct the Initial Messages
     const messages: vscode.LanguageModelChatMessage[] = [
@@ -296,5 +182,28 @@ export class AIHandler {
     await vscode.commands.executeCommand(commandId, {
       query: '@aws Help me with AWS tasks'
     });
+  }
+
+  private getToolsFromPackageJson(): vscode.LanguageModelChatTool[] {
+    try {
+      const packageJsonPath = path.join(__dirname, '../../package.json');
+      const raw = fs.readFileSync(packageJsonPath, 'utf8');
+      const pkg = JSON.parse(raw) as any;
+      const lmTools = pkg?.contributes?.languageModelTools as any[] | undefined;
+
+      if (!Array.isArray(lmTools)) {
+        ui.logToOutput('AIHandler: No languageModelTools found in package.json');
+        return [];
+      }
+
+      return lmTools.map((tool) => ({
+        name: tool.name,
+        description: tool.modelDescription || tool.userDescription || tool.displayName || 'Tool',
+        inputSchema: tool.inputSchema ?? { type: 'object' }
+      } satisfies vscode.LanguageModelChatTool));
+    } catch (err) {
+      ui.logToOutput('AIHandler: Failed to load tools from package.json', err instanceof Error ? err : undefined);
+      return [];
+    }
   }
 }
