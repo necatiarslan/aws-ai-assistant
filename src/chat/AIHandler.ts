@@ -57,7 +57,8 @@ export class AIHandler {
         stream.markdown('No suitable AI model found.');
         return;
       }
-
+      ui.logToOutput(`AIHandler: Using model ${model.family} (${model.name})`);
+      
       // Tool calling loop
       let keepGoing = true;
       while (keepGoing && !token.isCancellationRequested) {
