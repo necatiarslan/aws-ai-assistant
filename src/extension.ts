@@ -2,15 +2,17 @@ import * as vscode from 'vscode';
 import * as ui from './common/UI';
 import * as StatusBar from './statusbar/StatusBarItem';
 import { Session } from './common/Session';
-import { registerS3BucketsTool } from './language_tools/S3BucketsTool';
-import { registerChatParticipant } from './language_tools/ChatParticipant';
-import { TestAwsConnectionTool } from './language_tools/TestAwsConnectionTool';
+import { registerChatParticipant } from './chat/ChatParticipant';
+import { TestAwsConnectionTool } from './sts/TestAwsConnectionTool';
 import * as stsAPI from './sts/API';
+import { AIHandler } from './chat/AIHandler';
+import { ListBucketsTool } from './s3/ListBucketsTool';
 
 export function activate(context: vscode.ExtensionContext) {
 	ui.logToOutput('Aws AI Assistant is now active!');
 
 	Session.Current = new Session(context);
+	AIHandler.Current = new AIHandler();
 
 	new StatusBar.StatusBarItem(context);
 
@@ -22,10 +24,11 @@ export function activate(context: vscode.ExtensionContext) {
 	// Register language model tools
 	const testAwsConnectionTool = vscode.lm.registerTool('aws-ai-assistant_testAwsConnection', new TestAwsConnectionTool());
 	context.subscriptions.push(testAwsConnectionTool);
-	ui.logToOutput('Language model tools registered');
 
-	// Register language tools
-	registerS3BucketsTool(context);
+	const listBucketsTool = vscode.lm.registerTool('aws-ai-assistant_listBuckets', new ListBucketsTool());
+	context.subscriptions.push(listBucketsTool);
+
+	ui.logToOutput('Language model tools registered');
 
 	// Command to set AWS Endpoint
 	vscode.commands.registerCommand('aws-ai-assistant.SetAwsEndpoint', async () => {

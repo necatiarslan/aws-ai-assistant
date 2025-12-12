@@ -12,7 +12,7 @@ export class StatusBarItem {
     public static Current: StatusBarItem;
     public context: vscode.ExtensionContext;
     public awsAccessStatusBarItem: vscode.StatusBarItem;
-    public awsRefreshStatusBarItem: vscode.StatusBarItem;
+    // public awsRefreshStatusBarItem: vscode.StatusBarItem;
     public awsProfileStatusBarItem: vscode.StatusBarItem;
 
     public Text: string = StatusBarItem.LoadingText;
@@ -37,11 +37,11 @@ export class StatusBarItem {
         context.subscriptions.push(this.awsAccessStatusBarItem);
         this.awsAccessStatusBarItem.show();
 
-        const refreshButtonClickedCommand = 'aws-ai-assistant.refreshButtonClicked';
-        context.subscriptions.push(vscode.commands.registerCommand(refreshButtonClickedCommand, StatusBarItem.RefreshButtonClicked));
-        this.awsRefreshStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 1);
-        this.awsRefreshStatusBarItem.command = refreshButtonClickedCommand;
-        context.subscriptions.push(this.awsRefreshStatusBarItem);
+        // const refreshButtonClickedCommand = 'aws-ai-assistant.refreshButtonClicked';
+        // context.subscriptions.push(vscode.commands.registerCommand(refreshButtonClickedCommand, StatusBarItem.RefreshButtonClicked));
+        // this.awsRefreshStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 1);
+        // this.awsRefreshStatusBarItem.command = refreshButtonClickedCommand;
+        // context.subscriptions.push(this.awsRefreshStatusBarItem);
         
         const profileButtonClickedCommand = 'aws-ai-assistant.profileButtonClicked';
         context.subscriptions.push(vscode.commands.registerCommand(profileButtonClickedCommand, StatusBarItem.ProfileButtonClicked));
@@ -147,7 +147,7 @@ export class StatusBarItem {
 
     public RefreshText(){
         ui.logToOutput('StatusBarItem.Refresh Started');
-        this.awsRefreshStatusBarItem.hide();
+        // this.awsRefreshStatusBarItem.hide();
         this.awsProfileStatusBarItem.hide();
 
         if(this.Profiles && this.Profiles.length > 1)
@@ -185,22 +185,6 @@ export class StatusBarItem {
             return "x";
         }
 
-    }
-
-    public async TestAwsConnectivity()
-    {
-        if(this.HasIniCredentials)
-        {
-            let canConnect = await api.TestAwsConnectivity();
-            if (canConnect)
-            {
-                ui.showInfoMessage("Successfully Connect to AWS with User " + Session.Current?.AwsProfile);
-            }
-        }
-        else
-        {
-            ui.showWarningMessage("Config File NOT Found");
-        }
     }
 
     public static async StatusBarClicked()

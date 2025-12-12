@@ -24,14 +24,9 @@
       {
         "id": "aws-ai-assistant.chat",
         "name": "aws",
-        "description": "AWS AI Assistant that helps with AWS tasks and provides session information",
-        "isSticky": true,
-        "commands": [
-          {
-            "name": "session",
-            "description": "Get current AWS session information (Profile, Region, Endpoint)"
-          }
-        ]
+        "fullName": "Aws Assistant",
+        "description": "Access AWS services through chat",
+        "isSticky": true
       }
     ],
     "languageModelTools": [
@@ -39,7 +34,7 @@
         "name": "aws-ai-assistant_testAwsConnection",
         "toolReferenceName": "testAwsConnection",
         "displayName": "Test AWS Connection",
-        "modelDescription": "Tests AWS connectivity using STS GetCallerIdentity. Returns the current AWS session details including profile, region, and endpoint.",
+        "modelDescription": "Tests AWS connectivity using STS GetCallerIdentity. Returns true if the connection is successful.",
         "userDescription": "Test your AWS connectivity with current session credentials",
         "tags": [
           "aws",
@@ -55,6 +50,29 @@
               "type": "string",
               "description": "The AWS region to test. If not specified, uses the current session region.",
               "default": "us-east-1"
+            }
+          }
+        }
+      },
+      {
+        "name": "aws-ai-assistant_listBuckets",
+        "toolReferenceName": "listBuckets",
+        "displayName": "List S3 Buckets",
+        "modelDescription": "Lists S3 buckets with optional filtering by bucket name.",
+        "userDescription": "List your AWS S3 buckets with optional filtering",
+        "tags": [
+          "aws",
+          "s3",
+          "buckets"
+        ],
+        "canBeReferencedInPrompt": true,
+        "icon": "$(database)",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "bucketName": {
+              "type": "string",
+              "description": "Optional bucket name to filter results. If not specified, lists all buckets."
             }
           }
         }
@@ -75,7 +93,7 @@
       },
       {
         "command": "aws-ai-assistant.TestAwsConnectivity",
-        "title": "Aws AI Assistant:Test Aws Connectivity With Active User"
+        "title": "Aws AI Assistant:Test Aws Connectivity"
       },
       {
         "command": "aws-ai-assistant.SetAwsEndpoint",

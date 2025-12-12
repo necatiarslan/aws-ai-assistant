@@ -26,7 +26,7 @@ export class Session {
             this.Context.globalState.update('AwsEndPoint', Session.Current?.AwsEndPoint);
             this.Context.globalState.update('AwsRegion', Session.Current?.AwsRegion);
         } catch (error) {
-            ui.logToOutput("StatusBarItem.SaveState Error !!!");
+            ui.logToOutput("Session.SaveState Error !!!");
         }
     }
 
