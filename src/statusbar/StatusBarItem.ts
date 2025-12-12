@@ -5,6 +5,7 @@ import * as ui from '../common/UI';
 import { ParsedIniData } from "@aws-sdk/types";
 import { existsSync } from 'fs';
 import { Session } from '../common/Session';
+import * as stsAPI from '../sts/API';
 
 export class StatusBarItem {
 
@@ -211,5 +212,13 @@ export class StatusBarItem {
         vscode.commands.executeCommand('workbench.action.quickOpen', `> ${extensionPrefix}`);
     }
 
+    public async TestAwsConnection(){
+        let result = await stsAPI.TestAwsConnection();
+        if (result.isSuccessful) {
+            ui.showInfoMessage('AWS connectivity test successful.');
+        } else {
+            ui.showErrorMessage('AWS connectivity test failed.', result.error);
+        }
+    }
 
 }

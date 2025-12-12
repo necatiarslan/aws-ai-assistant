@@ -9,47 +9,31 @@ export class AIHandler {
     AIHandler.Current = this;
   }
 
+  private getToolsFromManifest(): vscode.LanguageModelChatTool[] {
+    const extension = vscode.extensions.getExtension('NecatiARSLAN.aws-ai-assistant');
+    if (!extension) {
+      ui.logToOutput('AIHandler: extension manifest not found');
+      return [];
+    }
+
+    const manifest = extension.packageJSON;
+    const languageModelTools = manifest?.contributes?.languageModelTools || [];
+
+    return languageModelTools.map((tool: any) => ({
+      name: tool.name || tool.toolReferenceName,
+      description: tool.modelDescription || tool.userDescription || tool.displayName,
+      inputSchema: tool.inputSchema,
+    }));
+  }
+
   public async aIHandler(
     request: vscode.ChatRequest,
     context: vscode.ChatContext,
     stream: vscode.ChatResponseStream,
     token: vscode.CancellationToken
   ): Promise<void> {
-    // 1. Define the tools we want to expose to the model
-    // These must match the definitions in package.json
-    const tools: vscode.LanguageModelChatTool[] = [
-      {
-        name: 'aws-ai-assistant_testAwsConnection',
-        description:
-          'Tests AWS connectivity using STS GetCallerIdentity. Returns true if the connection is successful.',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            region: {
-              type: 'string',
-              description:
-                'The AWS region to test. If not specified, uses the current session region.',
-              default: 'us-east-1'
-            }
-          }
-        }
-      },
-      {
-        name: 'aws-ai-assistant_listBuckets',
-        description:
-          'Lists S3 buckets with optional filtering by bucket name.',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            bucketName: {
-              type: 'string',
-              description:
-                'Optional bucket name to filter results. If not specified, lists all buckets.'
-            }
-          }
-        }
-      }
-    ];
+    // 1. Define the tools we want to expose to the model (from manifest)
+    const tools: vscode.LanguageModelChatTool[] = this.getToolsFromManifest();
 
     // 2. Construct the Initial Messages
     const messages: vscode.LanguageModelChatMessage[] = [
