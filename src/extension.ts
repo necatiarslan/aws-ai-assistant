@@ -7,6 +7,7 @@ import { AIHandler } from './chat/AIHandler';
 import * as session from './common/SessionToolsRegister';
 import * as s3 from './s3/S3ToolsRegister';
 import * as sts from './sts/STSToolsRegister';
+import * as cloudwatchlogs from './cloudwatchlogs/CloudWatchToolsRegister';
 
 
 export function activate(context: vscode.ExtensionContext) {
@@ -20,16 +21,17 @@ export function activate(context: vscode.ExtensionContext) {
 	s3.Register(context);
 	sts.Register(context);
 	session.Register(context);
+	cloudwatchlogs.Register(context);
 
 	new StatusBar.StatusBarItem(context);
 
 	// Command to set AWS Endpoint
-	vscode.commands.registerCommand('aws-ai-assistant.SetAwsEndpoint', async () => {Session.Current?.SetAwsEndpoint();});
-	vscode.commands.registerCommand('aws-ai-assistant.SetAwsRegion', async () => {Session.Current?.SetAwsRegion();});	
+	vscode.commands.registerCommand('aws-ai-assistant.SetAwsEndpoint', () => {Session.Current?.SetAwsEndpoint();});
+	vscode.commands.registerCommand('aws-ai-assistant.SetAwsRegion', () => {Session.Current?.SetAwsRegion();});	
 	vscode.commands.registerCommand('aws-ai-assistant.RefreshCredentials', () => {StatusBar.StatusBarItem.Current.GetCredentials();});
 	vscode.commands.registerCommand('aws-ai-assistant.ListAwsProfiles', () => {StatusBar.StatusBarItem.Current.ListAwsProfiles();});
 	vscode.commands.registerCommand('aws-ai-assistant.SetAwsProfile', () => {StatusBar.StatusBarItem.Current.SetAwsProfile();});
-	vscode.commands.registerCommand('aws-ai-assistant.TestAwsConnectivity', async () => { StatusBar.StatusBarItem.Current.TestAwsConnection();});
+	vscode.commands.registerCommand('aws-ai-assistant.TestAwsConnectivity', () => { StatusBar.StatusBarItem.Current.TestAwsConnection();});
 
 }
 
