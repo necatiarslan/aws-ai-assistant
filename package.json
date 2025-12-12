@@ -757,6 +757,94 @@
             }
           }
         }
+      },
+      {
+        "name": "iam",
+        "toolReferenceName": "iam",
+        "displayName": "IAM Tool",
+        "modelDescription": "Execute AWS IAM commands. ALWAYS provide params object. Examples: GetRole {command:'GetRole', params:{RoleName:'my-role'}}. ListAttachedRolePolicies {command:'ListAttachedRolePolicies', params:{RoleName:'my-role'}}. GetPolicyVersion {command:'GetPolicyVersion', params:{PolicyArn:'arn:aws:iam::123:policy/p', VersionId:'v1'}}.",
+        "userDescription": "Inspect IAM roles and policies",
+        "tags": [
+          "aws",
+          "iam",
+          "roles",
+          "policies"
+        ],
+        "canBeReferencedInPrompt": true,
+        "icon": "$(shield)",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "command",
+            "params"
+          ],
+          "properties": {
+            "command": {
+              "type": "string",
+              "enum": [
+                "GetRole",
+                "GetRolePolicy",
+                "ListAttachedRolePolicies",
+                "ListRolePolicies",
+                "ListRoles",
+                "ListRoleTags",
+                "GetPolicy",
+                "GetPolicyVersion",
+                "ListPolicies",
+                "ListPolicyVersions"
+              ],
+              "description": "The IAM command to execute"
+            },
+            "params": {
+              "type": "object",
+              "description": "REQUIRED parameters object. Always include this even if empty. Provide RoleName/PolicyArn as needed.",
+              "properties": {
+                "RoleName": {
+                  "type": "string",
+                  "description": "Target IAM role name (REQUIRED for GetRole, GetRolePolicy, ListAttachedRolePolicies, ListRolePolicies, ListRoleTags)"
+                },
+                "PolicyName": {
+                  "type": "string",
+                  "description": "Inline policy name (REQUIRED for GetRolePolicy)"
+                },
+                "PathPrefix": {
+                  "type": "string",
+                  "description": "Path prefix to filter results (optional for ListAttachedRolePolicies, ListRoles, ListPolicies)"
+                },
+                "Marker": {
+                  "type": "string",
+                  "description": "Pagination marker (optional where supported)"
+                },
+                "MaxItems": {
+                  "type": "number",
+                  "description": "Maximum items to return (optional where supported)"
+                },
+                "PolicyArn": {
+                  "type": "string",
+                  "description": "IAM policy ARN (REQUIRED for GetPolicy, GetPolicyVersion, ListPolicyVersions)"
+                },
+                "VersionId": {
+                  "type": "string",
+                  "description": "Policy version ID (REQUIRED for GetPolicyVersion)"
+                },
+                "Scope": {
+                  "type": "string",
+                  "enum": ["All", "AWS", "Local"],
+                  "description": "Scope filter for ListPolicies (optional)"
+                },
+                "OnlyAttached": {
+                  "type": "boolean",
+                  "description": "Set true to list only attached policies (optional for ListPolicies)"
+                },
+                "PolicyUsageFilter": {
+                  "type": "string",
+                  "enum": ["PermissionsPolicy", "PermissionsBoundary"],
+                  "description": "Filter policies by usage (optional for ListPolicies)"
+                }
+              }
+            }
+          }
+        }
       }
     ],
     "commands": [
