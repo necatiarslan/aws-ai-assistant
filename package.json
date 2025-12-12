@@ -710,7 +710,12 @@
                 },
                 "WorkerType": {
                   "type": "string",
-                  "enum": ["Standard", "G.1X", "G.2X", "G.025X"],
+                  "enum": [
+                    "Standard",
+                    "G.1X",
+                    "G.2X",
+                    "G.025X"
+                  ],
                   "description": "Worker type (optional for CreateJob)"
                 },
                 "NumberOfWorkers": {
@@ -829,7 +834,11 @@
                 },
                 "Scope": {
                   "type": "string",
-                  "enum": ["All", "AWS", "Local"],
+                  "enum": [
+                    "All",
+                    "AWS",
+                    "Local"
+                  ],
                   "description": "Scope filter for ListPolicies (optional)"
                 },
                 "OnlyAttached": {
@@ -838,8 +847,147 @@
                 },
                 "PolicyUsageFilter": {
                   "type": "string",
-                  "enum": ["PermissionsPolicy", "PermissionsBoundary"],
+                  "enum": [
+                    "PermissionsPolicy",
+                    "PermissionsBoundary"
+                  ],
                   "description": "Filter policies by usage (optional for ListPolicies)"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "dynamodb",
+        "toolReferenceName": "dynamodb",
+        "displayName": "DynamoDB Tool",
+        "modelDescription": "Execute DynamoDB commands. ALWAYS provide params object. Examples: ListTables {command:'ListTables', params:{Limit:10}}. DescribeTable {command:'DescribeTable', params:{TableName:'my-table'}}. Query {command:'Query', params:{TableName:'my-table', KeyConditionExpression:'pk = :pk', ExpressionAttributeValues:{':pk':{'S':'id'}}}}.",
+        "userDescription": "Manage DynamoDB tables and items",
+        "tags": [
+          "aws",
+          "dynamodb",
+          "database",
+          "nosql"
+        ],
+        "canBeReferencedInPrompt": true,
+        "icon": "$(server)",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "command",
+            "params"
+          ],
+          "properties": {
+            "command": {
+              "type": "string",
+              "enum": [
+                "ListTables",
+                "DescribeTable",
+                "CreateTable",
+                "DeleteTable",
+                "Query",
+                "Scan",
+                "PutItem",
+                "UpdateItem",
+                "DeleteItem",
+                "GetItem",
+                "UpdateTable",
+                "UpdateTimeToLive",
+                "ListTagsOfResource"
+              ],
+              "description": "The DynamoDB command to execute"
+            },
+            "params": {
+              "type": "object",
+              "description": "REQUIRED parameters object. Always include this even if empty. Provide TableName and key attributes where needed.",
+              "properties": {
+                "TableName": {
+                  "type": "string",
+                  "description": "Target DynamoDB table name (REQUIRED for most table/item operations)"
+                },
+                "Limit": {
+                  "type": "number",
+                  "description": "Maximum number of items to return (optional for ListTables, Query)"
+                },
+                "ExclusiveStartTableName": {
+                  "type": "string",
+                  "description": "Pagination start table name (optional for ListTables)"
+                },
+                "KeyConditionExpression": {
+                  "type": "string",
+                  "description": "Key condition expression (optional for Query)"
+                },
+                "FilterExpression": {
+                  "type": "string",
+                  "description": "Filter expression (optional for Query)"
+                },
+                "ExpressionAttributeValues": {
+                  "type": "object",
+                  "description": "Expression attribute values map (optional for Query/UpdateItem)"
+                },
+                "ExpressionAttributeNames": {
+                  "type": "object",
+                  "description": "Expression attribute names map (optional)"
+                },
+                "IndexName": {
+                  "type": "string",
+                  "description": "Secondary index name (optional for Query)"
+                },
+                "Select": {
+                  "type": "string",
+                  "description": "Projection selection (optional for Query)"
+                },
+                "Key": {
+                  "type": "object",
+                  "description": "Primary key map (REQUIRED for GetItem/DeleteItem/UpdateItem)"
+                },
+                "Item": {
+                  "type": "object",
+                  "description": "Item attributes map (REQUIRED for PutItem)"
+                },
+                "AttributeUpdates": {
+                  "type": "object",
+                  "description": "Legacy attribute updates map (optional for UpdateItem)"
+                },
+                "UpdateExpression": {
+                  "type": "string",
+                  "description": "Update expression (optional for UpdateItem)"
+                },
+                "ConditionExpression": {
+                  "type": "string",
+                  "description": "Condition expression (optional for write operations)"
+                },
+                "ProvisionedThroughput": {
+                  "type": "object",
+                  "description": "Provisioned throughput config (optional for CreateTable/UpdateTable)"
+                },
+                "AttributeDefinitions": {
+                  "type": "array",
+                  "items": { "type": "object" },
+                  "description": "Attribute definitions (REQUIRED for CreateTable)"
+                },
+                "KeySchema": {
+                  "type": "array",
+                  "items": { "type": "object" },
+                  "description": "Key schema definitions (REQUIRED for CreateTable)"
+                },
+                "BillingMode": {
+                  "type": "string",
+                  "description": "Billing mode: PROVISIONED or PAY_PER_REQUEST (optional for CreateTable/UpdateTable)"
+                },
+                "GlobalSecondaryIndexUpdates": {
+                  "type": "array",
+                  "items": { "type": "object" },
+                  "description": "Updates to GSIs (optional for UpdateTable)"
+                },
+                "TimeToLiveSpecification": {
+                  "type": "object",
+                  "description": "TTL specification (REQUIRED for UpdateTimeToLive)"
+                },
+                "ResourceArn": {
+                  "type": "string",
+                  "description": "Table resource ARN (REQUIRED for ListTagsOfResource)"
                 }
               }
             }
@@ -897,6 +1045,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-cloudwatch-logs": "^3.948.0",
+    "@aws-sdk/client-dynamodb": "^3.948.0",
     "@aws-sdk/client-glue": "^3.948.0",
     "@aws-sdk/client-iam": "^3.948.0",
     "@aws-sdk/client-lambda": "^3.948.0",

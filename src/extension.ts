@@ -13,6 +13,7 @@ import { LambdaTool } from './lambda/LambdaTool';
 import { StepFuncTool } from './stepfunc/StepFuncTool';
 import { GlueTool } from './glue/GlueTool';
 import { IAMTool } from './iam/IAMTool';
+import { DynamoDBTool } from './dynamodb/DynamoDBTool';
 
 export function activate(context: vscode.ExtensionContext) {
 	ui.logToOutput('Aws AI Assistant is now active!');
@@ -32,7 +33,8 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.lm.registerTool('lambda', new LambdaTool()),
 		vscode.lm.registerTool('stepfunc', new StepFuncTool()),
 		vscode.lm.registerTool('glue', new GlueTool()),
-		vscode.lm.registerTool('iam', new IAMTool())
+		vscode.lm.registerTool('iam', new IAMTool()),
+		vscode.lm.registerTool('dynamodb', new DynamoDBTool())
 	);
 
 	ui.logToOutput('Language model tools registered');
