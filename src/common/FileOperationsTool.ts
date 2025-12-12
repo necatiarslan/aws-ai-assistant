@@ -3,7 +3,9 @@ import * as ui from './UI';
 import * as fs from 'fs';
 import { createReadStream, readFileSync } from 'fs';
 import { Readable } from 'stream';
-import { join } from 'path';
+import { join, dirname, basename } from 'path';
+import * as archiver from 'archiver';
+import * as os from 'os';
 
 // Type for file encoding
 type FileEncoding = 'utf8' | 'ascii' | 'base64' | 'hex' | 'utf16le' | 'ucs2';
@@ -15,7 +17,7 @@ interface FileOperationsToolInput {
 }
 
 // Command type definition
-type FileCommand = 'ReadFile' | 'ReadFileStream' | 'ReadFileAsBase64' | 'GetFileInfo' | 'ListFiles';
+type FileCommand = 'ReadFile' | 'ReadFileStream' | 'ReadFileAsBase64' | 'GetFileInfo' | 'ListFiles' | 'ZipTextFile';
 
 // Command parameter interfaces
 interface ReadFileParams {
@@ -38,6 +40,11 @@ interface GetFileInfoParams {
 interface ListFilesParams {
   dirPath: string;
   recursive?: boolean;
+}
+
+interface ZipTextFileParams {
+  filePath: string;
+  outputPath?: string; // Optional custom output path
 }
 
 export class FileOperationsTool implements vscode.LanguageModelTool<FileOperationsToolInput> {
@@ -182,6 +189,77 @@ export class FileOperationsTool implements vscode.LanguageModelTool<FileOperatio
   }
 
   /**
+   * Zip a text file or directory
+   */
+  private async executeZipTextFile(params: ZipTextFileParams): Promise<any> {
+    const { filePath, outputPath } = params;
+    
+    try {
+      ui.logToOutput(`FileOperationsTool: Zipping file: ${filePath}`);
+      
+      // Check if source exists
+      if (!fs.existsSync(filePath)) {
+        throw new Error(`Source path does not exist: ${filePath}`);
+      }
+      
+      const stats = fs.statSync(filePath);
+      
+      // Determine output path
+      let zipPath: string;
+      if (outputPath) {
+        zipPath = outputPath;
+      } else {
+        // Create zip file in temp directory
+        const fileName = basename(filePath, '.txt') || 'archive';
+        zipPath = join(os.tmpdir(), `${fileName}_${Date.now()}.zip`);
+      }
+      
+      // Ensure output directory exists
+      const outputDir = dirname(zipPath);
+      if (!fs.existsSync(outputDir)) {
+        fs.mkdirSync(outputDir, { recursive: true });
+      }
+      
+      // Create zip file
+      return await new Promise((resolve, reject) => {
+        const output = fs.createWriteStream(zipPath);
+        const archive = archiver('zip', {
+          zlib: { level: 9 } // Maximum compression
+        });
+        
+        output.on('close', () => {
+          ui.logToOutput(`FileOperationsTool: Zip file created: ${zipPath} (${archive.pointer()} bytes)`);
+          resolve({
+            success: true,
+            result: zipPath,
+            sourcePath: filePath,
+            zipPath: zipPath,
+            size: archive.pointer(),
+            message: `Successfully created zip file at ${zipPath}`
+          });
+        });
+        
+        archive.on('error', (err: Error) => {
+          reject(new Error(`Failed to create zip: ${err.message}`));
+        });
+        
+        archive.pipe(output);
+        
+        // Add file or directory to archive
+        if (stats.isDirectory()) {
+          archive.directory(filePath, false);
+        } else {
+          archive.file(filePath, { name: basename(filePath) });
+        }
+        
+        archive.finalize();
+      });
+    } catch (error: any) {
+      throw new Error(`Failed to zip file ${filePath}: ${error.message}`);
+    }
+  }
+
+  /**
    * Main command dispatcher
    */
   private async executeCommand(command: FileCommand, params: Record<string, any>): Promise<any> {
@@ -203,6 +281,9 @@ export class FileOperationsTool implements vscode.LanguageModelTool<FileOperatio
       
       case 'ListFiles':
         return await this.executeListFiles(params as ListFilesParams);
+      
+      case 'ZipTextFile':
+        return await this.executeZipTextFile(params as ZipTextFileParams);
       
       default:
         throw new Error(`Unsupported command: ${command}`);

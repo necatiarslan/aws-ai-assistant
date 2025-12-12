@@ -218,7 +218,7 @@
         "name": "aws-ai-assistant_fileOperations",
         "toolReferenceName": "fileOperations",
         "displayName": "File Operations Tool",
-        "modelDescription": "Perform file operations: ReadFile to read file content, ReadFileStream to get file metadata, ReadFileAsBase64 to read as Base64, GetFileInfo to get file statistics, ListFiles to list directory contents.",
+        "modelDescription": "Perform file operations: ReadFile to read file content, ReadFileStream to get file metadata, ReadFileAsBase64 to read as Base64, GetFileInfo to get file statistics, ListFiles to list directory contents, ZipTextFile to create a zip archive of a file or directory.",
         "userDescription": "Read and manage files with various encoding and format options",
         "tags": [
           "file",
@@ -244,17 +244,18 @@
                 "ReadFileStream",
                 "ReadFileAsBase64",
                 "GetFileInfo",
-                "ListFiles"
+                "ListFiles",
+                "ZipTextFile"
               ],
               "description": "The file operation command to execute"
             },
             "params": {
               "type": "object",
-              "description": "Command parameters. ReadFile: {filePath, encoding?}. ReadFileStream: {filePath}. ReadFileAsBase64: {filePath}. GetFileInfo: {filePath}. ListFiles: {dirPath, recursive?}",
+              "description": "Command parameters. ReadFile: {filePath, encoding?}. ReadFileStream: {filePath}. ReadFileAsBase64: {filePath}. GetFileInfo: {filePath}. ListFiles: {dirPath, recursive?}. ZipTextFile: {filePath, outputPath?}",
               "properties": {
                 "filePath": {
                   "type": "string",
-                  "description": "File path (required for ReadFile, ReadFileStream, ReadFileAsBase64, GetFileInfo)"
+                  "description": "File path (required for ReadFile, ReadFileStream, ReadFileAsBase64, GetFileInfo, ZipTextFile)"
                 },
                 "dirPath": {
                   "type": "string",
@@ -267,6 +268,10 @@
                 "recursive": {
                   "type": "boolean",
                   "description": "Recursively list files in subdirectories (optional for ListFiles, default: false)"
+                },
+                "outputPath": {
+                  "type": "string",
+                  "description": "Custom output path for zip file (optional for ZipTextFile, default: temp directory)"
                 }
               }
             }
@@ -321,7 +326,10 @@
                 },
                 "orderBy": {
                   "type": "string",
-                  "enum": ["LogStreamName", "LastEventTime"],
+                  "enum": [
+                    "LogStreamName",
+                    "LastEventTime"
+                  ],
                   "description": "Ordering for DescribeLogStreams (optional)"
                 },
                 "descending": {
@@ -477,12 +485,19 @@
                 },
                 "InvocationType": {
                   "type": "string",
-                  "enum": ["Event", "RequestResponse", "DryRun"],
+                  "enum": [
+                    "Event",
+                    "RequestResponse",
+                    "DryRun"
+                  ],
                   "description": "Invocation type (optional for Invoke, default: RequestResponse)"
                 },
                 "LogType": {
                   "type": "string",
-                  "enum": ["None", "Tail"],
+                  "enum": [
+                    "None",
+                    "Tail"
+                  ],
                   "description": "Set to Tail to include execution log in response (optional for Invoke)"
                 },
                 "ClientContext": {
@@ -555,6 +570,8 @@
     "@aws-sdk/client-sts": "^3.948.0",
     "@aws-sdk/credential-provider-node": "^3.948.0",
     "@aws-sdk/credential-providers": "^3.948.0",
-    "@aws-sdk/types": "^3.936.0"
+    "@aws-sdk/types": "^3.936.0",
+    "@types/archiver": "^7.0.0",
+    "archiver": "^7.0.1"
   }
 }
