@@ -4,6 +4,7 @@ import * as StatusBar from './statusbar/StatusBarItem';
 import { Session } from './common/Session';
 import { registerChatParticipant } from './chat/ChatParticipant';
 import { AIHandler } from './chat/AIHandler';
+import * as session from './common/SessionToolsRegister';
 import * as s3 from './s3/S3ToolsRegister';
 import * as sts from './sts/STSToolsRegister';
 
@@ -18,6 +19,7 @@ export function activate(context: vscode.ExtensionContext) {
 	registerChatParticipant(context);
 	s3.Register(context);
 	sts.Register(context);
+	session.Register(context);
 
 	new StatusBar.StatusBarItem(context);
 
