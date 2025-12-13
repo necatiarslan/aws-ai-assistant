@@ -26,6 +26,7 @@ import {
 } from '@aws-sdk/client-glue';
 import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
 import { AwsCredentialIdentity } from '@aws-sdk/types';
+import { AIHandler } from '../chat/AIHandler';
 
 // Cached credentials and client
 let CurrentCredentials: AwsCredentialIdentity | undefined;
@@ -234,6 +235,10 @@ export class GlueTool implements vscode.LanguageModelTool<GlueToolInput> {
     ui.logToOutput(`GlueTool: Executing command: ${command}`);
     ui.logToOutput(`GlueTool: Command parameters: ${JSON.stringify(params)}`);
 
+    if("JobName" in params) {
+      AIHandler.Current.updateLatestResource({ type: "Glue Job", name: params["JobName"] });
+    }
+
     switch (command) {
       case 'CreateJob':
         return await this.executeCreateJob(params as CreateJobParams);
@@ -271,7 +276,7 @@ export class GlueTool implements vscode.LanguageModelTool<GlueToolInput> {
 
     try {
       ui.logToOutput(`GlueTool: Executing ${command} with params: ${JSON.stringify(params)}`);
-
+      
       const result = await this.executeCommand(command, params);
 
       const response = {

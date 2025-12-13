@@ -12,6 +12,7 @@ import {
 } from '@aws-sdk/client-cloudwatch-logs';
 import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
 import { AwsCredentialIdentity } from '@aws-sdk/types';
+import { AIHandler } from '../chat/AIHandler';
 
 // Cached credentials and client
 let CurrentCredentials: AwsCredentialIdentity | undefined;
@@ -139,6 +140,13 @@ export class CloudWatchLogTool implements vscode.LanguageModelTool<CloudWatchToo
 
     try {
       ui.logToOutput(`CloudWatchLogTool: Executing ${command} with params: ${JSON.stringify(params)}`);
+
+      if ("logGroupName" in params) {
+        AIHandler.Current.updateLatestResource({ type: "CloudWatch Log Group", name: params.logGroupName });
+      }
+      if ("logStreamName" in params) {
+        AIHandler.Current.updateLatestResource({ type: "CloudWatch Log Stream", name: params.logStreamName });
+      }
 
       const result = await this.dispatch(command, params);
 

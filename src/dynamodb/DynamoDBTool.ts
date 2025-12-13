@@ -45,6 +45,7 @@ import {
 } from '@aws-sdk/client-dynamodb';
 import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
 import { AwsCredentialIdentity } from '@aws-sdk/types';
+import { AIHandler } from '../chat/AIHandler';
 
 // Cached credentials and client
 let CurrentCredentials: AwsCredentialIdentity | undefined;
@@ -188,6 +189,10 @@ export class DynamoDBTool implements vscode.LanguageModelTool<DynamoDBToolInput>
   private async executeCommand(command: DynamoDBCommand, params: Record<string, any>): Promise<any> {
     ui.logToOutput(`DynamoDBTool: Executing command: ${command}`);
     ui.logToOutput(`DynamoDBTool: Command parameters: ${JSON.stringify(params)}`);
+
+    if("TableName" in params){
+      AIHandler.Current.updateLatestResource({ type: "DynamoDB Table", name: params["TableName"] });
+    }
 
     switch (command) {
       case 'ListTables':

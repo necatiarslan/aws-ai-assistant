@@ -22,6 +22,7 @@ import {
 } from '@aws-sdk/client-lambda';
 import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
 import { AwsCredentialIdentity } from '@aws-sdk/types';
+import { AIHandler } from '../chat/AIHandler';
 
 // Cached credentials and client
 let CurrentCredentials: AwsCredentialIdentity | undefined;
@@ -246,6 +247,10 @@ export class LambdaTool implements vscode.LanguageModelTool<LambdaToolInput> {
   private async executeCommand(command: LambdaCommand, params: Record<string, any>): Promise<any> {
     ui.logToOutput(`LambdaTool: Executing command: ${command}`);
     ui.logToOutput(`LambdaTool: Command parameters: ${JSON.stringify(params)}`);
+
+    if("FunctionName" in params){
+      AIHandler.Current.updateLatestResource({ type: 'Lambda Function', name: params["FunctionName"] });
+    }
 
     switch (command) {
       case 'ListFunctions':

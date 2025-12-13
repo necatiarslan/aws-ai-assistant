@@ -9,12 +9,18 @@ const PARTICIPANT_ID = 'aws-ai-assistant.chat';
 export class AIHandler {
   public static Current: AIHandler;
 
+  private latestResource: { [type: string]: { type: string; name: string; arn?: string } } = {};
+  private latestResponse: string = '';
+
   constructor() {
     AIHandler.Current = this;
     this.registerChatParticipant();
   }
 
-  
+  public updateLatestResource(resource: { type: string; name: string; arn?: string }): void {
+    this.latestResource[resource.type] = resource;
+  }
+
   public registerChatParticipant(): void {
     const participant = vscode.chat.createChatParticipant(PARTICIPANT_ID, this.aIHandler.bind(AIHandler.Current));
     if(!Session.Current){ return; }
@@ -37,8 +43,9 @@ export class AIHandler {
     // 2. Construct the Initial Messages
     const messages: vscode.LanguageModelChatMessage[] = [
       vscode.LanguageModelChatMessage.User(
-        `You are an expert in Amazon Web Services (AWS). You have access to tools to manage S3 buckets, 
-        test connectivity, and perform various AWS operations. Use the available tools when appropriate to help the user.`
+        `You are an expert in Amazon Web Services (AWS). You have access to tools to perform various AWS operations. Use the available tools when appropriate to help the user.
+        Don't provide JSON responses unless specifically asked. Always format your responses in markdown.
+        Previous Response: ${this.latestResponse || 'N/A'}`
       )
     ];
 
@@ -46,6 +53,11 @@ export class AIHandler {
     if (Session.Current) {
       const contextInfo = `Context:\nAWS Profile: ${Session.Current.AwsProfile || 'N/A'}\nAWS Region: ${Session.Current.AwsRegion || 'N/A'}\nAWS Endpoint: ${Session.Current.AwsEndPoint || 'default'}`;
       messages.push(vscode.LanguageModelChatMessage.User(contextInfo));
+    }
+
+    for (const resource of Object.values(this.latestResource)) {
+      const resourceInfo: string = `You have recently worked with the following AWS resource: Type=${resource.type} Name=${resource.name}` + (resource.arn ? `, ARN=${resource.arn}` : '');
+      messages.push(vscode.LanguageModelChatMessage.User(resourceInfo));
     }
 
     messages.push(vscode.LanguageModelChatMessage.User(request.prompt));
@@ -89,7 +101,7 @@ export class AIHandler {
           );
 
           for (const toolCall of toolCalls) {
-            stream.progress(`Running tool: ${toolCall.name}...`);
+            stream.progress(`Calling : ${toolCall.name}...`);
 
             try {
               // Invoke the tool using VS Code LM API
@@ -107,6 +119,7 @@ export class AIHandler {
                 .map(part => (part as vscode.LanguageModelTextPart).value)
                 .join('\n');
 
+              this.latestResponse = resultText;
               // Add result to history
               messages.push(
                 vscode.LanguageModelChatMessage.User([

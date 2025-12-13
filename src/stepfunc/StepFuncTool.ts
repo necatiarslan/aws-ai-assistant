@@ -18,6 +18,7 @@ import {
 } from '@aws-sdk/client-sfn';
 import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
 import { AwsCredentialIdentity } from '@aws-sdk/types';
+import { AIHandler } from '../chat/AIHandler';
 
 // Cached credentials and client
 let CurrentCredentials: AwsCredentialIdentity | undefined;
@@ -175,6 +176,10 @@ export class StepFuncTool implements vscode.LanguageModelTool<StepFuncToolInput>
   private async executeCommand(command: StepFuncCommand, params: Record<string, any>): Promise<any> {
     ui.logToOutput(`StepFuncTool: Executing command: ${command}`);
     ui.logToOutput(`StepFuncTool: Command parameters: ${JSON.stringify(params)}`);
+
+    if("stateMachineArn" in params){
+      AIHandler.Current.updateLatestResource({ type: 'Step Function State Machine', name: params.stateMachineArn });
+    }
 
     switch (command) {
       case 'DescribeExecution':

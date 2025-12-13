@@ -6,6 +6,7 @@ import { Readable } from 'stream';
 import { join, dirname, basename } from 'path';
 import * as archiver from 'archiver';
 import * as os from 'os';
+import { AIHandler } from '../chat/AIHandler';
 
 // Type for file encoding
 type FileEncoding = 'utf8' | 'ascii' | 'base64' | 'hex' | 'utf16le' | 'ucs2';
@@ -265,6 +266,13 @@ export class FileOperationsTool implements vscode.LanguageModelTool<FileOperatio
   private async executeCommand(command: FileCommand, params: Record<string, any>): Promise<any> {
     ui.logToOutput(`FileOperationsTool: Executing command: ${command}`);
     ui.logToOutput(`FileOperationsTool: Command parameters: ${JSON.stringify(params)}`);
+
+    if("filePath" in params){
+      AIHandler.Current.updateLatestResource({ type: "File", name: params.filePath });
+    }
+    if("dirPath" in params){
+      AIHandler.Current.updateLatestResource({ type: "Directory", name: params.dirPath });
+    }
 
     switch (command) {
       case 'ReadFile':

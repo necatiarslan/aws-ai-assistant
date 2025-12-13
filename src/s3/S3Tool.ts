@@ -26,6 +26,7 @@ import {
 } from '@aws-sdk/client-s3';
 import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
 import { AwsCredentialIdentity } from '@aws-sdk/types';
+import { AIHandler } from '../chat/AIHandler';
 
 // Cached credentials and client
 let CurrentCredentials: AwsCredentialIdentity | undefined;
@@ -251,6 +252,10 @@ export class S3Tool implements vscode.LanguageModelTool<S3ToolInput> {
   private async executeCommand(command: S3Command, params: Record<string, any>): Promise<any> {
     ui.logToOutput(`S3Tool: Executing command: ${command}`);
     ui.logToOutput(`S3Tool: Command parameters: ${JSON.stringify(params)}`);
+
+    if ("Bucket" in params) {
+      AIHandler.Current.updateLatestResource({ type: "S3 Bucket", name: params.Bucket });
+    }
 
     switch (command) {
       case 'HeadBucket':

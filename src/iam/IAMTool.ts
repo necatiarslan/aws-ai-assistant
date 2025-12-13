@@ -26,6 +26,7 @@ import {
 } from '@aws-sdk/client-iam';
 import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
 import { AwsCredentialIdentity } from '@aws-sdk/types';
+import { AIHandler } from '../chat/AIHandler';
 
 // Cached credentials and client
 let CurrentCredentials: AwsCredentialIdentity | undefined;
@@ -210,6 +211,10 @@ export class IAMTool implements vscode.LanguageModelTool<IAMToolInput> {
   private async executeCommand(command: IAMCommand, params: Record<string, any>): Promise<any> {
     ui.logToOutput(`IAMTool: Executing command: ${command}`);
     ui.logToOutput(`IAMTool: Command parameters: ${JSON.stringify(params)}`);
+
+    if("RoleName" in params){
+      AIHandler.Current.updateLatestResource({ type: 'Role', name: params["RoleName"] });
+    }
 
     switch (command) {
       case 'GetRole':
