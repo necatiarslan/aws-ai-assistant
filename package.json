@@ -172,8 +172,12 @@
                   "items": {
                     "type": "object",
                     "properties": {
-                      "Key": { "type": "string" },
-                      "Value": { "type": "string" }
+                      "Key": {
+                        "type": "string"
+                      },
+                      "Value": {
+                        "type": "string"
+                      }
                     }
                   },
                   "description": "Session tags (optional for GetFederationToken)"
@@ -197,6 +201,125 @@
                 "ProviderId": {
                   "type": "string",
                   "description": "Identity provider ID (optional for GetWebIdentityToken)"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "sqs",
+        "toolReferenceName": "sqs",
+        "displayName": "SQS Tool",
+        "modelDescription": "Execute AWS SQS (Simple Queue Service) commands. ALWAYS provide params object. Examples: ListQueues {command:'ListQueues', params:{}}. GetQueueUrl {command:'GetQueueUrl', params:{QueueName:'my-queue'}}. SendMessage {command:'SendMessage', params:{QueueUrl:'https://...', MessageBody:'text'}}. ReceiveMessage {command:'ReceiveMessage', params:{QueueUrl:'https://...', MaxNumberOfMessages:10}}. DeleteMessage {command:'DeleteMessage', params:{QueueUrl:'https://...', ReceiptHandle:'handle'}}.",
+        "userDescription": "Manage SQS queues and send/receive messages",
+        "tags": [
+          "aws",
+          "sqs",
+          "queue",
+          "messaging",
+          "messages"
+        ],
+        "canBeReferencedInPrompt": true,
+        "icon": "$(inbox)",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "command",
+            "params"
+          ],
+          "properties": {
+            "command": {
+              "type": "string",
+              "enum": [
+                "ListQueues",
+                "ListDeadLetterSourceQueues",
+                "ListQueueTags",
+                "GetQueueAttributes",
+                "GetQueueUrl",
+                "SendMessage",
+                "ReceiveMessage",
+                "DeleteMessage"
+              ],
+              "description": "The SQS command to execute"
+            },
+            "params": {
+              "type": "object",
+              "description": "REQUIRED parameters object. Always include this even if empty.",
+              "properties": {
+                "QueueUrl": {
+                  "type": "string",
+                  "description": "Queue URL (REQUIRED for most queue operations except GetQueueUrl and ListQueues)"
+                },
+                "QueueName": {
+                  "type": "string",
+                  "description": "Queue name (REQUIRED for GetQueueUrl)"
+                },
+                "QueueNamePrefix": {
+                  "type": "string",
+                  "description": "Queue name prefix filter (optional for ListQueues)"
+                },
+                "QueueOwnerAWSAccountId": {
+                  "type": "string",
+                  "description": "Queue owner AWS account ID (optional for GetQueueUrl)"
+                },
+                "AttributeNames": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "List of attribute names to retrieve (optional for GetQueueAttributes, ReceiveMessage). Use ['All'] for all attributes."
+                },
+                "MessageBody": {
+                  "type": "string",
+                  "description": "Message body text (REQUIRED for SendMessage)"
+                },
+                "DelaySeconds": {
+                  "type": "number",
+                  "description": "Delay in seconds before message becomes available (optional for SendMessage, 0-900)"
+                },
+                "MessageAttributes": {
+                  "type": "object",
+                  "description": "Custom message attributes (optional for SendMessage)"
+                },
+                "MessageDeduplicationId": {
+                  "type": "string",
+                  "description": "Deduplication ID for FIFO queues (optional for SendMessage)"
+                },
+                "MessageGroupId": {
+                  "type": "string",
+                  "description": "Message group ID for FIFO queues (optional for SendMessage)"
+                },
+                "MaxNumberOfMessages": {
+                  "type": "number",
+                  "description": "Maximum number of messages to receive (optional for ReceiveMessage, 1-10, default 1)"
+                },
+                "VisibilityTimeout": {
+                  "type": "number",
+                  "description": "Visibility timeout in seconds (optional for ReceiveMessage, 0-43200)"
+                },
+                "WaitTimeSeconds": {
+                  "type": "number",
+                  "description": "Long polling wait time in seconds (optional for ReceiveMessage, 0-20)"
+                },
+                "MessageAttributeNames": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Message attribute names to retrieve (optional for ReceiveMessage)"
+                },
+                "ReceiptHandle": {
+                  "type": "string",
+                  "description": "Message receipt handle (REQUIRED for DeleteMessage)"
+                },
+                "MaxResults": {
+                  "type": "number",
+                  "description": "Maximum number of results (optional for ListQueues, ListDeadLetterSourceQueues)"
+                },
+                "NextToken": {
+                  "type": "string",
+                  "description": "Pagination token (optional for ListQueues, ListDeadLetterSourceQueues)"
                 }
               }
             }
@@ -1063,12 +1186,16 @@
                 },
                 "AttributeDefinitions": {
                   "type": "array",
-                  "items": { "type": "object" },
+                  "items": {
+                    "type": "object"
+                  },
                   "description": "Attribute definitions (REQUIRED for CreateTable)"
                 },
                 "KeySchema": {
                   "type": "array",
-                  "items": { "type": "object" },
+                  "items": {
+                    "type": "object"
+                  },
                   "description": "Key schema definitions (REQUIRED for CreateTable)"
                 },
                 "BillingMode": {
@@ -1077,7 +1204,9 @@
                 },
                 "GlobalSecondaryIndexUpdates": {
                   "type": "array",
-                  "items": { "type": "object" },
+                  "items": {
+                    "type": "object"
+                  },
                   "description": "Updates to GSIs (optional for UpdateTable)"
                 },
                 "TimeToLiveSpecification": {
@@ -1150,6 +1279,7 @@
     "@aws-sdk/client-lambda": "^3.948.0",
     "@aws-sdk/client-s3": "^3.948.0",
     "@aws-sdk/client-sfn": "^3.948.0",
+    "@aws-sdk/client-sqs": "^3.948.0",
     "@aws-sdk/client-sts": "^3.948.0",
     "@aws-sdk/credential-provider-node": "^3.948.0",
     "@aws-sdk/credential-providers": "^3.948.0",
