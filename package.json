@@ -105,6 +105,105 @@
         }
       },
       {
+        "name": "sts",
+        "toolReferenceName": "sts",
+        "displayName": "STS Tool",
+        "modelDescription": "Execute AWS STS (Security Token Service) commands. ALWAYS provide params object. Examples: GetCallerIdentity {command:'GetCallerIdentity', params:{}}. GetAccessKeyInfo {command:'GetAccessKeyInfo', params:{AccessKeyId:'AKIA...'}}. GetSessionToken {command:'GetSessionToken', params:{DurationSeconds:3600}}. GetFederationToken {command:'GetFederationToken', params:{Name:'session-name'}}. GetWebIdentityToken {command:'GetWebIdentityToken', params:{RoleArn:'arn:aws:iam::...', RoleSessionName:'session', WebIdentityToken:'token'}}.",
+        "userDescription": "Get temporary security credentials and caller identity information from AWS STS",
+        "tags": [
+          "aws",
+          "sts",
+          "credentials",
+          "security",
+          "tokens",
+          "identity"
+        ],
+        "canBeReferencedInPrompt": true,
+        "icon": "$(key)",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "command",
+            "params"
+          ],
+          "properties": {
+            "command": {
+              "type": "string",
+              "enum": [
+                "GetCallerIdentity",
+                "GetAccessKeyInfo",
+                "GetDelegatedAccessToken",
+                "GetFederationToken",
+                "GetSessionToken",
+                "GetWebIdentityToken"
+              ],
+              "description": "The STS command to execute"
+            },
+            "params": {
+              "type": "object",
+              "description": "REQUIRED parameters object. Always include this even if empty.",
+              "properties": {
+                "AccessKeyId": {
+                  "type": "string",
+                  "description": "AWS access key ID (REQUIRED for GetAccessKeyInfo)"
+                },
+                "RoleArn": {
+                  "type": "string",
+                  "description": "IAM role ARN (REQUIRED for GetDelegatedAccessToken, GetWebIdentityToken)"
+                },
+                "DurationSeconds": {
+                  "type": "number",
+                  "description": "Token lifetime in seconds (optional, default varies by command)"
+                },
+                "DelegationTokenLifetimeSeconds": {
+                  "type": "number",
+                  "description": "Delegated token lifetime in seconds (optional for GetDelegatedAccessToken)"
+                },
+                "Name": {
+                  "type": "string",
+                  "description": "Session or federation token name (REQUIRED for GetFederationToken)"
+                },
+                "Policy": {
+                  "type": "string",
+                  "description": "IAM policy JSON string for the temporary credentials (optional for GetFederationToken)"
+                },
+                "Tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "Key": { "type": "string" },
+                      "Value": { "type": "string" }
+                    }
+                  },
+                  "description": "Session tags (optional for GetFederationToken)"
+                },
+                "SerialNumber": {
+                  "type": "string",
+                  "description": "MFA device serial number (optional for GetSessionToken)"
+                },
+                "TokenCode": {
+                  "type": "string",
+                  "description": "MFA token code (optional for GetSessionToken)"
+                },
+                "RoleSessionName": {
+                  "type": "string",
+                  "description": "Role session name (REQUIRED for GetWebIdentityToken)"
+                },
+                "WebIdentityToken": {
+                  "type": "string",
+                  "description": "Web identity token (REQUIRED for GetWebIdentityToken)"
+                },
+                "ProviderId": {
+                  "type": "string",
+                  "description": "Identity provider ID (optional for GetWebIdentityToken)"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
         "name": "s3",
         "toolReferenceName": "s3Generic",
         "displayName": "S3 Generic Tool",

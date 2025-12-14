@@ -3,6 +3,7 @@ import * as ui from './common/UI';
 import { StatusBarItem } from './statusbar/StatusBarItem';
 import { Session } from './common/Session';
 import { TestAwsConnectionTool } from './sts/TestAwsConnectionTool';
+import { STSTool } from './sts/STSTool';
 import * as stsAPI from './sts/API';
 import { AIHandler } from './chat/AIHandler';
 import { S3Tool as S3Tool } from './s3/S3Tool';
@@ -26,6 +27,7 @@ export function activate(context: vscode.ExtensionContext) {
 	// Register language model tools
 	context.subscriptions.push(
 		vscode.lm.registerTool('testAwsConnection', new TestAwsConnectionTool()),
+		vscode.lm.registerTool('sts', new STSTool()),
 		vscode.lm.registerTool('s3', new S3Tool()),
 		vscode.lm.registerTool('fileOperations', new FileOperationsTool()),
 		vscode.lm.registerTool('session', new SessionTool()),

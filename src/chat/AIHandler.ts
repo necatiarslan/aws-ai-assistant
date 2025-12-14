@@ -62,6 +62,9 @@ export class AIHandler {
 
     messages.push(vscode.LanguageModelChatMessage.User(request.prompt));
 
+    // Check if user is expressing appreciation
+    const usedAppreciated = request.prompt.toLowerCase().includes('thank');
+
     // 3. Select Model and Send Request
     try {
       const [model] = await vscode.lm.selectChatModels();
@@ -101,7 +104,8 @@ export class AIHandler {
           );
 
           for (const toolCall of toolCalls) {
-            stream.progress(`Calling : ${toolCall.name}...`);
+            stream.progress(`Calling : ${toolCall.name}`);
+            ui.logToOutput(`AIHandler: Invoking tool ${toolCall.name} with input: ${JSON.stringify(toolCall.input)}`);
 
             try {
               // Invoke the tool using VS Code LM API
@@ -147,6 +151,13 @@ export class AIHandler {
           }
         }
       }
+
+            // Final appreciation message
+      if (usedAppreciated) {
+          stream.markdown("\n\n\n")
+          stream.markdown("\n🙏 [Donate](https://github.com/sponsors/necatiarslan) if you found me useful!");
+          stream.markdown("\n🤔 Request a [New Feature](https://github.com/necatiarslan/aws-ai-assistant/issues/new)");
+      }
     } catch (err) {
       if (err instanceof Error) {
         stream.markdown(
@@ -157,6 +168,7 @@ export class AIHandler {
           "I'm sorry, I couldn't connect to the AI model."
         );
       }
+      stream.markdown("\n🪲 Please [Report an Issue](https://github.com/necatiarslan/aws-ai-assistant/issues/new)");
     }
   }
 
