@@ -183,7 +183,34 @@ export class GlueTool implements vscode.LanguageModelTool<GlueToolInput> {
   private async executeGetJobRun(params: GetJobRunParams): Promise<GetJobRunCommandOutput> {
     const client = await this.getClient();
     const command = new GetJobRunCommand(params);
-    return await client.send(command);
+    const result = await client.send(command);
+    
+    // Extract LogGroup and LogStream from Glue job run
+    if (result.JobRun?.LogGroupName) {
+      AIHandler.Current.updateLatestResource({ 
+        type: 'CloudWatch Log Group', 
+        name: result.JobRun.LogGroupName 
+      });
+      
+      // Store log stream if available (typically job run ID)
+      if (result.JobRun.Id) {
+        const logStreamName = result.JobRun.Id;
+        AIHandler.Current.updateLatestResource({ 
+          type: 'CloudWatch Log Stream', 
+          name: logStreamName 
+        });
+      }
+    }
+
+    // Track the Glue Job Run ID for later reference
+    if (result.JobRun?.Id) {
+      AIHandler.Current.updateLatestResource({
+        type: 'Glue Job Run',
+        name: result.JobRun.Id
+      });
+    }
+    
+    return result;
   }
 
   private async executeGetJobRuns(params: GetJobRunsParams): Promise<GetJobRunsCommandOutput> {
@@ -225,7 +252,35 @@ export class GlueTool implements vscode.LanguageModelTool<GlueToolInput> {
   private async executeStartJobRun(params: StartJobRunParams): Promise<StartJobRunCommandOutput> {
     const client = await this.getClient();
     const command = new StartJobRunCommand(params);
-    return await client.send(command);
+    const result = await client.send(command);
+    
+    // For started job runs, construct the log group name (standard Glue pattern)
+    // Glue job logs typically go to /aws-glue/jobs/output and /aws-glue/jobs/error
+    if (params.JobName) {
+      const logGroupName = `/aws-glue/jobs/output`;
+      AIHandler.Current.updateLatestResource({ 
+        type: 'CloudWatch Log Group', 
+        name: logGroupName 
+      });
+      
+      // Store log stream if job run ID is returned
+      if (result.JobRunId) {
+        AIHandler.Current.updateLatestResource({ 
+          type: 'CloudWatch Log Stream', 
+          name: result.JobRunId 
+        });
+      }
+    }
+
+    // Track the Glue Job Run ID for later reference
+    if (result.JobRunId) {
+      AIHandler.Current.updateLatestResource({
+        type: 'Glue Job Run',
+        name: result.JobRunId
+      });
+    }
+    
+    return result;
   }
 
   /**

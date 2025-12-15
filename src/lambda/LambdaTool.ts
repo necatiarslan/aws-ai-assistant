@@ -165,7 +165,17 @@ export class LambdaTool implements vscode.LanguageModelTool<LambdaToolInput> {
   private async executeGetFunction(params: GetFunctionParams): Promise<GetFunctionCommandOutput> {
     const client = await this.getLambdaClient();
     const command = new GetFunctionCommand(params);
-    return await client.send(command);
+    const result = await client.send(command);
+    
+    // Extract and store LogGroup if available
+    if (result.Configuration?.LoggingConfig?.LogGroup) {
+      AIHandler.Current.updateLatestResource({ 
+        type: 'CloudWatch Log Group', 
+        name: result.Configuration.LoggingConfig.LogGroup 
+      });
+    }
+    
+    return result;
   }
 
   /**
@@ -174,7 +184,17 @@ export class LambdaTool implements vscode.LanguageModelTool<LambdaToolInput> {
   private async executeGetFunctionConfiguration(params: GetFunctionConfigurationParams): Promise<GetFunctionConfigurationCommandOutput> {
     const client = await this.getLambdaClient();
     const command = new GetFunctionConfigurationCommand(params);
-    return await client.send(command);
+    const result = await client.send(command);
+    
+    // Extract and store LogGroup if available
+    if (result.LoggingConfig?.LogGroup) {
+      AIHandler.Current.updateLatestResource({ 
+        type: 'CloudWatch Log Group', 
+        name: result.LoggingConfig.LogGroup 
+      });
+    }
+    
+    return result;
   }
 
   /**
