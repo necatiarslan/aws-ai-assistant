@@ -10,6 +10,7 @@ import {
   ListObjectsV2Command,
   ListObjectVersionsCommand,
   GetBucketPolicyCommand,
+  GetObjectCommand,
   PutObjectCommand,
   DeleteObjectCommand,
   CopyObjectCommand,
@@ -19,6 +20,7 @@ import {
   ListObjectsV2CommandOutput,
   ListObjectVersionsCommandOutput,
   GetBucketPolicyCommandOutput,
+  GetObjectCommandOutput,
   PutObjectCommandOutput,
   DeleteObjectCommandOutput,
   CopyObjectCommandOutput,
@@ -28,6 +30,9 @@ import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
 import { AwsCredentialIdentity } from '@aws-sdk/types';
 import { AIHandler } from '../chat/AIHandler';
 import { needsConfirmation, confirmProceed } from '../common/ActionGuard';
+import * as os from 'os';
+import * as path from 'path';
+import * as fs from 'fs';
 
 // Cached credentials and client
 let CurrentCredentials: AwsCredentialIdentity | undefined;
@@ -38,6 +43,7 @@ type S3Command =
   | 'PutObject'
   | 'DeleteObject'
   | 'CopyObject'
+  | 'GetObject'
   | 'HeadBucket'
   | 'HeadObject'
   | 'ListBuckets'
@@ -112,6 +118,14 @@ interface CopyObjectParams {
 }
 interface GetBucketPolicyParams {
   Bucket: string;
+}
+
+interface GetObjectParams {
+  Bucket: string;
+  Key: string;
+  VersionId?: string;
+  DownloadToTemp?: boolean; // If true, download to temp folder and return path
+  AsText?: boolean; // If true, return content as text for analysis
 }
 
 export class S3Tool implements vscode.LanguageModelTool<S3ToolInput> {
@@ -248,6 +262,79 @@ export class S3Tool implements vscode.LanguageModelTool<S3ToolInput> {
   }
 
   /**
+   * Execute GetObject command
+   */
+  private async executeGetObject(params: GetObjectParams): Promise<any> {
+    const client = await this.getS3Client();
+    const command = new GetObjectCommand({
+      Bucket: params.Bucket,
+      Key: params.Key,
+      VersionId: params.VersionId
+    });
+    const result = await client.send(command);
+
+    // Convert body stream to buffer
+    const bodyBuffer = await this.streamToBuffer(result.Body as any);
+
+    // Extract only serializable metadata
+    const metadata = {
+      ContentType: result.ContentType,
+      ContentLength: result.ContentLength,
+      ETag: result.ETag,
+      LastModified: result.LastModified,
+      VersionId: result.VersionId,
+      Metadata: result.Metadata,
+      $metadata: {
+        httpStatusCode: result.$metadata?.httpStatusCode,
+        requestId: result.$metadata?.requestId,
+      }
+    };
+
+    if (params.DownloadToTemp) {
+      // Download to temp folder
+      const tempDir = os.tmpdir();
+      const fileName = path.basename(params.Key);
+      const filePath = path.join(tempDir, fileName);
+      fs.writeFileSync(filePath, bodyBuffer);
+      
+      return {
+        ...metadata,
+        LocalPath: filePath,
+        FileSize: bodyBuffer.length,
+        Message: `File downloaded to ${filePath}`
+      };
+    } else if (params.AsText) {
+      // Return content as text
+      const textContent = bodyBuffer.toString('utf-8');
+      return {
+        ...metadata,
+        TextContent: textContent,
+        ContentLength: textContent.length
+      };
+    } else {
+      // Return metadata with base64 content
+      return {
+        ...metadata,
+        Body: bodyBuffer.toString('base64'),
+        ContentLength: bodyBuffer.length,
+        Message: 'File content returned as base64'
+      };
+    }
+  }
+
+  /**
+   * Convert stream to buffer
+   */
+  private async streamToBuffer(stream: any): Promise<Buffer> {
+    const chunks: Buffer[] = [];
+    return new Promise((resolve, reject) => {
+      stream.on('data', (chunk: Buffer) => chunks.push(chunk));
+      stream.on('error', reject);
+      stream.on('end', () => resolve(Buffer.concat(chunks)));
+    });
+  }
+
+  /**
    * Main command dispatcher - easily extensible
    */
   private async executeCommand(command: S3Command, params: Record<string, any>): Promise<any> {
@@ -276,6 +363,9 @@ export class S3Tool implements vscode.LanguageModelTool<S3ToolInput> {
       
       case 'GetBucketPolicy':
         return await this.executeGetBucketPolicy(params as GetBucketPolicyParams);
+      
+      case 'GetObject':
+        return await this.executeGetObject(params as GetObjectParams);
       
       case 'PutObject':
         return await this.executePutObject(params as PutObjectParams);

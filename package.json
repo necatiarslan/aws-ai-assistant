@@ -1002,6 +1002,7 @@
                 "ListObjectsV2",
                 "ListObjectVersions",
                 "GetBucketPolicy",
+                "GetObject",
                 "PutObject",
                 "DeleteObject",
                 "CopyObject"
@@ -1071,6 +1072,14 @@
                 "MetadataDirective": {
                   "type": "string",
                   "description": "How to handle metadata in CopyObject: COPY or REPLACE (optional)"
+                },
+                "DownloadToTemp": {
+                  "type": "boolean",
+                  "description": "Download file to temp folder and return local path (optional for GetObject)"
+                },
+                "AsText": {
+                  "type": "boolean",
+                  "description": "Return file content as text for analysis (optional for GetObject)"
                 }
               }
             }
