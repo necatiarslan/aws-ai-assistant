@@ -661,6 +661,53 @@
         }
       },
       {
+        "name": "rdsdata",
+        "toolReferenceName": "rdsdata",
+        "displayName": "RDS Data Tool",
+        "modelDescription": "Execute Amazon RDS Data API commands for Aurora Serverless and RDS with Data API enabled. ALWAYS provide params object. Examples: ExecuteStatement {command:'ExecuteStatement', params:{resourceArn:'arn:aws:rds:...', secretArn:'arn:aws:secretsmanager:...', database:'db', sql:'SELECT 1'}}.",
+        "userDescription": "Run SQL and manage transactions via the RDS Data API",
+        "tags": [
+          "aws",
+          "rds",
+          "data",
+          "aurora",
+          "sql"
+        ],
+        "canBeReferencedInPrompt": true,
+        "icon": "$(server-process)",
+        "inputSchema": {
+          "type": "object",
+          "required": ["command", "params"],
+          "properties": {
+            "command": {
+              "type": "string",
+              "enum": [
+                "BatchExecuteStatement",
+                "BeginTransaction",
+                "CommitTransaction",
+                "ExecuteStatement",
+                "RollbackTransaction"
+              ],
+              "description": "The RDS Data API command to execute"
+            },
+            "params": {
+              "type": "object",
+              "description": "REQUIRED parameters object. Use Data API field names (e.g., resourceArn, secretArn, database, sql, transactionId, parameters).",
+              "properties": {
+                "resourceArn": { "type": "string", "description": "ARN of the Aurora/RDS cluster" },
+                "secretArn": { "type": "string", "description": "ARN of the Secrets Manager secret with credentials" },
+                "database": { "type": "string" },
+                "schema": { "type": "string" },
+                "sql": { "type": "string" },
+                "transactionId": { "type": "string" },
+                "parameters": { "type": "array" },
+                "includeResultMetadata": { "type": "boolean" }
+              }
+            }
+          }
+        }
+      },
+      {
         "name": "sns",
         "toolReferenceName": "sns",
         "displayName": "SNS Tool",
