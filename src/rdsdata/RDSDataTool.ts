@@ -17,6 +17,7 @@ import {
 import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
 import { AwsCredentialIdentity } from '@aws-sdk/types';
 import { AIHandler } from '../chat/AIHandler';
+import { needsConfirmation, confirmProceed } from '../common/ActionGuard';
 
 let CurrentCredentials: AwsCredentialIdentity | undefined;
 let CurrentClient: RDSDataClient | undefined;
@@ -102,6 +103,15 @@ export class RDSDataTool implements vscode.LanguageModelTool<RDSDataToolInput> {
     const { command, params } = options.input;
     try {
       ui.logToOutput(`RDSDataTool: Executing ${command} with params: ${JSON.stringify(params)}`);
+      if (needsConfirmation(command)) {
+        const ok = await confirmProceed(command);
+        if (!ok) {
+          const cancelled = { success: false, command, message: 'User cancelled action command' };
+          return new vscode.LanguageModelToolResult([
+            new vscode.LanguageModelTextPart(JSON.stringify(cancelled, null, 2))
+          ]);
+        }
+      }
       const result = await this.executeCommand(command, params);
       const response = {
         success: true,

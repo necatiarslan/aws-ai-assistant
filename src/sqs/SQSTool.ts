@@ -26,6 +26,7 @@ import {
 import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
 import { AwsCredentialIdentity } from '@aws-sdk/types';
 import { AIHandler } from '../chat/AIHandler';
+import { needsConfirmation, confirmProceed } from '../common/ActionGuard';
 
 // Cached credentials and client
 let CurrentCredentials: AwsCredentialIdentity | undefined;
@@ -277,6 +278,16 @@ export class SQSTool implements vscode.LanguageModelTool<SQSToolInput> {
 
     try {
       ui.logToOutput(`SQSTool: Executing ${command} with params: ${JSON.stringify(params)}`);
+
+      if (needsConfirmation(command)) {
+        const ok = await confirmProceed(command);
+        if (!ok) {
+          const cancelled = { success: false, command, message: 'User cancelled action command' };
+          return new vscode.LanguageModelToolResult([
+            new vscode.LanguageModelTextPart(JSON.stringify(cancelled, null, 2))
+          ]);
+        }
+      }
 
       // Execute the command
       const result = await this.executeCommand(command, params);
