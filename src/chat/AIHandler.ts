@@ -155,7 +155,12 @@ export class AIHandler {
         }
       }
 
-            // Final appreciation message
+      if(this.latestResource && this.latestResource["CloudWatch Log Group"] && this.latestResource["CloudWatch Log Stream"]){
+        const logGroup = this.latestResource["CloudWatch Log Group"].name;
+        const logStream = this.latestResource["CloudWatch Log Stream"].name;
+
+      }
+
       if (usedAppreciated) {
           stream.markdown("\n\n\n")
           stream.markdown("\n🙏 [Donate](https://github.com/sponsors/necatiarslan) if you found me useful!");

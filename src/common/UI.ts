@@ -73,6 +73,10 @@ export function showErrorMessage(message: string, error: Error | undefined): voi
   }
 }
 
+export function getUri(webview: vscode.Webview, extensionUri: vscode.Uri, pathList: string[]) {
+  return webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, ...pathList));
+}
+
 export function getExtensionVersion() {
   const { version: extVersion } = JSON.parse(
     readFileSync(join(__dirname, '..', 'package.json'), { encoding: 'utf8' })
