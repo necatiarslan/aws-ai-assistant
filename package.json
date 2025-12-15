@@ -638,7 +638,17 @@
                   "type": "number"
                 },
                 "Filters": {
-                  "type": "array"
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "Name": { "type": "string" },
+                      "Values": {
+                        "type": "array",
+                        "items": { "type": "string" }
+                      }
+                    }
+                  }
                 },
                 "StartTime": {
                   "type": "string"
@@ -718,7 +728,25 @@
                   "type": "string"
                 },
                 "parameters": {
-                  "type": "array"
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": { "type": "string" },
+                      "value": {
+                        "type": "object",
+                        "properties": {
+                          "isNull": { "type": "boolean" },
+                          "booleanValue": { "type": "boolean" },
+                          "longValue": { "type": "number" },
+                          "doubleValue": { "type": "number" },
+                          "stringValue": { "type": "string" },
+                          "blobValue": { "type": "string" },
+                          "arrayValue": { "type": "object" }
+                        }
+                      }
+                    }
+                  }
                 },
                 "includeResultMetadata": {
                   "type": "boolean"
