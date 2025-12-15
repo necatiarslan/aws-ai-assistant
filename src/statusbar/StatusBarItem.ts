@@ -8,14 +8,14 @@ import { Session } from '../common/Session';
 
 export class StatusBarItem {
 
-    public static LoadingText:string = "$(copilot) Aws $(sync~spin)";
+    public static WorkingText:string = "$(copilot) Aws $(sync~spin)";
     public static Current: StatusBarItem;
 
     public awsAssistantStatusBarItem: vscode.StatusBarItem;
 
     //public awsProfileStatusBarItem: vscode.StatusBarItem;
 
-    public Text: string = StatusBarItem.LoadingText;
+    public Text: string = StatusBarItem.WorkingText;
     public ToolTip:string = "Loading ...";
 
     public IniData:ParsedIniData | undefined;
@@ -29,9 +29,9 @@ export class StatusBarItem {
         const statusBarClickedCommand = 'aws-ai-assistant.statusBarClicked';
         Session.Current?.Context.subscriptions.push(vscode.commands.registerCommand(statusBarClickedCommand, StatusBarItem.StatusBarClicked));
 
-        this.awsAssistantStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 2);
+        this.awsAssistantStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 3);
         this.awsAssistantStatusBarItem.command = statusBarClickedCommand;
-        this.awsAssistantStatusBarItem.text = StatusBarItem.LoadingText;
+        this.awsAssistantStatusBarItem.text = StatusBarItem.WorkingText;
         this.awsAssistantStatusBarItem.tooltip = this.ToolTip;
         Session.Current?.Context.subscriptions.push(this.awsAssistantStatusBarItem);
         this.awsAssistantStatusBarItem.show();
@@ -48,7 +48,7 @@ export class StatusBarItem {
         // this.awsProfileStatusBarItem.command = profileButtonClickedCommand;
         // Session.Current?.Context.subscriptions.push(this.awsProfileStatusBarItem);
 
-        this.ShowLoading();
+        this.StartWorking();
         
         this.GetCredentials();
 	}
@@ -115,7 +115,7 @@ export class StatusBarItem {
             selected.then(value=>{
                 if(value){
                     Session.Current!.AwsProfile = value;
-                    this.ShowLoading();
+                    //this.ShowLoading();
                     Session.Current!.SaveState();
                 }
             });
@@ -139,9 +139,14 @@ export class StatusBarItem {
         ui.showOutputMessage("AwsLoginShellCommands: ", "", false);
     }
 
-    public ShowLoading(){
-        ui.logToOutput('StatusBarItem.ShowLoading Started');
-        this.awsAssistantStatusBarItem.text = StatusBarItem.LoadingText;
+    public StartWorking(){
+        ui.logToOutput('StatusBarItem.StartWorking Started');
+        this.awsAssistantStatusBarItem.text = StatusBarItem.WorkingText;
+    }
+
+    public EndWorking(){
+        ui.logToOutput('StatusBarItem.EndWorking Started');
+        this.RefreshText();
     }
 
     public RefreshText(){
@@ -155,15 +160,15 @@ export class StatusBarItem {
         //     this.awsProfileStatusBarItem.tooltip = "Select Profile";
         //     this.awsProfileStatusBarItem.show();
         // }
-
-        if(!this.HasCredentials)
+        this.ToolTip = "@Aws AI Assistant";
+        if(!Session.Current?.CurrentCredentials)
         {
-            this.ToolTip = "No Aws Credentials Found !!!";
+            this.ToolTip += "\nNo Aws Credentials Found !!!";
             this.Text = "$(copilot) Aws No Credentials";
         }
         else
         {
-            this.ToolTip = "You have Aws Credentials";
+            this.ToolTip += "\nYou have Aws Credentials";
             this.Text = "$(copilot) Aws $(check)";
         }
 

@@ -1,5 +1,7 @@
 import * as ui from './UI';
 import * as vscode from 'vscode';
+import { AwsCredentialIdentity } from '@aws-sdk/types';
+import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
 
 export class Session {
 	public static Current: Session | undefined = undefined;
@@ -9,12 +11,14 @@ export class Session {
     public AwsProfile:string = "default";
     public AwsEndPoint: string | undefined;
 	public AwsRegion: string = "us-east-1";
+    public CurrentCredentials: AwsCredentialIdentity | undefined;
 
 	public constructor(context: vscode.ExtensionContext) {
 		Session.Current = this;
         this.Context = context;
         this.ExtensionUri = context.extensionUri;
         this.LoadState();
+        this.GetCredentials();
 	}
 
     public SaveState() {
@@ -83,6 +87,41 @@ export class Session {
             ui.showInfoMessage('Default AWS Region updated');
             ui.logToOutput('AWS Region set to ' + (Session.Current.AwsRegion || 'us-east-1'));
         }
+    }
+
+    public async GetCredentials(): Promise<AwsCredentialIdentity | undefined> {
+    if (this.CurrentCredentials !== undefined) {
+        ui.logToOutput(`Using cached credentials (AccessKeyId=${this.CurrentCredentials.accessKeyId})`);
+        return this.CurrentCredentials;
+    }
+
+    try {
+        process.env.AWS_PROFILE = this.AwsProfile;
+
+        const provider = fromNodeProviderChain({ ignoreCache: true });
+        this.CurrentCredentials = await provider();
+
+        if (!this.CurrentCredentials) {
+        throw new Error('AWS credentials not found');
+        }
+
+        ui.logToOutput(`Credentials loaded (AccessKeyId=${this.CurrentCredentials.accessKeyId})`);
+        return this.CurrentCredentials;
+    } catch (error: any) {
+        ui.logToOutput('Failed to get credentials', error);
+        throw error;
+    }
+    }
+
+    public RefreshCredentials() {
+        this.CurrentCredentials = undefined;
+        this.GetCredentials();
+        ui.logToOutput('Credentials cache refreshed');
+    }
+
+    public ClearCredentials() {
+        this.CurrentCredentials = undefined;
+        ui.logToOutput('Credentials cache cleared');
     }
 
 	public dispose() {

@@ -3,6 +3,7 @@ import * as ui from '../common/UI';
 import { Session } from '../common/Session';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as MessageHub from '../common/MessageHub';
 
 const PARTICIPANT_ID = 'aws-ai-assistant.chat';
 
@@ -38,6 +39,7 @@ export class AIHandler {
   ): Promise<void> {
     // 1. Define the tools we want to expose to the model
     // Read directly from package.json to keep definitions in sync
+    MessageHub.StartWorking();
     const tools: vscode.LanguageModelChatTool[] = this.getToolsFromPackageJson();
 
     // 2. Construct the Initial Messages
@@ -70,6 +72,7 @@ export class AIHandler {
       const [model] = await vscode.lm.selectChatModels();
       if (!model) {
         stream.markdown('No suitable AI model found.');
+        MessageHub.EndWorking();
         return;
       }
       ui.logToOutput(`AIHandler: Using model ${model.family} (${model.name})`);
@@ -158,6 +161,7 @@ export class AIHandler {
           stream.markdown("\n🙏 [Donate](https://github.com/sponsors/necatiarslan) if you found me useful!");
           stream.markdown("\n🤔 Request a [New Feature](https://github.com/necatiarslan/aws-ai-assistant/issues/new)");
       }
+      MessageHub.EndWorking();
     } catch (err) {
       if (err instanceof Error) {
         stream.markdown(
@@ -169,6 +173,7 @@ export class AIHandler {
         );
       }
       stream.markdown("\n🪲 Please [Report an Issue](https://github.com/necatiarslan/aws-ai-assistant/issues/new)");
+      MessageHub.EndWorking();
     }
   }
 

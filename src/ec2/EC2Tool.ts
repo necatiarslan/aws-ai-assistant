@@ -40,11 +40,8 @@ import {
   GetLaunchTemplateDataCommandOutput,
   GetPasswordDataCommandOutput,
 } from '@aws-sdk/client-ec2';
-import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
-import { AwsCredentialIdentity } from '@aws-sdk/types';
 import { AIHandler } from '../chat/AIHandler';
 
-let CurrentCredentials: AwsCredentialIdentity | undefined;
 let CurrentEC2Client: EC2Client | undefined;
 
 type EC2Command =
@@ -73,33 +70,11 @@ interface EC2ToolInput {
 }
 
 export class EC2Tool implements vscode.LanguageModelTool<EC2ToolInput> {
-  private async getCredentials(): Promise<AwsCredentialIdentity | undefined> {
-    if (CurrentCredentials) {
-      ui.logToOutput(`EC2Tool: Using cached credentials (AccessKeyId=${CurrentCredentials.accessKeyId})`);
-      return CurrentCredentials;
-    }
-    try {
-      if (Session.Current) {
-        process.env.AWS_PROFILE = Session.Current.AwsProfile;
-      }
-      const provider = fromNodeProviderChain({ ignoreCache: true });
-      CurrentCredentials = await provider();
-      if (!CurrentCredentials) {
-        throw new Error('AWS credentials not found');
-      }
-      ui.logToOutput(`EC2Tool: Credentials loaded (AccessKeyId=${CurrentCredentials.accessKeyId})`);
-      return CurrentCredentials;
-    } catch (error: any) {
-      ui.logToOutput('EC2Tool: Failed to get credentials', error);
-      throw error;
-    }
-  }
-
   private async getClient(): Promise<EC2Client> {
     if (CurrentEC2Client) {
       return CurrentEC2Client;
     }
-    const credentials = await this.getCredentials();
+    const credentials = await Session.Current?.GetCredentials();
     CurrentEC2Client = new EC2Client({
       credentials,
       endpoint: Session.Current?.AwsEndPoint,

@@ -23,13 +23,10 @@ import {
   QueueAttributeName,
   MessageSystemAttributeNameForSends,
 } from '@aws-sdk/client-sqs';
-import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
-import { AwsCredentialIdentity } from '@aws-sdk/types';
 import { AIHandler } from '../chat/AIHandler';
 import { needsConfirmation, confirmProceed } from '../common/ActionGuard';
 
-// Cached credentials and client
-let CurrentCredentials: AwsCredentialIdentity | undefined;
+// Cached client
 let CurrentSQSClient: SQSClient | undefined;
 
 // Command type definition
@@ -102,36 +99,6 @@ interface DeleteMessageParams {
 }
 
 export class SQSTool implements vscode.LanguageModelTool<SQSToolInput> {
-  
-  /**
-   * Get AWS credentials with caching
-   */
-  private async getCredentials(): Promise<AwsCredentialIdentity | undefined> {
-    if (CurrentCredentials !== undefined) {
-      ui.logToOutput(`SQSTool: Using cached credentials (AccessKeyId=${CurrentCredentials.accessKeyId})`);
-      return CurrentCredentials;
-    }
-
-    try {
-      if (Session.Current) {
-        process.env.AWS_PROFILE = Session.Current.AwsProfile;
-      }
-
-      const provider = fromNodeProviderChain({ ignoreCache: true });
-      CurrentCredentials = await provider();
-
-      if (!CurrentCredentials) {
-        throw new Error('AWS credentials not found');
-      }
-
-      ui.logToOutput(`SQSTool: Credentials loaded (AccessKeyId=${CurrentCredentials.accessKeyId})`);
-      return CurrentCredentials;
-    } catch (error: any) {
-      ui.logToOutput('SQSTool: Failed to get credentials', error);
-      throw error;
-    }
-  }
-
   /**
    * Get SQS Client with session configuration
    */
@@ -140,7 +107,7 @@ export class SQSTool implements vscode.LanguageModelTool<SQSToolInput> {
       return CurrentSQSClient;
     }
 
-    const credentials = await this.getCredentials();
+    const credentials = await Session.Current?.GetCredentials();
 
     CurrentSQSClient = new SQSClient({
       credentials,

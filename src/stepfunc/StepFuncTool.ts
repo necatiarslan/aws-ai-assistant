@@ -16,12 +16,9 @@ import {
   StartExecutionCommandOutput,
   UpdateStateMachineCommandOutput
 } from '@aws-sdk/client-sfn';
-import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
-import { AwsCredentialIdentity } from '@aws-sdk/types';
 import { AIHandler } from '../chat/AIHandler';
 
-// Cached credentials and client
-let CurrentCredentials: AwsCredentialIdentity | undefined;
+// Cached client
 let CurrentSfClient: SFNClient | undefined;
 
 // Command type definition
@@ -79,35 +76,6 @@ interface UpdateStateMachineParams {
 
 export class StepFuncTool implements vscode.LanguageModelTool<StepFuncToolInput> {
   /**
-   * Get AWS credentials with caching
-   */
-  private async getCredentials(): Promise<AwsCredentialIdentity | undefined> {
-    if (CurrentCredentials !== undefined) {
-      ui.logToOutput(`StepFuncTool: Using cached credentials (AccessKeyId=${CurrentCredentials.accessKeyId})`);
-      return CurrentCredentials;
-    }
-
-    try {
-      if (Session.Current) {
-        process.env.AWS_PROFILE = Session.Current.AwsProfile;
-      }
-
-      const provider = fromNodeProviderChain({ ignoreCache: true });
-      CurrentCredentials = await provider();
-
-      if (!CurrentCredentials) {
-        throw new Error('AWS credentials not found');
-      }
-
-      ui.logToOutput(`StepFuncTool: Credentials loaded (AccessKeyId=${CurrentCredentials.accessKeyId})`);
-      return CurrentCredentials;
-    } catch (error: any) {
-      ui.logToOutput('StepFuncTool: Failed to get credentials', error);
-      throw error;
-    }
-  }
-
-  /**
    * Get Step Functions client with session configuration
    */
   private async getClient(): Promise<SFNClient> {
@@ -115,7 +83,7 @@ export class StepFuncTool implements vscode.LanguageModelTool<StepFuncToolInput>
       return CurrentSfClient;
     }
 
-    const credentials = await this.getCredentials();
+    const credentials = await Session.Current?.GetCredentials();
 
     CurrentSfClient = new SFNClient({
       credentials,

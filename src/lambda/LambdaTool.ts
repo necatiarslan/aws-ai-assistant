@@ -20,12 +20,9 @@ import {
   UntagResourceCommandOutput,
   InvokeCommandOutput
 } from '@aws-sdk/client-lambda';
-import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
-import { AwsCredentialIdentity } from '@aws-sdk/types';
 import { AIHandler } from '../chat/AIHandler';
 
-// Cached credentials and client
-let CurrentCredentials: AwsCredentialIdentity | undefined;
+// Cached client
 let CurrentLambdaClient: LambdaClient | undefined;
 
 // Command type definition
@@ -100,36 +97,6 @@ interface InvokeParams {
 }
 
 export class LambdaTool implements vscode.LanguageModelTool<LambdaToolInput> {
-  
-  /**
-   * Get AWS credentials with caching
-   */
-  private async getCredentials(): Promise<AwsCredentialIdentity | undefined> {
-    if (CurrentCredentials !== undefined) {
-      ui.logToOutput(`LambdaTool: Using cached credentials (AccessKeyId=${CurrentCredentials.accessKeyId})`);
-      return CurrentCredentials;
-    }
-
-    try {
-      if (Session.Current) {
-        process.env.AWS_PROFILE = Session.Current.AwsProfile;
-      }
-
-      const provider = fromNodeProviderChain({ ignoreCache: true });
-      CurrentCredentials = await provider();
-
-      if (!CurrentCredentials) {
-        throw new Error('AWS credentials not found');
-      }
-
-      ui.logToOutput(`LambdaTool: Credentials loaded (AccessKeyId=${CurrentCredentials.accessKeyId})`);
-      return CurrentCredentials;
-    } catch (error: any) {
-      ui.logToOutput('LambdaTool: Failed to get credentials', error);
-      throw error;
-    }
-  }
-
   /**
    * Get Lambda Client with session configuration
    */
@@ -138,7 +105,7 @@ export class LambdaTool implements vscode.LanguageModelTool<LambdaToolInput> {
       return CurrentLambdaClient;
     }
 
-    const credentials = await this.getCredentials();
+    const credentials = await Session.Current?.GetCredentials();
 
     CurrentLambdaClient = new LambdaClient({
       credentials,

@@ -17,12 +17,9 @@ import {
   GetSessionTokenCommandOutput,
   GetWebIdentityTokenCommandOutput,
 } from '@aws-sdk/client-sts';
-import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
-import { AwsCredentialIdentity } from '@aws-sdk/types';
 import { AIHandler } from '../chat/AIHandler';
 
 // Cached credentials and client
-let CurrentCredentials: AwsCredentialIdentity | undefined;
 let CurrentSTSClient: STSClient | undefined;
 
 // Command type definition
@@ -78,37 +75,8 @@ interface GetWebIdentityTokenParams {
   ProviderId?: string;
 }
 
+
 export class STSTool implements vscode.LanguageModelTool<STSToolInput> {
-  
-  /**
-   * Get AWS credentials with caching
-   */
-  private async getCredentials(): Promise<AwsCredentialIdentity | undefined> {
-    if (CurrentCredentials !== undefined) {
-      ui.logToOutput(`STSTool: Using cached credentials (AccessKeyId=${CurrentCredentials.accessKeyId})`);
-      return CurrentCredentials;
-    }
-
-    try {
-      if (Session.Current) {
-        process.env.AWS_PROFILE = Session.Current.AwsProfile;
-      }
-
-      const provider = fromNodeProviderChain({ ignoreCache: true });
-      CurrentCredentials = await provider();
-
-      if (!CurrentCredentials) {
-        throw new Error('AWS credentials not found');
-      }
-
-      ui.logToOutput(`STSTool: Credentials loaded (AccessKeyId=${CurrentCredentials.accessKeyId})`);
-      return CurrentCredentials;
-    } catch (error: any) {
-      ui.logToOutput('STSTool: Failed to get credentials', error);
-      throw error;
-    }
-  }
-
   /**
    * Get STS Client with session configuration
    */
@@ -117,7 +85,7 @@ export class STSTool implements vscode.LanguageModelTool<STSToolInput> {
       return CurrentSTSClient;
     }
 
-    const credentials = await this.getCredentials();
+    const credentials = await Session.Current?.GetCredentials();
 
     CurrentSTSClient = new STSClient({
       credentials,

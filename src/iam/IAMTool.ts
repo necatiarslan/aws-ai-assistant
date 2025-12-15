@@ -24,12 +24,9 @@ import {
   ListPoliciesCommandOutput,
   ListPolicyVersionsCommandOutput
 } from '@aws-sdk/client-iam';
-import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
-import { AwsCredentialIdentity } from '@aws-sdk/types';
 import { AIHandler } from '../chat/AIHandler';
 
 // Cached credentials and client
-let CurrentCredentials: AwsCredentialIdentity | undefined;
 let CurrentIamClient: IAMClient | undefined;
 
 // Command type definition
@@ -112,30 +109,6 @@ interface ListPolicyVersionsParams {
 
 export class IAMTool implements vscode.LanguageModelTool<IAMToolInput> {
   /**
-   * Get AWS credentials with caching
-   */
-  private async getCredentials(): Promise<AwsCredentialIdentity | undefined> {
-    if (CurrentCredentials !== undefined) {
-      ui.logToOutput(`IAMTool: Using cached credentials (AccessKeyId=${CurrentCredentials.accessKeyId})`);
-      return CurrentCredentials;
-    }
-
-    if (Session.Current) {
-      process.env.AWS_PROFILE = Session.Current.AwsProfile;
-    }
-
-    const provider = fromNodeProviderChain({ ignoreCache: true });
-    CurrentCredentials = await provider();
-
-    if (!CurrentCredentials) {
-      throw new Error('AWS credentials not found');
-    }
-
-    ui.logToOutput(`IAMTool: Credentials loaded (AccessKeyId=${CurrentCredentials.accessKeyId})`);
-    return CurrentCredentials;
-  }
-
-  /**
    * Get IAM client with session configuration
    */
   private async getClient(): Promise<IAMClient> {
@@ -143,7 +116,7 @@ export class IAMTool implements vscode.LanguageModelTool<IAMToolInput> {
       return CurrentIamClient;
     }
 
-    const credentials = await this.getCredentials();
+    const credentials = await Session.Current?.GetCredentials();
 
     CurrentIamClient = new IAMClient({
       credentials,

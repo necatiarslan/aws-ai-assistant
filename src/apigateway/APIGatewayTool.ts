@@ -92,11 +92,8 @@ import {
   GetVpcLinkCommandOutput,
   GetVpcLinksCommandOutput,
 } from '@aws-sdk/client-api-gateway';
-import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
-import { AwsCredentialIdentity } from '@aws-sdk/types';
 import { AIHandler } from '../chat/AIHandler';
 
-let CurrentCredentials: AwsCredentialIdentity | undefined;
 let CurrentClient: APIGatewayClient | undefined;
 
 type APIGatewayCommand =
@@ -152,33 +149,11 @@ interface APIGatewayToolInput {
 }
 
 export class APIGatewayTool implements vscode.LanguageModelTool<APIGatewayToolInput> {
-  private async getCredentials(): Promise<AwsCredentialIdentity | undefined> {
-    if (CurrentCredentials) {
-      ui.logToOutput(`APIGatewayTool: Using cached credentials (AccessKeyId=${CurrentCredentials.accessKeyId})`);
-      return CurrentCredentials;
-    }
-    try {
-      if (Session.Current) {
-        process.env.AWS_PROFILE = Session.Current.AwsProfile;
-      }
-      const provider = fromNodeProviderChain({ ignoreCache: true });
-      CurrentCredentials = await provider();
-      if (!CurrentCredentials) {
-        throw new Error('AWS credentials not found');
-      }
-      ui.logToOutput(`APIGatewayTool: Credentials loaded (AccessKeyId=${CurrentCredentials.accessKeyId})`);
-      return CurrentCredentials;
-    } catch (error: any) {
-      ui.logToOutput('APIGatewayTool: Failed to get credentials', error);
-      throw error;
-    }
-  }
-
   private async getClient(): Promise<APIGatewayClient> {
     if (CurrentClient) {
       return CurrentClient;
     }
-    const credentials = await this.getCredentials();
+    const credentials = await Session.Current?.GetCredentials();
     CurrentClient = new APIGatewayClient({
       credentials,
       endpoint: Session.Current?.AwsEndPoint,

@@ -24,12 +24,9 @@ import {
   ListTriggersCommandOutput,
   StartJobRunCommandOutput
 } from '@aws-sdk/client-glue';
-import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
-import { AwsCredentialIdentity } from '@aws-sdk/types';
 import { AIHandler } from '../chat/AIHandler';
 
-// Cached credentials and client
-let CurrentCredentials: AwsCredentialIdentity | undefined;
+// Cached client
 let CurrentGlueClient: GlueClient | undefined;
 
 // Command type definition
@@ -120,35 +117,6 @@ interface StartJobRunParams {
 
 export class GlueTool implements vscode.LanguageModelTool<GlueToolInput> {
   /**
-   * Get AWS credentials with caching
-   */
-  private async getCredentials(): Promise<AwsCredentialIdentity | undefined> {
-    if (CurrentCredentials !== undefined) {
-      ui.logToOutput(`GlueTool: Using cached credentials (AccessKeyId=${CurrentCredentials.accessKeyId})`);
-      return CurrentCredentials;
-    }
-
-    try {
-      if (Session.Current) {
-        process.env.AWS_PROFILE = Session.Current.AwsProfile;
-      }
-
-      const provider = fromNodeProviderChain({ ignoreCache: true });
-      CurrentCredentials = await provider();
-
-      if (!CurrentCredentials) {
-        throw new Error('AWS credentials not found');
-      }
-
-      ui.logToOutput(`GlueTool: Credentials loaded (AccessKeyId=${CurrentCredentials.accessKeyId})`);
-      return CurrentCredentials;
-    } catch (error: any) {
-      ui.logToOutput('GlueTool: Failed to get credentials', error);
-      throw error;
-    }
-  }
-
-  /**
    * Get Glue client with session configuration
    */
   private async getClient(): Promise<GlueClient> {
@@ -156,7 +124,7 @@ export class GlueTool implements vscode.LanguageModelTool<GlueToolInput> {
       return CurrentGlueClient;
     }
 
-    const credentials = await this.getCredentials();
+    const credentials = await Session.Current?.GetCredentials();
 
     CurrentGlueClient = new GlueClient({
       credentials,

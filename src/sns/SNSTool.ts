@@ -28,12 +28,9 @@ import {
   ListTopicsCommandOutput,
   PublishCommandOutput,
 } from '@aws-sdk/client-sns';
-import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
-import { AwsCredentialIdentity } from '@aws-sdk/types';
 import { AIHandler } from '../chat/AIHandler';
 import { needsConfirmation, confirmProceed } from '../common/ActionGuard';
 
-let CurrentCredentials: AwsCredentialIdentity | undefined;
 let CurrentSNSClient: SNSClient | undefined;
 
 type SNSCommand =
@@ -81,33 +78,12 @@ interface PublishParams {
 }
 
 export class SNSTool implements vscode.LanguageModelTool<SNSToolInput> {
-  private async getCredentials(): Promise<AwsCredentialIdentity | undefined> {
-    if (CurrentCredentials) {
-      ui.logToOutput(`SNSTool: Using cached credentials (AccessKeyId=${CurrentCredentials.accessKeyId})`);
-      return CurrentCredentials;
-    }
-    try {
-      if (Session.Current) {
-        process.env.AWS_PROFILE = Session.Current.AwsProfile;
-      }
-      const provider = fromNodeProviderChain({ ignoreCache: true });
-      CurrentCredentials = await provider();
-      if (!CurrentCredentials) {
-        throw new Error('AWS credentials not found');
-      }
-      ui.logToOutput(`SNSTool: Credentials loaded (AccessKeyId=${CurrentCredentials.accessKeyId})`);
-      return CurrentCredentials;
-    } catch (error: any) {
-      ui.logToOutput('SNSTool: Failed to get credentials', error);
-      throw error;
-    }
-  }
 
   private async getSNSClient(): Promise<SNSClient> {
     if (CurrentSNSClient) {
       return CurrentSNSClient;
     }
-    const credentials = await this.getCredentials();
+    const credentials = await Session.Current?.GetCredentials();
     CurrentSNSClient = new SNSClient({
       credentials,
       endpoint: Session.Current?.AwsEndPoint,

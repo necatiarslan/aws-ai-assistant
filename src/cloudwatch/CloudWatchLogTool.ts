@@ -10,12 +10,9 @@ import {
   DescribeLogStreamsCommandOutput,
   GetLogEventsCommandOutput
 } from '@aws-sdk/client-cloudwatch-logs';
-import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
-import { AwsCredentialIdentity } from '@aws-sdk/types';
 import { AIHandler } from '../chat/AIHandler';
 
-// Cached credentials and client
-let CurrentCredentials: AwsCredentialIdentity | undefined;
+// Cached client
 let CurrentCwClient: CloudWatchLogsClient | undefined;
 
 // Command type definition
@@ -58,30 +55,6 @@ interface GetLogEventsParams {
 
 export class CloudWatchLogTool implements vscode.LanguageModelTool<CloudWatchToolInput> {
   /**
-   * Get AWS credentials with caching
-   */
-  private async getCredentials(): Promise<AwsCredentialIdentity | undefined> {
-    if (CurrentCredentials !== undefined) {
-      ui.logToOutput(`CloudWatchLogTool: Using cached credentials (AccessKeyId=${CurrentCredentials.accessKeyId})`);
-      return CurrentCredentials;
-    }
-
-    if (Session.Current) {
-      process.env.AWS_PROFILE = Session.Current.AwsProfile;
-    }
-
-    const provider = fromNodeProviderChain({ ignoreCache: true });
-    CurrentCredentials = await provider();
-
-    if (!CurrentCredentials) {
-      throw new Error('AWS credentials not found');
-    }
-
-    ui.logToOutput(`CloudWatchLogTool: Credentials loaded (AccessKeyId=${CurrentCredentials.accessKeyId})`);
-    return CurrentCredentials;
-  }
-
-  /**
    * Get CloudWatch Logs client with session configuration
    */
   private async getClient(): Promise<CloudWatchLogsClient> {
@@ -89,7 +62,7 @@ export class CloudWatchLogTool implements vscode.LanguageModelTool<CloudWatchToo
       return CurrentCwClient;
     }
 
-    const credentials = await this.getCredentials();
+    const credentials = await Session.Current?.GetCredentials();
 
     CurrentCwClient = new CloudWatchLogsClient({
       credentials,

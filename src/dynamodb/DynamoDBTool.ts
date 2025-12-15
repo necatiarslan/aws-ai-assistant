@@ -43,12 +43,9 @@ import {
   UpdateTimeToLiveCommandOutput,
   ListTagsOfResourceCommandOutput
 } from '@aws-sdk/client-dynamodb';
-import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
-import { AwsCredentialIdentity } from '@aws-sdk/types';
 import { AIHandler } from '../chat/AIHandler';
 
-// Cached credentials and client
-let CurrentCredentials: AwsCredentialIdentity | undefined;
+// Cached client
 let CurrentDdbClient: DynamoDBClient | undefined;
 
 // Command type definition
@@ -75,30 +72,6 @@ interface DynamoDBToolInput {
 
 export class DynamoDBTool implements vscode.LanguageModelTool<DynamoDBToolInput> {
   /**
-   * Get AWS credentials with caching
-   */
-  private async getCredentials(): Promise<AwsCredentialIdentity | undefined> {
-    if (CurrentCredentials !== undefined) {
-      ui.logToOutput(`DynamoDBTool: Using cached credentials (AccessKeyId=${CurrentCredentials.accessKeyId})`);
-      return CurrentCredentials;
-    }
-
-    if (Session.Current) {
-      process.env.AWS_PROFILE = Session.Current.AwsProfile;
-    }
-
-    const provider = fromNodeProviderChain({ ignoreCache: true });
-    CurrentCredentials = await provider();
-
-    if (!CurrentCredentials) {
-      throw new Error('AWS credentials not found');
-    }
-
-    ui.logToOutput(`DynamoDBTool: Credentials loaded (AccessKeyId=${CurrentCredentials.accessKeyId})`);
-    return CurrentCredentials;
-  }
-
-  /**
    * Get DynamoDB client with session configuration
    */
   private async getClient(): Promise<DynamoDBClient> {
@@ -106,7 +79,7 @@ export class DynamoDBTool implements vscode.LanguageModelTool<DynamoDBToolInput>
       return CurrentDdbClient;
     }
 
-    const credentials = await this.getCredentials();
+    const credentials = await Session.Current?.GetCredentials();
 
     CurrentDdbClient = new DynamoDBClient({
       credentials,

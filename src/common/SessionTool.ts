@@ -9,7 +9,7 @@ interface SessionToolInput {
   params?: SessionParams;
 }
 
-type SessionCommand = 'GetSession' | 'SetSession' | 'ListProfiles';
+type SessionCommand = 'GetSession' | 'SetSession' | 'ListProfiles' | 'RefreshCredentials';
 
 interface SessionParams {
   AwsProfile?: string;
@@ -61,6 +61,8 @@ export class SessionTool implements vscode.LanguageModelTool<SessionToolInput> {
         return this.setSession(params);
       case 'ListProfiles':
         return this.listProfiles();
+      case 'RefreshCredentials':
+        return this.refreshCredentials();
       default:
         throw new Error(`Unsupported command: ${command}`);
     }
@@ -93,6 +95,7 @@ export class SessionTool implements vscode.LanguageModelTool<SessionToolInput> {
     }
 
     Session.Current.SaveState();
+    StatusBarItem.Current?.RefreshText();
 
     return this.getSession();
   }
@@ -106,5 +109,13 @@ export class SessionTool implements vscode.LanguageModelTool<SessionToolInput> {
     return {
       Profiles: statusBar.Profiles,
     };
+  }
+
+  private async refreshCredentials() {
+    if (!Session.Current) {
+      throw new Error('Session not initialized');
+    }
+    Session.Current.RefreshCredentials();
+    return { ok: true };
   }
 }

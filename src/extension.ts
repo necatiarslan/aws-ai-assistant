@@ -66,7 +66,7 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 	
 	vscode.commands.registerCommand('aws-ai-assistant.RefreshCredentials', () => {
-		StatusBarItem.Current.GetCredentials();
+		Session.Current?.RefreshCredentials();
 	});
 
 	vscode.commands.registerCommand('aws-ai-assistant.ListAwsProfiles', () => {
