@@ -44,6 +44,7 @@ import {
   ListTagsOfResourceCommandOutput
 } from '@aws-sdk/client-dynamodb';
 import { AIHandler } from '../chat/AIHandler';
+import { needsConfirmation, confirmProceed } from '../common/ActionGuard';
 
 // Cached client
 let CurrentDdbClient: DynamoDBClient | undefined;
@@ -210,6 +211,16 @@ export class DynamoDBTool implements vscode.LanguageModelTool<DynamoDBToolInput>
 
     try {
       ui.logToOutput(`DynamoDBTool: Executing ${command} with params: ${JSON.stringify(params)}`);
+
+      if (needsConfirmation(command)) {
+        const ok = await confirmProceed(command);
+        if (!ok) {
+          const cancelled = { success: false, command, message: 'User cancelled action command' };
+          return new vscode.LanguageModelToolResult([
+            new vscode.LanguageModelTextPart(JSON.stringify(cancelled, null, 2))
+          ]);
+        }
+      }
 
       const result = await this.executeCommand(command, params);
 

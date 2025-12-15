@@ -2,6 +2,7 @@ import * as ui from './UI';
 import * as vscode from 'vscode';
 import { AwsCredentialIdentity } from '@aws-sdk/types';
 import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
+import * as MessageHub from './MessageHub';
 
 export class Session {
 	public static Current: Session | undefined = undefined;
@@ -102,10 +103,12 @@ export class Session {
         this.CurrentCredentials = await provider();
 
         if (!this.CurrentCredentials) {
-        throw new Error('AWS credentials not found');
+            MessageHub.CredentialsChanged();
+            throw new Error('AWS credentials not found');
         }
 
         ui.logToOutput(`Credentials loaded (AccessKeyId=${this.CurrentCredentials.accessKeyId})`);
+        MessageHub.CredentialsChanged();
         return this.CurrentCredentials;
     } catch (error: any) {
         ui.logToOutput('Failed to get credentials', error);
@@ -116,11 +119,13 @@ export class Session {
     public RefreshCredentials() {
         this.CurrentCredentials = undefined;
         this.GetCredentials();
+        // MessageHub.CredentialsChanged();
         ui.logToOutput('Credentials cache refreshed');
     }
 
     public ClearCredentials() {
         this.CurrentCredentials = undefined;
+        MessageHub.CredentialsChanged();
         ui.logToOutput('Credentials cache cleared');
     }
 

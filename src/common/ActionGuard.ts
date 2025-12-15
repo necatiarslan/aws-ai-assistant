@@ -15,7 +15,11 @@ export function needsConfirmation(command: string): boolean {
     c.startsWith('commit') ||
     c.startsWith('rollback') ||
     c.startsWith('send') ||
-    c.startsWith('publish')
+    c.startsWith('publish') ||
+    c.startsWith('invoke') ||
+    c.startsWith('start') ||
+    c.startsWith('execute') ||
+    c.startsWith('receive')
   );
 }
 

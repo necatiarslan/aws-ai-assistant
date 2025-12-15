@@ -7,3 +7,7 @@ export function StartWorking(){
 export function EndWorking(){
     StatusBarItem.Current?.EndWorking();
 }
+
+export function CredentialsChanged(){
+    StatusBarItem.Current?.RefreshText();
+}

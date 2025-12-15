@@ -25,6 +25,7 @@ import {
   StartJobRunCommandOutput
 } from '@aws-sdk/client-glue';
 import { AIHandler } from '../chat/AIHandler';
+import { needsConfirmation, confirmProceed } from '../common/ActionGuard';
 
 // Cached client
 let CurrentGlueClient: GlueClient | undefined;
@@ -299,6 +300,15 @@ export class GlueTool implements vscode.LanguageModelTool<GlueToolInput> {
 
     try {
       ui.logToOutput(`GlueTool: Executing ${command} with params: ${JSON.stringify(params)}`);
+      if (needsConfirmation(command)) {
+        const ok = await confirmProceed(command);
+        if (!ok) {
+          const cancelled = { success: false, command, message: 'User cancelled action command' };
+          return new vscode.LanguageModelToolResult([
+            new vscode.LanguageModelTextPart(JSON.stringify(cancelled, null, 2))
+          ]);
+        }
+      }
       
       const result = await this.executeCommand(command, params);
 

@@ -95,7 +95,7 @@ export class SessionTool implements vscode.LanguageModelTool<SessionToolInput> {
     }
 
     Session.Current.SaveState();
-    StatusBarItem.Current?.RefreshText();
+    Session.Current.ClearCredentials();
 
     return this.getSession();
   }

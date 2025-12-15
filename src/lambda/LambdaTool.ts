@@ -21,6 +21,7 @@ import {
   InvokeCommandOutput
 } from '@aws-sdk/client-lambda';
 import { AIHandler } from '../chat/AIHandler';
+import { needsConfirmation, confirmProceed } from '../common/ActionGuard';
 
 // Cached client
 let CurrentLambdaClient: LambdaClient | undefined;
@@ -280,6 +281,16 @@ export class LambdaTool implements vscode.LanguageModelTool<LambdaToolInput> {
 
     try {
       ui.logToOutput(`LambdaTool: Executing ${command} with params: ${JSON.stringify(params)}`);
+
+      if (needsConfirmation(command)) {
+        const ok = await confirmProceed(command);
+        if (!ok) {
+          const cancelled = { success: false, command, message: 'User cancelled action command' };
+          return new vscode.LanguageModelToolResult([
+            new vscode.LanguageModelTextPart(JSON.stringify(cancelled, null, 2))
+          ]);
+        }
+      }
 
       // Execute the command
       const result = await this.executeCommand(command, params);
