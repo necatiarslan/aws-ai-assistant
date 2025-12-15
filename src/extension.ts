@@ -7,6 +7,7 @@ import { STSTool } from './sts/STSTool';
 import * as stsAPI from './sts/API';
 import { AIHandler } from './chat/AIHandler';
 import { S3Tool as S3Tool } from './s3/S3Tool';
+import { SNSTool } from './sns/SNSTool';
 import { SQSTool } from './sqs/SQSTool';
 import { FileOperationsTool } from './common/FileOperationsTool';
 import { SessionTool } from './common/SessionTool';
@@ -31,6 +32,7 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.lm.registerTool('sts', new STSTool()),
 		vscode.lm.registerTool('sqs', new SQSTool()),
 		vscode.lm.registerTool('s3', new S3Tool()),
+		vscode.lm.registerTool('sns', new SNSTool()),
 		vscode.lm.registerTool('fileOperations', new FileOperationsTool()),
 		vscode.lm.registerTool('session', new SessionTool()),
 		vscode.lm.registerTool('cloudWatchLogs', new CloudWatchLogTool()),

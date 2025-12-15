@@ -327,6 +327,69 @@
         }
       },
       {
+        "name": "sns",
+        "toolReferenceName": "sns",
+        "displayName": "SNS Tool",
+        "modelDescription": "Execute AWS SNS (Simple Notification Service) commands. ALWAYS provide params object. Examples: ListTopics {command:'ListTopics', params:{}}. GetTopicAttributes {command:'GetTopicAttributes', params:{TopicArn:'arn:...'}}. Publish {command:'Publish', params:{TopicArn:'arn:...', Message:'hello'}}.",
+        "userDescription": "Manage SNS topics, subscriptions, endpoints and publishing",
+        "tags": [
+          "aws",
+          "sns",
+          "notifications",
+          "topics",
+          "subscriptions",
+          "sms"
+        ],
+        "canBeReferencedInPrompt": true,
+        "icon": "$(megaphone)",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "command",
+            "params"
+          ],
+          "properties": {
+            "command": {
+              "type": "string",
+              "enum": [
+                "CheckIfPhoneNumberIsOptedOut",
+                "GetEndpointAttributes",
+                "GetPlatformApplicationAttributes",
+                "GetSMSAttributes",
+                "GetSubscriptionAttributes",
+                "GetTopicAttributes",
+                "ListPhoneNumbersOptedOut",
+                "ListSubscriptionsByTopic",
+                "ListSubscriptions",
+                "ListTagsForResource",
+                "ListTopics",
+                "Publish"
+              ],
+              "description": "The SNS command to execute"
+            },
+            "params": {
+              "type": "object",
+              "description": "REQUIRED parameters object. Always include this even if empty.",
+              "properties": {
+                "phoneNumber": { "type": "string", "description": "E.164 phone number (for CheckIfPhoneNumberIsOptedOut, Publish)" },
+                "EndpointArn": { "type": "string", "description": "Endpoint ARN (for GetEndpointAttributes)" },
+                "PlatformApplicationArn": { "type": "string", "description": "Platform application ARN (for GetPlatformApplicationAttributes)" },
+                "attributes": { "type": "array", "items": { "type": "string" }, "description": "SMS attribute names (optional for GetSMSAttributes)" },
+                "SubscriptionArn": { "type": "string", "description": "Subscription ARN (for GetSubscriptionAttributes)" },
+                "TopicArn": { "type": "string", "description": "Topic ARN (for GetTopicAttributes, ListSubscriptionsByTopic, Publish)" },
+                "ResourceArn": { "type": "string", "description": "Resource ARN (for ListTagsForResource)" },
+                "NextToken": { "type": "string", "description": "Pagination token (optional for list operations)" },
+                "Message": { "type": "string", "description": "Message body (REQUIRED for Publish unless using phoneNumber/TargetArn)" },
+                "TargetArn": { "type": "string", "description": "Target ARN (optional for Publish)" },
+                "Subject": { "type": "string", "description": "Message subject (optional for Publish)" },
+                "MessageStructure": { "type": "string", "description": "Message structure (e.g., 'json') (optional for Publish)" },
+                "MessageAttributes": { "type": "object", "description": "Message attributes (optional for Publish)" }
+              }
+            }
+          }
+        }
+      },
+      {
         "name": "s3",
         "toolReferenceName": "s3Generic",
         "displayName": "S3 Generic Tool",
@@ -1279,6 +1342,7 @@
     "@aws-sdk/client-lambda": "^3.948.0",
     "@aws-sdk/client-s3": "^3.948.0",
     "@aws-sdk/client-sfn": "^3.948.0",
+    "@aws-sdk/client-sns": "^3.948.0",
     "@aws-sdk/client-sqs": "^3.948.0",
     "@aws-sdk/client-sts": "^3.948.0",
     "@aws-sdk/credential-provider-node": "^3.948.0",
