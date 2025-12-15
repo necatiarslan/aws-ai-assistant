@@ -501,17 +501,160 @@
               "type": "object",
               "description": "REQUIRED parameters object. Always include this even if empty. Use native API Gateway field names (e.g., restApiId, resourceId, httpMethod, limit, position).",
               "properties": {
-                "restApiId": { "type": "string", "description": "REST API identifier (for many resource operations)" },
-                "resourceId": { "type": "string", "description": "Resource ID" },
-                "httpMethod": { "type": "string", "description": "HTTP method (e.g., GET, POST)" },
-                "usagePlanId": { "type": "string", "description": "Usage plan ID" },
-                "keyId": { "type": "string", "description": "Usage plan key ID" },
-                "domainName": { "type": "string", "description": "Custom domain name" },
-                "stageName": { "type": "string", "description": "Stage name" },
-                "position": { "type": "string", "description": "Pagination position token" },
-                "limit": { "type": "number", "description": "Maximum results for list operations" },
-                "name": { "type": "string", "description": "Common name filter for certain commands" },
-                "includeCredentials": { "type": "boolean", "description": "Whether to include credentials where supported" }
+                "restApiId": {
+                  "type": "string",
+                  "description": "REST API identifier (for many resource operations)"
+                },
+                "resourceId": {
+                  "type": "string",
+                  "description": "Resource ID"
+                },
+                "httpMethod": {
+                  "type": "string",
+                  "description": "HTTP method (e.g., GET, POST)"
+                },
+                "usagePlanId": {
+                  "type": "string",
+                  "description": "Usage plan ID"
+                },
+                "keyId": {
+                  "type": "string",
+                  "description": "Usage plan key ID"
+                },
+                "domainName": {
+                  "type": "string",
+                  "description": "Custom domain name"
+                },
+                "stageName": {
+                  "type": "string",
+                  "description": "Stage name"
+                },
+                "position": {
+                  "type": "string",
+                  "description": "Pagination position token"
+                },
+                "limit": {
+                  "type": "number",
+                  "description": "Maximum results for list operations"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Common name filter for certain commands"
+                },
+                "includeCredentials": {
+                  "type": "boolean",
+                  "description": "Whether to include credentials where supported"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "rds",
+        "toolReferenceName": "rds",
+        "displayName": "RDS Tool",
+        "modelDescription": "Execute AWS RDS describe and log commands. ALWAYS provide params object. Examples: DescribeDBInstances {command:'DescribeDBInstances', params:{DBInstanceIdentifier:'my-db'}}. DescribeDBClusters {command:'DescribeDBClusters', params:{}}.",
+        "userDescription": "Inspect Amazon RDS: instances, clusters, snapshots, parameters, logs",
+        "tags": [
+          "aws",
+          "rds",
+          "database",
+          "aurora"
+        ],
+        "canBeReferencedInPrompt": true,
+        "icon": "$(database)",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "command",
+            "params"
+          ],
+          "properties": {
+            "command": {
+              "type": "string",
+              "enum": [
+                "DescribeAccountAttributes",
+                "DescribeBlueGreenDeployments",
+                "DescribeCertificates",
+                "DescribeDBClusterAutomatedBackups",
+                "DescribeDBClusterParameterGroups",
+                "DescribeDBClusters",
+                "DescribeDBClusterSnapshots",
+                "DescribeDBEngineVersions",
+                "DescribeDBInstanceAutomatedBackups",
+                "DescribeDBInstances",
+                "DescribeDBLogFiles",
+                "DescribeDBParameterGroups",
+                "DescribeDBProxies",
+                "DescribeDBProxyEndpoints",
+                "DescribeDBRecommendations",
+                "DescribeDBSecurityGroups",
+                "DescribeDBSnapshotAttributes",
+                "DescribeDBSnapshots",
+                "DescribeDBSubnetGroups",
+                "DescribeEngineDefaultParameters",
+                "DescribeEvents",
+                "DescribeEventSubscriptions",
+                "DescribeExportTasks",
+                "DescribeGlobalClusters",
+                "DescribeIntegrations",
+                "DescribeOptionGroups",
+                "DescribeOrderableDBInstanceOptions",
+                "DescribePendingMaintenanceActions",
+                "DescribeReservedDBInstances",
+                "DescribeReservedDBInstancesOfferings",
+                "DescribeSourceRegions",
+                "DescribeTenantDatabases",
+                "DescribeValidDBInstanceModifications",
+                "DownloadDBLogFilePortion",
+                "ListTagsForResource"
+              ],
+              "description": "The RDS command to execute"
+            },
+            "params": {
+              "type": "object",
+              "description": "REQUIRED parameters object. Use RDS field names (e.g., DBInstanceIdentifier, DBClusterIdentifier, Marker, MaxRecords).",
+              "properties": {
+                "DBInstanceIdentifier": {
+                  "type": "string"
+                },
+                "DBClusterIdentifier": {
+                  "type": "string"
+                },
+                "DBParameterGroupName": {
+                  "type": "string"
+                },
+                "Engine": {
+                  "type": "string"
+                },
+                "EngineVersion": {
+                  "type": "string"
+                },
+                "Marker": {
+                  "type": "string"
+                },
+                "MaxRecords": {
+                  "type": "number"
+                },
+                "Filters": {
+                  "type": "array"
+                },
+                "StartTime": {
+                  "type": "string"
+                },
+                "EndTime": {
+                  "type": "string"
+                },
+                "Duration": {
+                  "type": "number"
+                },
+                "ResourceName": {
+                  "type": "string"
+                },
+                "LogFileName": {
+                  "type": "string"
+                }
               }
             }
           }
@@ -1575,6 +1718,8 @@
     "@aws-sdk/client-glue": "^3.948.0",
     "@aws-sdk/client-iam": "^3.948.0",
     "@aws-sdk/client-lambda": "^3.948.0",
+    "@aws-sdk/client-rds": "^3.948.0",
+    "@aws-sdk/client-rds-data": "^3.948.0",
     "@aws-sdk/client-s3": "^3.948.0",
     "@aws-sdk/client-sfn": "^3.948.0",
     "@aws-sdk/client-sns": "^3.948.0",
