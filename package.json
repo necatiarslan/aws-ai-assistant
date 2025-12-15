@@ -677,7 +677,10 @@
         "icon": "$(server-process)",
         "inputSchema": {
           "type": "object",
-          "required": ["command", "params"],
+          "required": [
+            "command",
+            "params"
+          ],
           "properties": {
             "command": {
               "type": "string",
@@ -694,14 +697,138 @@
               "type": "object",
               "description": "REQUIRED parameters object. Use Data API field names (e.g., resourceArn, secretArn, database, sql, transactionId, parameters).",
               "properties": {
-                "resourceArn": { "type": "string", "description": "ARN of the Aurora/RDS cluster" },
-                "secretArn": { "type": "string", "description": "ARN of the Secrets Manager secret with credentials" },
-                "database": { "type": "string" },
-                "schema": { "type": "string" },
-                "sql": { "type": "string" },
-                "transactionId": { "type": "string" },
-                "parameters": { "type": "array" },
-                "includeResultMetadata": { "type": "boolean" }
+                "resourceArn": {
+                  "type": "string",
+                  "description": "ARN of the Aurora/RDS cluster"
+                },
+                "secretArn": {
+                  "type": "string",
+                  "description": "ARN of the Secrets Manager secret with credentials"
+                },
+                "database": {
+                  "type": "string"
+                },
+                "schema": {
+                  "type": "string"
+                },
+                "sql": {
+                  "type": "string"
+                },
+                "transactionId": {
+                  "type": "string"
+                },
+                "parameters": {
+                  "type": "array"
+                },
+                "includeResultMetadata": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "cloudformation",
+        "toolReferenceName": "cloudformation",
+        "displayName": "CloudFormation Tool",
+        "modelDescription": "Execute AWS CloudFormation describe, list, get, and drift detection commands. ALWAYS provide params object.",
+        "userDescription": "Inspect stacks, resources, changesets, types, and drift",
+        "tags": [
+          "aws",
+          "cloudformation",
+          "stacks",
+          "infrastructure"
+        ],
+        "canBeReferencedInPrompt": true,
+        "icon": "$(tools)",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "command",
+            "params"
+          ],
+          "properties": {
+            "command": {
+              "type": "string",
+              "enum": [
+                "BatchDescribeTypeConfigurations",
+                "DescribeAccountLimits",
+                "DescribeChangeSet",
+                "DescribeChangeSetHooks",
+                "DescribeGeneratedTemplate",
+                "DescribeOrganizationsAccess",
+                "DescribePublisher",
+                "DescribeResourceScan",
+                "DescribeStackDriftDetectionStatus",
+                "DescribeStackEvents",
+                "DescribeStackInstance",
+                "DescribeStackRefactor",
+                "DescribeStackResource",
+                "DescribeStackResourceDrifts",
+                "DescribeStackResources",
+                "DescribeStacks",
+                "DescribeStackSet",
+                "DescribeStackSetOperation",
+                "DescribeType",
+                "DescribeTypeRegistration",
+                "DetectStackDrift",
+                "DetectStackResourceDrift",
+                "DetectStackSetDrift",
+                "GetGeneratedTemplate",
+                "GetHookResult",
+                "GetStackPolicy",
+                "GetTemplate",
+                "GetTemplateSummary",
+                "ListChangeSets",
+                "ListExports",
+                "ListGeneratedTemplates",
+                "ListHookResults",
+                "ListImports",
+                "ListResourceScanRelatedResources",
+                "ListResourceScanResources",
+                "ListResourceScans",
+                "ListStackInstanceResourceDrifts",
+                "ListStackInstances",
+                "ListStackRefactorActions",
+                "ListStackRefactors",
+                "ListStackResources",
+                "ListStacks",
+                "ListStackSetAutoDeploymentTargets",
+                "ListStackSetOperationResults",
+                "ListStackSetOperations",
+                "ListStackSets",
+                "ListTypeRegistrations",
+                "ListTypes",
+                "ListTypeVersions"
+              ],
+              "description": "The CloudFormation command to execute"
+            },
+            "params": {
+              "type": "object",
+              "description": "REQUIRED parameters object. Use CloudFormation field names (e.g., StackName, StackSetName, ChangeSetName, TypeName, NextToken, MaxResults).",
+              "properties": {
+                "StackName": {
+                  "type": "string"
+                },
+                "StackSetName": {
+                  "type": "string"
+                },
+                "ChangeSetName": {
+                  "type": "string"
+                },
+                "TypeName": {
+                  "type": "string"
+                },
+                "TypeArn": {
+                  "type": "string"
+                },
+                "NextToken": {
+                  "type": "string"
+                },
+                "MaxResults": {
+                  "type": "number"
+                }
               }
             }
           }
@@ -1759,6 +1886,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-api-gateway": "^3.948.0",
+    "@aws-sdk/client-cloudformation": "^3.948.0",
     "@aws-sdk/client-cloudwatch-logs": "^3.948.0",
     "@aws-sdk/client-dynamodb": "^3.948.0",
     "@aws-sdk/client-ec2": "^3.948.0",

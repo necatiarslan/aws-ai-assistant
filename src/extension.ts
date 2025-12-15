@@ -21,6 +21,7 @@ import { DynamoDBTool } from './dynamodb/DynamoDBTool';
 import { APIGatewayTool } from './apigateway/APIGatewayTool';
 import { RDSTool } from './rds/RDSTool';
 import { RDSDataTool } from './rdsdata/RDSDataTool';
+import { CloudFormationTool } from './cloudformation/CloudFormationTool';
 
 export function activate(context: vscode.ExtensionContext) {
 	ui.logToOutput('Aws AI Assistant is now active!');
@@ -41,6 +42,7 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.lm.registerTool('apigateway', new APIGatewayTool()),
 		vscode.lm.registerTool('rds', new RDSTool()),
     	vscode.lm.registerTool('rdsdata', new RDSDataTool()),
+    vscode.lm.registerTool('cloudformation', new CloudFormationTool()),
 		vscode.lm.registerTool('fileOperations', new FileOperationsTool()),
 		vscode.lm.registerTool('session', new SessionTool()),
 		vscode.lm.registerTool('cloudWatchLogs', new CloudWatchLogTool()),
