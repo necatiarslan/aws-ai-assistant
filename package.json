@@ -327,6 +327,69 @@
         }
       },
       {
+        "name": "ec2",
+        "toolReferenceName": "ec2",
+        "displayName": "EC2 Tool",
+        "modelDescription": "Execute AWS EC2 read-only and info commands. ALWAYS provide params object. Examples: DescribeInstances {command:'DescribeInstances', params:{InstanceIds:['i-123']}}. DescribeImages {command:'DescribeImages', params:{Owners:['self']}}. GetConsoleOutput {command:'GetConsoleOutput', params:{InstanceId:'i-123'}}.",
+        "userDescription": "Query EC2 instances, images, networking, and console data",
+        "tags": [
+          "aws",
+          "ec2",
+          "compute",
+          "network",
+          "instances"
+        ],
+        "canBeReferencedInPrompt": true,
+        "icon": "$(vm)",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "command",
+            "params"
+          ],
+          "properties": {
+            "command": {
+              "type": "string",
+              "enum": [
+                "DescribeAccountAttributes",
+                "DescribeAddresses",
+                "DescribeAvailabilityZones",
+                "DescribeImages",
+                "DescribeInstances",
+                "DescribeInstanceStatus",
+                "DescribeKeyPairs",
+                "DescribeRegions",
+                "DescribeSecurityGroups",
+                "DescribeSnapshots",
+                "DescribeSubnets",
+                "DescribeTags",
+                "DescribeVolumes",
+                "DescribeVpcs",
+                "GetConsoleOutput",
+                "GetHostReservationPurchasePreview",
+                "GetLaunchTemplateData",
+                "GetPasswordData"
+              ],
+              "description": "The EC2 command to execute"
+            },
+            "params": {
+              "type": "object",
+              "description": "REQUIRED parameters object. Always include this even if empty. Use native EC2 API field names (e.g., InstanceIds, Filters, Owners).",
+              "properties": {
+                "InstanceId": { "type": "string", "description": "Single instance ID (for GetConsoleOutput, GetPasswordData)" },
+                "InstanceIds": { "type": "array", "items": { "type": "string" }, "description": "List of instance IDs (for DescribeInstances, DescribeInstanceStatus)" },
+                "Filters": { "type": "array", "items": { "type": "object" }, "description": "EC2 filter array with Name and Values[]" },
+                "Owners": { "type": "array", "items": { "type": "string" }, "description": "Image owners (for DescribeImages)" },
+                "DryRun": { "type": "boolean", "description": "Validate permissions without running the request" },
+                "MaxResults": { "type": "number", "description": "Pagination: maximum results" },
+                "NextToken": { "type": "string", "description": "Pagination token for next page" },
+                "RegionNames": { "type": "array", "items": { "type": "string" }, "description": "Specific region names (for DescribeRegions)" }
+              }
+            }
+          }
+        }
+      },
+      {
         "name": "sns",
         "toolReferenceName": "sns",
         "displayName": "SNS Tool",
@@ -371,19 +434,61 @@
               "type": "object",
               "description": "REQUIRED parameters object. Always include this even if empty.",
               "properties": {
-                "phoneNumber": { "type": "string", "description": "E.164 phone number (for CheckIfPhoneNumberIsOptedOut, Publish)" },
-                "EndpointArn": { "type": "string", "description": "Endpoint ARN (for GetEndpointAttributes)" },
-                "PlatformApplicationArn": { "type": "string", "description": "Platform application ARN (for GetPlatformApplicationAttributes)" },
-                "attributes": { "type": "array", "items": { "type": "string" }, "description": "SMS attribute names (optional for GetSMSAttributes)" },
-                "SubscriptionArn": { "type": "string", "description": "Subscription ARN (for GetSubscriptionAttributes)" },
-                "TopicArn": { "type": "string", "description": "Topic ARN (for GetTopicAttributes, ListSubscriptionsByTopic, Publish)" },
-                "ResourceArn": { "type": "string", "description": "Resource ARN (for ListTagsForResource)" },
-                "NextToken": { "type": "string", "description": "Pagination token (optional for list operations)" },
-                "Message": { "type": "string", "description": "Message body (REQUIRED for Publish unless using phoneNumber/TargetArn)" },
-                "TargetArn": { "type": "string", "description": "Target ARN (optional for Publish)" },
-                "Subject": { "type": "string", "description": "Message subject (optional for Publish)" },
-                "MessageStructure": { "type": "string", "description": "Message structure (e.g., 'json') (optional for Publish)" },
-                "MessageAttributes": { "type": "object", "description": "Message attributes (optional for Publish)" }
+                "phoneNumber": {
+                  "type": "string",
+                  "description": "E.164 phone number (for CheckIfPhoneNumberIsOptedOut, Publish)"
+                },
+                "EndpointArn": {
+                  "type": "string",
+                  "description": "Endpoint ARN (for GetEndpointAttributes)"
+                },
+                "PlatformApplicationArn": {
+                  "type": "string",
+                  "description": "Platform application ARN (for GetPlatformApplicationAttributes)"
+                },
+                "attributes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "SMS attribute names (optional for GetSMSAttributes)"
+                },
+                "SubscriptionArn": {
+                  "type": "string",
+                  "description": "Subscription ARN (for GetSubscriptionAttributes)"
+                },
+                "TopicArn": {
+                  "type": "string",
+                  "description": "Topic ARN (for GetTopicAttributes, ListSubscriptionsByTopic, Publish)"
+                },
+                "ResourceArn": {
+                  "type": "string",
+                  "description": "Resource ARN (for ListTagsForResource)"
+                },
+                "NextToken": {
+                  "type": "string",
+                  "description": "Pagination token (optional for list operations)"
+                },
+                "Message": {
+                  "type": "string",
+                  "description": "Message body (REQUIRED for Publish unless using phoneNumber/TargetArn)"
+                },
+                "TargetArn": {
+                  "type": "string",
+                  "description": "Target ARN (optional for Publish)"
+                },
+                "Subject": {
+                  "type": "string",
+                  "description": "Message subject (optional for Publish)"
+                },
+                "MessageStructure": {
+                  "type": "string",
+                  "description": "Message structure (e.g., 'json') (optional for Publish)"
+                },
+                "MessageAttributes": {
+                  "type": "object",
+                  "description": "Message attributes (optional for Publish)"
+                }
               }
             }
           }
@@ -1337,6 +1442,7 @@
   "dependencies": {
     "@aws-sdk/client-cloudwatch-logs": "^3.948.0",
     "@aws-sdk/client-dynamodb": "^3.948.0",
+    "@aws-sdk/client-ec2": "^3.948.0",
     "@aws-sdk/client-glue": "^3.948.0",
     "@aws-sdk/client-iam": "^3.948.0",
     "@aws-sdk/client-lambda": "^3.948.0",
