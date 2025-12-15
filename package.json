@@ -1002,6 +1002,7 @@
                 "ListObjectsV2",
                 "ListObjectVersions",
                 "GetBucketPolicy",
+                "GetBucketNotificationConfiguration",
                 "GetObject",
                 "PutObject",
                 "DeleteObject",

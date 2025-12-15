@@ -10,6 +10,7 @@ import {
   ListObjectsV2Command,
   ListObjectVersionsCommand,
   GetBucketPolicyCommand,
+  GetBucketNotificationConfigurationCommand,
   GetObjectCommand,
   PutObjectCommand,
   DeleteObjectCommand,
@@ -20,6 +21,7 @@ import {
   ListObjectsV2CommandOutput,
   ListObjectVersionsCommandOutput,
   GetBucketPolicyCommandOutput,
+  GetBucketNotificationConfigurationCommandOutput,
   GetObjectCommandOutput,
   PutObjectCommandOutput,
   DeleteObjectCommandOutput,
@@ -49,7 +51,8 @@ type S3Command =
   | 'ListBuckets'
   | 'ListObjectsV2'
   | 'ListObjectVersions'
-  | 'GetBucketPolicy';
+  | 'GetBucketPolicy'
+  | 'GetBucketNotificationConfiguration';
 
 // Input interface - command + params object
 interface S3ToolInput {
@@ -117,6 +120,10 @@ interface CopyObjectParams {
   MetadataDirective?: MetadataDirective;
 }
 interface GetBucketPolicyParams {
+  Bucket: string;
+}
+
+interface GetBucketNotificationConfigurationParams {
   Bucket: string;
 }
 
@@ -231,6 +238,15 @@ export class S3Tool implements vscode.LanguageModelTool<S3ToolInput> {
   private async executeGetBucketPolicy(params: GetBucketPolicyParams): Promise<GetBucketPolicyCommandOutput> {
     const client = await this.getS3Client();
     const command = new GetBucketPolicyCommand(params);
+    return await client.send(command);
+  }
+
+  /**
+   * Execute GetBucketNotificationConfiguration command
+   */
+  private async executeGetBucketNotificationConfiguration(params: GetBucketNotificationConfigurationParams): Promise<GetBucketNotificationConfigurationCommandOutput> {
+    const client = await this.getS3Client();
+    const command = new GetBucketNotificationConfigurationCommand(params);
     return await client.send(command);
   }
 
@@ -363,6 +379,9 @@ export class S3Tool implements vscode.LanguageModelTool<S3ToolInput> {
       
       case 'GetBucketPolicy':
         return await this.executeGetBucketPolicy(params as GetBucketPolicyParams);
+
+      case 'GetBucketNotificationConfiguration':
+        return await this.executeGetBucketNotificationConfiguration(params as GetBucketNotificationConfigurationParams);
       
       case 'GetObject':
         return await this.executeGetObject(params as GetObjectParams);
