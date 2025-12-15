@@ -376,14 +376,142 @@
               "type": "object",
               "description": "REQUIRED parameters object. Always include this even if empty. Use native EC2 API field names (e.g., InstanceIds, Filters, Owners).",
               "properties": {
-                "InstanceId": { "type": "string", "description": "Single instance ID (for GetConsoleOutput, GetPasswordData)" },
-                "InstanceIds": { "type": "array", "items": { "type": "string" }, "description": "List of instance IDs (for DescribeInstances, DescribeInstanceStatus)" },
-                "Filters": { "type": "array", "items": { "type": "object" }, "description": "EC2 filter array with Name and Values[]" },
-                "Owners": { "type": "array", "items": { "type": "string" }, "description": "Image owners (for DescribeImages)" },
-                "DryRun": { "type": "boolean", "description": "Validate permissions without running the request" },
-                "MaxResults": { "type": "number", "description": "Pagination: maximum results" },
-                "NextToken": { "type": "string", "description": "Pagination token for next page" },
-                "RegionNames": { "type": "array", "items": { "type": "string" }, "description": "Specific region names (for DescribeRegions)" }
+                "InstanceId": {
+                  "type": "string",
+                  "description": "Single instance ID (for GetConsoleOutput, GetPasswordData)"
+                },
+                "InstanceIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "List of instance IDs (for DescribeInstances, DescribeInstanceStatus)"
+                },
+                "Filters": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  },
+                  "description": "EC2 filter array with Name and Values[]"
+                },
+                "Owners": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Image owners (for DescribeImages)"
+                },
+                "DryRun": {
+                  "type": "boolean",
+                  "description": "Validate permissions without running the request"
+                },
+                "MaxResults": {
+                  "type": "number",
+                  "description": "Pagination: maximum results"
+                },
+                "NextToken": {
+                  "type": "string",
+                  "description": "Pagination token for next page"
+                },
+                "RegionNames": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Specific region names (for DescribeRegions)"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "apigateway",
+        "toolReferenceName": "apigateway",
+        "displayName": "API Gateway Tool",
+        "modelDescription": "Execute AWS API Gateway REST API commands. ALWAYS provide params object. Examples: GetRestApis {command:'GetRestApis', params:{limit:25}}. GetResources {command:'GetResources', params:{restApiId:'abc'}}. GetMethod {command:'GetMethod', params:{restApiId:'abc', resourceId:'xyz', httpMethod:'GET'}}.",
+        "userDescription": "Inspect API Gateway REST APIs, resources, stages, usage, and more",
+        "tags": [
+          "aws",
+          "api-gateway",
+          "api",
+          "rest",
+          "gateway"
+        ],
+        "canBeReferencedInPrompt": true,
+        "icon": "$(globe)",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "command",
+            "params"
+          ],
+          "properties": {
+            "command": {
+              "type": "string",
+              "enum": [
+                "GetAccount",
+                "GetApiKey",
+                "GetApiKeys",
+                "GetAuthorizer",
+                "GetAuthorizers",
+                "GetBasePathMapping",
+                "GetBasePathMappings",
+                "GetClientCertificate",
+                "GetClientCertificates",
+                "GetDeployment",
+                "GetDeployments",
+                "GetDocumentationPart",
+                "GetDocumentationParts",
+                "GetDocumentationVersion",
+                "GetDocumentationVersions",
+                "GetDomainName",
+                "GetDomainNames",
+                "GetExport",
+                "GetGatewayResponse",
+                "GetGatewayResponses",
+                "GetIntegration",
+                "GetIntegrationResponse",
+                "GetMethod",
+                "GetModel",
+                "GetModels",
+                "GetRequestValidator",
+                "GetRequestValidators",
+                "GetResource",
+                "GetResources",
+                "GetRestApi",
+                "GetRestApis",
+                "GetSdk",
+                "GetSdkType",
+                "GetSdkTypes",
+                "GetStage",
+                "GetStages",
+                "GetTags",
+                "GetUsage",
+                "GetUsagePlan",
+                "GetUsagePlanKey",
+                "GetUsagePlanKeys",
+                "GetUsagePlans",
+                "GetVpcLink",
+                "GetVpcLinks"
+              ],
+              "description": "The API Gateway command to execute"
+            },
+            "params": {
+              "type": "object",
+              "description": "REQUIRED parameters object. Always include this even if empty. Use native API Gateway field names (e.g., restApiId, resourceId, httpMethod, limit, position).",
+              "properties": {
+                "restApiId": { "type": "string", "description": "REST API identifier (for many resource operations)" },
+                "resourceId": { "type": "string", "description": "Resource ID" },
+                "httpMethod": { "type": "string", "description": "HTTP method (e.g., GET, POST)" },
+                "usagePlanId": { "type": "string", "description": "Usage plan ID" },
+                "keyId": { "type": "string", "description": "Usage plan key ID" },
+                "domainName": { "type": "string", "description": "Custom domain name" },
+                "stageName": { "type": "string", "description": "Stage name" },
+                "position": { "type": "string", "description": "Pagination position token" },
+                "limit": { "type": "number", "description": "Maximum results for list operations" },
+                "name": { "type": "string", "description": "Common name filter for certain commands" },
+                "includeCredentials": { "type": "boolean", "description": "Whether to include credentials where supported" }
               }
             }
           }
@@ -1440,6 +1568,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "@aws-sdk/client-api-gateway": "^3.948.0",
     "@aws-sdk/client-cloudwatch-logs": "^3.948.0",
     "@aws-sdk/client-dynamodb": "^3.948.0",
     "@aws-sdk/client-ec2": "^3.948.0",

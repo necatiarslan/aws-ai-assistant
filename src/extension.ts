@@ -18,6 +18,7 @@ import { StepFuncTool } from './stepfunc/StepFuncTool';
 import { GlueTool } from './glue/GlueTool';
 import { IAMTool } from './iam/IAMTool';
 import { DynamoDBTool } from './dynamodb/DynamoDBTool';
+import { APIGatewayTool } from './apigateway/APIGatewayTool';
 
 export function activate(context: vscode.ExtensionContext) {
 	ui.logToOutput('Aws AI Assistant is now active!');
@@ -35,6 +36,7 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.lm.registerTool('ec2', new EC2Tool()),
 		vscode.lm.registerTool('s3', new S3Tool()),
 		vscode.lm.registerTool('sns', new SNSTool()),
+		vscode.lm.registerTool('apigateway', new APIGatewayTool()),
 		vscode.lm.registerTool('fileOperations', new FileOperationsTool()),
 		vscode.lm.registerTool('session', new SessionTool()),
 		vscode.lm.registerTool('cloudWatchLogs', new CloudWatchLogTool()),
