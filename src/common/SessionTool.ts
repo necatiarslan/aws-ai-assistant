@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as ui from './UI';
 import { Session } from './Session';
+import { StatusBarItem } from '../statusbar/StatusBarItem';
 
 // Input interface
 interface SessionToolInput {
@@ -8,7 +9,7 @@ interface SessionToolInput {
   params?: SessionParams;
 }
 
-type SessionCommand = 'GetSession' | 'SetSession';
+type SessionCommand = 'GetSession' | 'SetSession' | 'ListProfiles';
 
 interface SessionParams {
   AwsProfile?: string;
@@ -58,6 +59,8 @@ export class SessionTool implements vscode.LanguageModelTool<SessionToolInput> {
         return this.getSession();
       case 'SetSession':
         return this.setSession(params);
+      case 'ListProfiles':
+        return this.listProfiles();
       default:
         throw new Error(`Unsupported command: ${command}`);
     }
@@ -92,5 +95,16 @@ export class SessionTool implements vscode.LanguageModelTool<SessionToolInput> {
     Session.Current.SaveState();
 
     return this.getSession();
+  }
+
+  private listProfiles() {
+    const statusBar = StatusBarItem.Current;
+    if (!statusBar) {
+      throw new Error('Status bar not initialized');
+    }
+
+    return {
+      Profiles: statusBar.Profiles,
+    };
   }
 }

@@ -58,8 +58,8 @@
         "name": "session",
         "toolReferenceName": "session",
         "displayName": "Session Tool",
-        "modelDescription": "Get or set AWS session values (AwsProfile, AwsEndPoint, AwsRegion). Use command GetSession to read current values. Use SetSession with params to update any of AwsProfile, AwsEndPoint, AwsRegion.",
-        "userDescription": "Manage AWS session profile, endpoint, and region",
+        "modelDescription": "Get or set AWS session values (AwsProfile, AwsEndPoint, AwsRegion) or list available profiles. Use GetSession to read current values. Use SetSession with params to update any of AwsProfile, AwsEndPoint, AwsRegion. Use ListProfiles to return the profile names detected from the AWS config/credentials files.",
+        "userDescription": "Manage AWS session profile, endpoint, region, and list available profiles",
         "tags": [
           "aws",
           "session",
@@ -79,9 +79,10 @@
               "type": "string",
               "enum": [
                 "GetSession",
-                "SetSession"
+                "SetSession",
+                "ListProfiles"
               ],
-              "description": "Use GetSession to read current values. Use SetSession to update session values."
+              "description": "Use GetSession to read current values. Use SetSession to update session values. Use ListProfiles to retrieve available profile names."
             },
             "params": {
               "type": "object",
