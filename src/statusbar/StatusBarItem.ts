@@ -5,10 +5,11 @@ import * as ui from '../common/UI';
 import { ParsedIniData } from "@aws-sdk/types";
 import { existsSync } from 'fs';
 import { Session } from '../common/Session';
+import { AIHandler } from '../chat/AIHandler';
 
 export class StatusBarItem {
 
-    public static WorkingText:string = "$(copilot) Aws $(sync~spin)";
+    public static WorkingText:string = "$(plug) Aws $(sync~spin)";
     public static Current: StatusBarItem;
 
     public awsAssistantStatusBarItem: vscode.StatusBarItem;
@@ -160,16 +161,16 @@ export class StatusBarItem {
         //     this.awsProfileStatusBarItem.tooltip = "Select Profile";
         //     this.awsProfileStatusBarItem.show();
         // }
-        this.ToolTip = "@Aws AI Assistant";
+        this.ToolTip = "Nebula: @Aws AI Assistant";
         if(!Session.Current?.CurrentCredentials)
         {
             this.ToolTip += "\nNo Aws Credentials Found !!!";
-            this.Text = "$(copilot) Aws No Credentials";
+            this.Text = "$(plug) Aws No Credentials";
         }
         else
         {
             this.ToolTip += "\nYou have Aws Credentials";
-            this.Text = "$(copilot) Aws $(check)";
+            this.Text = "$(plug) Aws $(check)";
         }
 
         this.ToolTip += "\nProfile: " + (Session.Current?.AwsProfile || "default");
@@ -194,7 +195,8 @@ export class StatusBarItem {
     public static async StatusBarClicked()
     {
         ui.logToOutput('StatusBarItem.StatusBarClicked Started');
-        StatusBarItem.OpenCommandPalette();
+        //StatusBarItem.OpenCommandPalette();
+        AIHandler.Current.askAI();
     }
 
     public static async RefreshButtonClicked()

@@ -1,6 +1,6 @@
-# Aws AI Assistant
+# Nebula: AWS AI Assistant
 
-Aws AI Assistant is a Visual Studio Code extension that lets you manage AWS resources through the VS Code chat experience. It exposes a set of AWS-aware language model tools (S3, SQS, EC2, Lambda, STS, CloudWatch Logs, CloudFormation, RDS, DynamoDB, IAM, Step Functions, Glue, API Gateway, and more) so you can ask natural-language questions and have actions executed on your behalf with your AWS credentials.
+Nebula AWS AI Assistant is a Visual Studio Code extension that lets you manage AWS resources through the VS Code chat experience. It exposes a set of AWS-aware language model tools (S3, SQS, EC2, Lambda, STS, CloudWatch Logs, CloudFormation, RDS, DynamoDB, IAM, Step Functions, Glue, API Gateway, and more) so you can ask natural-language questions and have actions executed on your behalf with your AWS credentials.
 
 ## What you can do
 - Ask "@aws" in the chat to inspect or operate AWS services using built-in tools.

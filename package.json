@@ -1,6 +1,6 @@
 {
   "name": "aws-ai-assistant",
-  "displayName": "AI Connect for AWS",
+  "displayName": "Nebula: AWS AI Assistant",
   "description": "Access AWS services through AI chat and tools within VS Code.",
   "version": "1.0.0",
   "publisher": "NecatiARSLAN",

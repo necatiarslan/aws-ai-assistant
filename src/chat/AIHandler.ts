@@ -6,6 +6,7 @@ import * as path from 'path';
 import * as MessageHub from '../common/MessageHub';
 
 const PARTICIPANT_ID = 'aws-ai-assistant.chat';
+const DEFAULT_PROMPT = "How can I assist you with AWS today?";
 
 export class AIHandler {
   public static Current: AIHandler;
@@ -66,6 +67,7 @@ export class AIHandler {
 
     // Check if user is expressing appreciation
     const usedAppreciated = request.prompt.toLowerCase().includes('thank');
+    const defaultPromptUsed = request.prompt === DEFAULT_PROMPT;
 
     // 3. Select Model and Send Request
     try {
@@ -186,7 +188,7 @@ export class AIHandler {
         });
       }
 
-      if (usedAppreciated) {
+      if (usedAppreciated || defaultPromptUsed) {
           stream.markdown("\n\n\n")
           stream.markdown("\n🙏 [Donate](https://github.com/sponsors/necatiarslan) if you found me useful!");
           stream.markdown("\n🤔 Request a [New Feature](https://github.com/necatiarslan/aws-ai-assistant/issues/new)");
@@ -241,7 +243,7 @@ export class AIHandler {
     }
 
     await vscode.commands.executeCommand(commandId, {
-      query: '@aws ' + (prompt || 'Help me with AWS tasks')
+      query: '@aws ' + (prompt || DEFAULT_PROMPT)
     });
   }
 
