@@ -155,10 +155,24 @@ export class AIHandler {
         }
       }
 
-      if(this.latestResource && this.latestResource["CloudWatch Log Group"] && this.latestResource["CloudWatch Log Stream"]){
+      if(this.latestResource && this.latestResource["CloudWatch Log Group"]){
         const logGroup = this.latestResource["CloudWatch Log Group"].name;
-        const logStream = this.latestResource["CloudWatch Log Stream"].name;
-
+        const logStream = this.latestResource["CloudWatch Log Stream"]?.name;
+        
+        stream.markdown("\n\n");
+        if (logStream) {
+          stream.button({
+            command: 'aws-ai-assistant.OpenCloudWatchView',
+            title: 'Open Log View',
+            arguments: [logGroup, logStream]
+          });
+        } else {
+          stream.button({
+            command: 'aws-ai-assistant.OpenCloudWatchView',
+            title: 'Open Log View',
+            arguments: [logGroup]
+          });
+        }
       }
 
       if (usedAppreciated) {
@@ -187,7 +201,7 @@ export class AIHandler {
     return commands.includes('workbench.action.chat.open');
   }
 
-  public async askAI(): Promise<void> {
+  public async askAI(prompt?:string): Promise<void> {
     ui.logToOutput('AIHandler.askAI Started');
 
     if (!await this.isChatCommandAvailable()) {
@@ -216,7 +230,7 @@ export class AIHandler {
     }
 
     await vscode.commands.executeCommand(commandId, {
-      query: '@aws Help me with AWS tasks'
+      query: '@aws ' + (prompt || 'Help me with AWS tasks')
     });
   }
 

@@ -2,7 +2,10 @@
 import * as vscode from "vscode";
 import * as ui from '../common/UI';
 import * as api from './API';
-import { OutputLogEvent } from '@aws-sdk/client-cloudwatch-logs';
+import { OutputLogEvent } from "@aws-sdk/client-cloudwatch-logs";
+import * as tmp from 'tmp';
+import * as fs from 'fs';
+import { Session } from "../common/Session";
 
 export class CloudWatchLogView {
     public static Current: CloudWatchLogView | undefined;
@@ -13,14 +16,20 @@ export class CloudWatchLogView {
     public Region: string;
     public LogGroup:string;
     public LogStream:string;
+    public LogStreams: string[] = [];
 
     public StartTime:number = 0;
     public LogEvents:OutputLogEvent[] = [];
-    public FilterText:string = "";
-    public HideText:string = "";
     public SearchText:string = "";
+    public HideText:string = "";
+    public FilterText:string = "";
+    public WrapText:boolean = true; // Default to wrapped text
+    public UseDateTimeFilter:boolean = false; // Date/Time filter checkbox
+    public FilterStartDate:string = ""; // YYYY-MM-DD format
+    public FilterStartTime:string = "00"; // HH format (0-23)
 
-    private Timer: NodeJS.Timer | undefined;
+    private Timer: ReturnType<typeof setInterval> | undefined;
+
 
     private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, Region: string, LogGroup:string, LogStream:string) {
         ui.logToOutput('CloudWatchLogView.constructor Started');
@@ -34,8 +43,10 @@ export class CloudWatchLogView {
         this._panel = panel;
         this._panel.onDidDispose(this.dispose, null, this._disposables);
         this._setWebviewMessageListener(this._panel.webview);
-        this.LoadLogs();
-        //TODO: this.StartTimer();
+        this.LoadLogStreams().then(() => {
+            this.LoadLogs();
+            this.StartTimer();
+        });
         ui.logToOutput('CloudWatchLogView.constructor Completed');
     }
 
@@ -46,13 +57,48 @@ export class CloudWatchLogView {
         ui.logToOutput('CloudWatchLogView.RenderHmtl Completed');
     }
 
+    public async LoadLogStreams(){
+        ui.logToOutput('CloudWatchLogView.LoadLogStreams Started');
+        if(!Session.Current){return;}
+
+        var logStreamsResult = await api.GetLogStreams(this.Region, this.LogGroup, undefined, 50);
+        if(logStreamsResult.isSuccessful && logStreamsResult.result)
+        {
+            this.LogStreams = logStreamsResult.result
+                .map(ls => ls.logStreamName)
+                .filter((name): name is string => name !== undefined);
+            ui.logToOutput('CloudWatchLogView.LoadLogStreams Count=' + this.LogStreams.length);
+        }
+        else
+        {
+            ui.logToOutput('CloudWatchLogView.LoadLogStreams No LogStreams Found');
+            this.LogStreams = [];
+        }
+    }
+
     public async LoadLogs(){
         ui.logToOutput('CloudWatchLogView.LoadLogs Started');
+        if(!Session.Current){return;}
 
-        var result = await api.GetLogEvents(this.Region, this.LogGroup, this.LogStream);
+        if(!this.LogStream)
+        {
+            // get latest logstream
+            var logStreamsResult = await api.GetLogStreams(this.Region, this.LogGroup, undefined, 1);
+            if(logStreamsResult.isSuccessful && logStreamsResult.result && logStreamsResult.result.length > 0)
+            {
+                this.LogStream = logStreamsResult.result[0].logStreamName || "";
+                ui.logToOutput('CloudWatchLogView.LoadLogs Latest LogStream=' + this.LogStream);
+            }
+            else
+            {
+                ui.logToOutput('CloudWatchLogView.LoadLogs No LogStream Found');
+                return;
+            }
+        }
+
+        var result = await api.GetLogEvents(this.Region, this.LogGroup, this.LogStream, this.StartTime);
         if(result.isSuccessful)
         {
-            this.LogEvents = [];
             if(result.result.length > 0)
             {
                 this.LogEvents = this.LogEvents.concat(result.result);
@@ -86,6 +132,38 @@ export class CloudWatchLogView {
     public ResetCurrentState(){
         this.LogEvents = [];
         this.StartTime = 0;
+    }
+
+    /**
+     * Get the first log event timestamp for default date/time filter values
+     */
+    private GetFirstLogTimestamp(): Date | null {
+        if (this.LogEvents && this.LogEvents.length > 0 && this.LogEvents[0].timestamp) {
+            return new Date(this.LogEvents[0].timestamp);
+        }
+        return null;
+    }
+
+    /**
+     * Get default filter date in YYYY-MM-DD format from first log
+     */
+    private GetDefaultFilterDate(): string {
+        const firstLog = this.GetFirstLogTimestamp();
+        if (firstLog) {
+            return firstLog.toISOString().split('T')[0];
+        }
+        return new Date().toISOString().split('T')[0];
+    }
+
+    /**
+     * Get default filter time (hour) from first log
+     */
+    private GetDefaultFilterTime(): string {
+        const firstLog = this.GetFirstLogTimestamp();
+        if (firstLog) {
+            return firstLog.getHours().toString().padStart(2, '0');
+        }
+        return '00';
     }
 
     public static Render(extensionUri: vscode.Uri, Region: string, LogGroup:string, LogStream:string) {
@@ -139,11 +217,11 @@ export class CloudWatchLogView {
         }
 
         if(this.SearchText)
-        {
-            const filterTextArray = this.SearchText.split(",");
-            for(var i = 0; i < filterTextArray.length; i++)
+        {        
+            const searchTextArray = this.SearchText.split(",");
+            for(var i = 0; i < searchTextArray.length; i++)
             {
-                const regex = new RegExp("(" + filterTextArray[i].trim() + ")", "i");
+                const regex = new RegExp("(" + searchTextArray[i].trim() + ")", "i");
                 result=result.replace(regex, (match, capture1) => `<span class="color_code_search_result">${capture1}</span>`);
             }
         }
@@ -154,11 +232,12 @@ export class CloudWatchLogView {
     private _getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
         ui.logToOutput('CloudWatchLogView._getWebviewContent Started');
 
-
+        //file URIs
         const vscodeElementsUri = ui.getUri(webview, extensionUri, ["node_modules", "@vscode-elements", "elements", "dist", "bundled.js"]);
         const mainUri = ui.getUri(webview, extensionUri, ["media", "main.js"]);
         const styleUri = ui.getUri(webview, extensionUri, ["media", "style.css"]);
-        const codiconsUri = ui.getUri(webview, extensionUri, ["node_modules", "@vscode", "codicons", "dist", "codicon.css"]);
+        const codiconsUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'node_modules', '@vscode/codicons', 'dist', 'codicon.css'));
+
 
         let logRowHtml:string="";
         
@@ -175,7 +254,11 @@ export class CloudWatchLogView {
                 {
                     timeString = new Date(event.timestamp).toLocaleTimeString();
                 }
-                logRowHtml += '<tr><td>' + rowNumber.toString() + '</td><td>' + this.SetCustomColorCoding(event.message) + '</td><td style="white-space:nowrap;">' + timeString + '</td></tr>';
+                // Apply wrapping styles based on WrapText state
+                const messageStyle = this.WrapText 
+                    ? 'word-wrap: break-word; overflow-wrap: break-word; white-space: normal; vertical-align: top;'
+                    : 'white-space: nowrap; vertical-align: top;';
+                logRowHtml += '<tr><td>' + rowNumber.toString() + '</td><td style="' + messageStyle + '" >' + this.SetCustomColorCoding(event.message) + '</td><td style="white-space:nowrap;">' + timeString + '</td></tr>';
             }
         }
         else
@@ -198,38 +281,71 @@ export class CloudWatchLogView {
       <body>  
         
         <div style="display: flex; align-items: center;">
-            <h2>${this.LogGroup}</h2>
+            <h1>${this.LogGroup}</h1>
         </div>
 
-        <div style="display: flex; align-items: center;">
-            <h2>${this.LogStream}</h2>
+        <div style="margin-bottom: 10px;">
+            <vscode-single-select id="logstream_select" style="width: 400px; --vscode-font-size: 16px;">
+                ${this.LogStreams.map(stream => 
+                    `<vscode-option ${stream === this.LogStream ? 'selected' : ''} value="${stream}">${stream}</vscode-option>`
+                ).join('')}
+            </vscode-single-select>
         </div>
 
         <table>
             <tr>
-                <td style="text-align:left">
-                    <vscode-button id="refresh" >Refresh</vscode-button>
-                    <vscode-button id="export_logs" >Export</vscode-button>
+                <td style="text-align:left"  width="300px">
+                    <vscode-button appearance="primary" id="pause_timer" >${this.IsTimerTicking()?"Pause":"Resume"}</vscode-button>
+                    <vscode-button appearance="primary" id="refresh" >Refresh</vscode-button>
+                    <vscode-button appearance="primary" id="export_logs" >Export Logs</vscode-button>
+                    <vscode-button appearance="secondary" id="ask_ai" >Ask AI</vscode-button>
+                </td>
+                <td style="text-align:left" width="20px">
+                    <div style="visibility: ${this.IsTimerTicking() ? "visible" : "hidden"}; display: flex; align-items: center;">
+                    <vscode-progress-ring></vscode-progress-ring>
+                    </div>
                 </td>
                 <td style="text-align:right">
                     <vscode-textfield id="search_text" placeholder="Search" value="${this.SearchText}" style="width: 20ch; margin: 0;" >
                         <vscode-icon slot="content-before" name="search" title="search"></vscode-icon>
                     </vscode-textfield>
-                    <vscode-textfield id="filter_text" placeholder="Filter" value="${this.FilterText}" style="width: 10ch; margin: 0;" >
+                    <vscode-textfield id="filter_text" placeholder="Filter" value="${this.FilterText}" style="width: 20ch; margin: 0;" >
                         <vscode-icon slot="content-before" name="filter" title="filter"></vscode-icon>
                     </vscode-textfield>
-                    <vscode-textfield id="hide_text" placeholder="Hide" value="${this.HideText}" style="width: 10ch; margin: 0;" >
+                    <vscode-textfield id="hide_text" placeholder="Hide" value="${this.HideText}" style="width: 20ch; margin: 0;" >
                         <vscode-icon slot="content-before" name="eye-closed" title="eye-closed"></vscode-icon>
                     </vscode-textfield>
+                    <vscode-checkbox id="wrap_text" ${this.WrapText ? 'checked' : ''} style="margin-left: 10px;">
+                        Wrap
+                    </vscode-checkbox>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="3" style="text-align:right; padding-top: 10px;">
+                    <vscode-checkbox id="use_datetime_filter" ${this.UseDateTimeFilter ? 'checked' : ''} style="margin-right: 10px;">
+                        Date/Time Filter
+                    </vscode-checkbox>
+                    <label style="margin-right: 5px;">From:</label>
+                    <input type="date" id="filter_start_date" value="${this.FilterStartDate || this.GetDefaultFilterDate()}" 
+                           style="padding: 4px 8px; margin-right: 10px; background: var(--vscode-input-background); 
+                                  color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border);" 
+                           ${!this.UseDateTimeFilter ? 'disabled' : ''} />
+                    <label style="margin-right: 5px;">Hour:</label>
+                    <select id="filter_start_time" 
+                            style="padding: 4px 8px; background: var(--vscode-input-background); 
+                                   color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border);" 
+                            ${!this.UseDateTimeFilter ? 'disabled' : ''}>
+                        ${this.GenerateHourOptions(this.FilterStartTime || this.GetDefaultFilterTime())}
+                    </select>
                 </td>
             </tr>
         </table>
 
-        <table>
+        <table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
             <tr>
-                <th width="5px">#</th>
+                <th style="width: 10px;">#</th>
                 <th>Message</th>
-                <th  width="50px">Time</th>
+                <th style="width: 100px;">Time</th>
             </tr>
 
             ${logRowHtml}
@@ -237,12 +353,27 @@ export class CloudWatchLogView {
         </table>
 
         <br>
+        Region : ${this.Region} 
+        <br>
+        LogGroup : ${this.LogGroup} 
+        <br>
+        LogStream : ${this.LogStream}
+        
+        <br>
+        <br>
         <br>
                     
         <table>
             <tr>
-                <td colspan="3">
-                    <a href="https://github.com/necatiarslan/aws-lambda-vscode-extension/issues/new">Bug Report & Feature Request</a>
+                <td>
+                    <a href="https://github.com/necatiarslan/aws-ai-assistant/issues/new" style="cursor: pointer; text-decoration: none;">Bug Report & Feature Request</a>
+                </td>
+            </tr>
+        </table>
+        <table>
+            <tr>
+                <td>
+                    <a href="https://github.com/sponsors/necatiarslan" style="cursor: pointer; text-decoration: none;">Donate to support this extension</a>
                 </td>
             </tr>
         </table>
@@ -253,16 +384,26 @@ export class CloudWatchLogView {
         return result;
     }
 
+    /**
+     * Generate HTML options for hour selection (0-23)
+     */
+    private GenerateHourOptions(selectedHour: string): string {
+        let options = '';
+        for (let i = 0; i < 24; i++) {
+            const hourValue = i.toString().padStart(2, '0');
+            const selected = hourValue === selectedHour ? 'selected' : '';
+            options += `<option value="${hourValue}" ${selected}>${hourValue}:00</option>`;
+        }
+        return options;
+    }
+
     private IsHideEvent(event: OutputLogEvent) : boolean
     {
-        if(this.FilterText.length > 0)
-        {
-            let searchTerms = this.FilterText.split(",");
-            for (var term of searchTerms) {
-                const regex = new RegExp(term.trim(), "i");
-                if (event.message?.search(regex) !== -1) { return false; }
+        // Check date/time filter first
+        if (this.UseDateTimeFilter && event.timestamp) {
+            if (!this.IsEventInDateTimeRange(event)) {
+                return true; // Hide events outside the date/time range
             }
-            return true;
         }
 
         if(this.HideText.length > 0)
@@ -275,7 +416,32 @@ export class CloudWatchLogView {
             return false;
         }
 
+        if(this.FilterText.length > 0)
+        {
+            let searchTerms = this.FilterText.split(",");
+            for (var term of searchTerms) {
+                const regex = new RegExp(term.trim(), "i");
+                if (event.message?.search(regex) !== -1) { return false; }
+            }
+            return true;
+        }
+
         return false;
+    }
+
+    /**
+     * Check if log event is within the selected date/time range
+     */
+    private IsEventInDateTimeRange(event: OutputLogEvent): boolean {
+        if (!event.timestamp || !this.FilterStartDate || !this.FilterStartTime) {
+            return true;
+        }
+
+        const eventDate = new Date(event.timestamp);
+        const filterDateTime = new Date(`${this.FilterStartDate}T${this.FilterStartTime}:00:00`);
+        
+        // Show events from the selected date/time onwards
+        return eventDate >= filterDateTime;
     }
 
     private _setWebviewMessageListener(webview: vscode.Webview) {
@@ -287,20 +453,70 @@ export class CloudWatchLogView {
                 ui.logToOutput('CloudWatchLogView._setWebviewMessageListener Message Received ' + message.command);
                 switch (command) {
                     case "refresh":
-                        this.FilterText = message.filter_text;
-                        this.HideText = message.hide_text;
                         this.SearchText = message.search_text;
-                        this.LoadLogs();;
+                        this.HideText = message.hide_text;
+                        this.FilterText = message.filter_text;
+                        this.WrapText = message.wrap_text !== undefined ? message.wrap_text : this.WrapText;
+                        this.UseDateTimeFilter = message.use_datetime_filter !== undefined ? message.use_datetime_filter : this.UseDateTimeFilter;
+                        this.FilterStartDate = message.filter_start_date || this.FilterStartDate;
+                        this.FilterStartTime = message.filter_start_time || this.FilterStartTime;
+                        this.LoadLogs();
+                        this.RenderHtml();
+                        return;
+
+                    case "refresh_nologload":
+                        this.SearchText = message.search_text;
+                        this.HideText = message.hide_text;
+                        this.FilterText = message.filter_text;
+                        this.WrapText = message.wrap_text !== undefined ? message.wrap_text : this.WrapText;
+                        this.UseDateTimeFilter = message.use_datetime_filter !== undefined ? message.use_datetime_filter : this.UseDateTimeFilter;
+                        this.FilterStartDate = message.filter_start_date || this.FilterStartDate;
+                        this.FilterStartTime = message.filter_start_time || this.FilterStartTime;
                         this.RenderHtml();
                         return;
 
                     case "pause_timer":
-                        this.IsTimerTicking() ? this.StopTimer() : this.StartTimer();
+                        if (this.IsTimerTicking()) {
+                            this.StopTimer();
+                        } else {
+                            this.StartTimer();
+                        }
                         this.RenderHtml();
                         return;
                     
                     case "export_logs":
                         this.ExportLogs();
+                        return;
+                    
+                    case "ask_ai":
+                        this.AskAI();
+                        return;
+                    
+                    case "toggle_wrap":
+                        this.WrapText = message.wrap_text;
+                        this.RenderHtml();
+                        return;
+                    
+                    case "toggle_datetime_filter":
+                        this.UseDateTimeFilter = message.use_datetime_filter;
+                        if (this.UseDateTimeFilter && !this.FilterStartDate) {
+                            // Set defaults from first log if not already set
+                            this.FilterStartDate = this.GetDefaultFilterDate();
+                            this.FilterStartTime = this.GetDefaultFilterTime();
+                        }
+                        this.RenderHtml();
+                        return;
+                    
+                    case "update_datetime_filter":
+                        this.FilterStartDate = message.filter_start_date;
+                        this.FilterStartTime = message.filter_start_time;
+                        this.RenderHtml();
+                        return;
+                    
+                    case "logstream_changed":
+                        this.LogStream = message.logstream;
+                        this.ResetCurrentState();
+                        this.LoadLogs();
                         return;
                 }
 
@@ -328,7 +544,7 @@ export class CloudWatchLogView {
         ui.logToOutput('CloudWatchLogView.StartTimer Started');
 
         if (this.Timer) {
-            //TODO: clearInterval(this.Timer);//stop prev checking
+            clearInterval(this.Timer);//stop prev checking
             this.Timer = undefined;
         }
 
@@ -338,7 +554,7 @@ export class CloudWatchLogView {
     async StopTimer() {
         ui.logToOutput('CloudWatchLogView.StopTimer Started');
         if (this.Timer) {
-            //TODO: clearInterval(this.Timer);//stop prev checking
+            clearInterval(this.Timer);//stop prev checking
             this.Timer = undefined;
         }
     }
@@ -358,13 +574,10 @@ export class CloudWatchLogView {
 
         try 
         {
-            const tmp = require('tmp');
-            var fs = require('fs');
-    
-            let fileName = this.LogStream.replace(/[^a-zA-Z0-9]/g, "_");
+            const fileName = this.LogStream.replace(/[^a-zA-Z0-9]/g, "_");
             const tmpFile = tmp.fileSync({ mode: 0o644, prefix: fileName, postfix: '.log' });
             fs.appendFileSync(tmpFile.name, this.Region + "/" + this.LogGroup + "/" + this.LogStream);
-            for(var message of this.LogEvents)
+            for(const message of this.LogEvents)
             {
                 fs.appendFileSync(tmpFile.name, "\n" + "----------------------------------------------------------");
                 fs.appendFileSync(tmpFile.name, "\n" + message.message);
@@ -372,11 +585,31 @@ export class CloudWatchLogView {
             fs.appendFileSync(tmpFile.name, "\n" + "---------------------------END OF LOGS--------------------");
             ui.openFile(tmpFile.name);    
         } 
-        catch (error:any) 
+        catch (error: unknown) 
         {
-            ui.showErrorMessage('ExportLogs Error !!!', error);
-            ui.logToOutput("ExportLogs Error !!!", error); 
+            ui.showErrorMessage('ExportLogs Error !!!', error as Error);
+            ui.logToOutput("ExportLogs Error !!!", error as Error); 
         }
 
+    }
+
+    async AskAI(){
+        ui.logToOutput('CloudWatchLogView.AskAI Started');
+
+        try 
+        {
+            const { AIHandler } = await import('../chat/AIHandler');
+            if (!AIHandler.Current) {
+                ui.showErrorMessage('AIHandler not initialized', new Error('AI handler is not available'));
+                return;
+            }
+
+            await AIHandler.Current.askAI("Analyse CloudWatch Logs " + this.LogGroup + " Stream:" + this.LogStream);
+        } 
+        catch (error: unknown) 
+        {
+            ui.showErrorMessage('AskAI Error !!!', error as Error);
+            ui.logToOutput("AskAI Error !!!", error as Error); 
+        }
     }
 }

@@ -1,7 +1,7 @@
 {
   "name": "aws-ai-assistant",
-  "displayName": "Aws AI Assistant",
-  "description": "Aws AI Assistant",
+  "displayName": "AI Connect for AWS",
+  "description": "Access AWS services through AI chat and tools within VS Code.",
   "version": "1.0.0",
   "publisher": "NecatiARSLAN",
   "repository": {
@@ -644,10 +644,14 @@
                   "items": {
                     "type": "object",
                     "properties": {
-                      "Name": { "type": "string" },
+                      "Name": {
+                        "type": "string"
+                      },
                       "Values": {
                         "type": "array",
-                        "items": { "type": "string" }
+                        "items": {
+                          "type": "string"
+                        }
                       }
                     }
                   }
@@ -734,17 +738,33 @@
                   "items": {
                     "type": "object",
                     "properties": {
-                      "name": { "type": "string" },
+                      "name": {
+                        "type": "string"
+                      },
                       "value": {
                         "type": "object",
                         "properties": {
-                          "isNull": { "type": "boolean" },
-                          "booleanValue": { "type": "boolean" },
-                          "longValue": { "type": "number" },
-                          "doubleValue": { "type": "number" },
-                          "stringValue": { "type": "string" },
-                          "blobValue": { "type": "string" },
-                          "arrayValue": { "type": "object" }
+                          "isNull": {
+                            "type": "boolean"
+                          },
+                          "booleanValue": {
+                            "type": "boolean"
+                          },
+                          "longValue": {
+                            "type": "number"
+                          },
+                          "doubleValue": {
+                            "type": "number"
+                          },
+                          "stringValue": {
+                            "type": "string"
+                          },
+                          "blobValue": {
+                            "type": "string"
+                          },
+                          "arrayValue": {
+                            "type": "object"
+                          }
                         }
                       }
                     }
@@ -1915,6 +1935,7 @@
     "@types/glob": "^9.0.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "^25.0.0",
+    "@types/tmp": "^0.2.6",
     "@types/vscode": "^1.104.0",
     "@typescript-eslint/eslint-plugin": "^8.49.0",
     "@typescript-eslint/parser": "^8.49.0",
@@ -1944,6 +1965,9 @@
     "@aws-sdk/credential-providers": "^3.948.0",
     "@aws-sdk/types": "^3.936.0",
     "@types/archiver": "^7.0.0",
-    "archiver": "^7.0.1"
+    "@vscode-elements/elements": "^2.3.1",
+    "@vscode/codicons": "^0.0.44",
+    "archiver": "^7.0.1",
+    "tmp": "^0.2.5"
   }
 }

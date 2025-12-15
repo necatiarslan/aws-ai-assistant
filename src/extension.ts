@@ -22,6 +22,7 @@ import { APIGatewayTool } from './apigateway/APIGatewayTool';
 import { RDSTool } from './rds/RDSTool';
 import { RDSDataTool } from './rdsdata/RDSDataTool';
 import { CloudFormationTool } from './cloudformation/CloudFormationTool';
+import { CloudWatchLogView } from './cloudwatch/CloudWatchLogView';
 
 export function activate(context: vscode.ExtensionContext) {
 	ui.logToOutput('Aws AI Assistant is now active!');
@@ -84,6 +85,16 @@ export function activate(context: vscode.ExtensionContext) {
 		} else {
 			ui.showErrorMessage('AWS connectivity test failed.', result.error);
 		}
+	});
+
+	vscode.commands.registerCommand('aws-ai-assistant.OpenCloudWatchView', async (logGroup: string, logStream?: string) => {
+		if (!Session.Current) {
+			ui.showErrorMessage('Session not initialized', new Error('No session'));
+			return;
+		}
+		const region = Session.Current.AwsRegion;
+		const stream = logStream || '';
+		CloudWatchLogView.Render(Session.Current.ExtensionUri, region, logGroup, stream);
 	});
 
 }
