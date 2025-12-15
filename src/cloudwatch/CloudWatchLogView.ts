@@ -234,8 +234,8 @@ export class CloudWatchLogView {
 
         //file URIs
         const vscodeElementsUri = ui.getUri(webview, extensionUri, ["node_modules", "@vscode-elements", "elements", "dist", "bundled.js"]);
-        const mainUri = ui.getUri(webview, extensionUri, ["media", "main.js"]);
-        const styleUri = ui.getUri(webview, extensionUri, ["media", "style.css"]);
+        const mainUri = ui.getUri(webview, extensionUri, ["media", "cloudwatch", "main.js"]);
+        const styleUri = ui.getUri(webview, extensionUri, ["media", "cloudwatch", "style.css"]);
         const codiconsUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'node_modules', '@vscode/codicons', 'dist', 'codicon.css'));
 
 

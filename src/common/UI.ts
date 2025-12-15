@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { MethodResult } from './MethodResult';
 
 var outputChannel: vscode.OutputChannel;
 var logsOutputChannel: vscode.OutputChannel;
@@ -170,4 +171,51 @@ export function isValidDate(dateString: string): boolean {
 export function SanitizeFileName(filename: string): string {
   // Replace invalid characters with underscores
   return filename.replace(/[<>:"/\\|?*\x00-\x1F]/g, '_').replace(/[\u{80}-\u{9F}]/gu, '_');
+}
+
+export function bytesToText(bytes: number | undefined): string {
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  if (bytes === undefined) return '';
+  if (bytes === 0) return '0 Bytes';
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${sizes[i]}`;
+}
+
+export function CopyToClipboard(text:string): MethodResult<boolean>
+{
+  let result = new MethodResult<boolean>();
+  try 
+  {
+    vscode.env.clipboard.writeText(text);
+    result.isSuccessful = true;
+  } 
+  catch (error:any) 
+  {
+    result.isSuccessful=false;
+    showErrorMessage('CopyToClipboard Error !!!', error);
+  }
+  return result;
+}
+
+export function CopyListToClipboard(textList:string[]): MethodResult<boolean>
+{
+  let text: string = "";
+  for(var t of textList)
+  {
+    if(t)
+    {
+      text += t;
+      if(textList.length > 1) text += "\n";
+    }
+  }
+  
+  return CopyToClipboard(text);
+}
+
+export function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+export function withProgress<T>(task: (progress: vscode.Progress<{ increment: number; message?: string }>) => Promise<T>): Promise<T> {
+  return Promise.resolve(vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, cancellable: false }, task));
 }

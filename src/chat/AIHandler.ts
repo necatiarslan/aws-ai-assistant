@@ -175,6 +175,17 @@ export class AIHandler {
         }
       }
 
+      if(this.latestResource && this.latestResource["S3 Bucket"]){
+        const bucket = this.latestResource["S3 Bucket"].name;
+        
+        stream.markdown("\n\n");
+        stream.button({
+          command: 'aws-ai-assistant.OpenS3ExplorerView',
+          title: 'Open S3 View',
+          arguments: [bucket]
+        });
+      }
+
       if (usedAppreciated) {
           stream.markdown("\n\n\n")
           stream.markdown("\n🙏 [Donate](https://github.com/sponsors/necatiarslan) if you found me useful!");

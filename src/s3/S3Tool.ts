@@ -30,6 +30,7 @@ import {
 } from '@aws-sdk/client-s3';
 import { AIHandler } from '../chat/AIHandler';
 import { needsConfirmation, confirmProceed } from '../common/ActionGuard';
+import { S3Explorer } from './S3Explorer';
 import * as os from 'os';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -49,7 +50,8 @@ type S3Command =
   | 'ListObjectsV2'
   | 'ListObjectVersions'
   | 'GetBucketPolicy'
-  | 'GetBucketNotificationConfiguration';
+  | 'GetBucketNotificationConfiguration'
+  | 'OpenS3Explorer';
 
 // Input interface - command + params object
 interface S3ToolInput {
@@ -130,6 +132,11 @@ interface GetObjectParams {
   VersionId?: string;
   DownloadToTemp?: boolean; // If true, download to temp folder and return path
   AsText?: boolean; // If true, return content as text for analysis
+}
+
+interface OpenS3ExplorerParams {
+  Bucket: string;
+  Key?: string; // Optional file/folder path or key
 }
 
 export class S3Tool implements vscode.LanguageModelTool<S3ToolInput> {
@@ -306,6 +313,25 @@ export class S3Tool implements vscode.LanguageModelTool<S3ToolInput> {
   }
 
   /**
+   * Execute OpenS3Explorer command - Opens S3Explorer view
+   */
+  private async executeOpenS3Explorer(params: OpenS3ExplorerParams): Promise<any> {
+    if (!Session.Current) {
+      throw new Error('Session not initialized');
+    }
+
+    // Open the S3Explorer view
+    S3Explorer.Render(Session.Current.ExtensionUri, params.Bucket, params.Key);
+
+    return {
+      success: true,
+      message: `S3 Explorer opened for bucket: ${params.Bucket}${params.Key ? `, key: ${params.Key}` : ''}`,
+      Bucket: params.Bucket,
+      Key: params.Key
+    };
+  }
+
+  /**
    * Convert stream to buffer
    */
   private async streamToBuffer(stream: any): Promise<Buffer> {
@@ -361,6 +387,9 @@ export class S3Tool implements vscode.LanguageModelTool<S3ToolInput> {
       
       case 'CopyObject':
         return await this.executeCopyObject(params as CopyObjectParams);
+      
+      case 'OpenS3Explorer':
+        return await this.executeOpenS3Explorer(params as OpenS3ExplorerParams);
       
       default:
         throw new Error(`Unsupported command: ${command}`);

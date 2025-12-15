@@ -993,8 +993,8 @@
         "name": "s3",
         "toolReferenceName": "s3Generic",
         "displayName": "S3 Generic Tool",
-        "modelDescription": "Execute S3 commands. ALWAYS provide params object. Examples: ListObjectsV2 {command:'ListObjectsV2', params:{Bucket:'bucket-name'}}. PutObject {command:'PutObject', params:{Bucket:'name', Key:'path', Body:'content'}}. DeleteObject {command:'DeleteObject', params:{Bucket:'name', Key:'path'}}. CopyObject {command:'CopyObject', params:{Bucket:'name', CopySource:'/bucket/key', Key:'new-path'}}.",
-        "userDescription": "Execute S3 commands including read, write, and delete operations",
+        "modelDescription": "Execute S3 commands. ALWAYS provide params object. Examples: ListObjectsV2 {command:'ListObjectsV2', params:{Bucket:'bucket-name'}}. PutObject {command:'PutObject', params:{Bucket:'name', Key:'path', Body:'content'}}. DeleteObject {command:'DeleteObject', params:{Bucket:'name', Key:'path'}}. CopyObject {command:'CopyObject', params:{Bucket:'name', CopySource:'/bucket/key', Key:'new-path'}}. OpenS3Explorer {command:'OpenS3Explorer', params:{Bucket:'bucket-name', Key:'optional/path/'}}.",
+        "userDescription": "Execute S3 commands including read, write, delete operations, and open S3 Explorer view",
         "tags": [
           "aws",
           "s3",
@@ -1028,7 +1028,8 @@
                 "GetObject",
                 "PutObject",
                 "DeleteObject",
-                "CopyObject"
+                "CopyObject",
+                "OpenS3Explorer"
               ],
               "description": "The S3 command to execute"
             },
@@ -1920,6 +1921,14 @@
       {
         "command": "aws-ai-assistant.SetDefaultRegion",
         "title": "Aws AI Assistant:Set Default AWS Region"
+      },
+      {
+        "command": "aws-ai-assistant.OpenCloudWatchView",
+        "title": "Aws AI Assistant:Open CloudWatch Log View"
+      },
+      {
+        "command": "aws-ai-assistant.OpenS3ExplorerView",
+        "title": "Aws AI Assistant:Open S3 Explorer View"
       }
     ]
   },
