@@ -11,6 +11,7 @@ import {
   GetLogEventsCommandOutput
 } from '@aws-sdk/client-cloudwatch-logs';
 import { AIHandler } from '../chat/AIHandler';
+import { CloudWatchLogView } from './CloudWatchLogView';
 
 // Cached client
 let CurrentCwClient: CloudWatchLogsClient | undefined;
@@ -19,7 +20,8 @@ let CurrentCwClient: CloudWatchLogsClient | undefined;
 type CloudWatchCommand =
   | 'DescribeLogGroups'
   | 'DescribeLogStreams'
-  | 'GetLogEvents';
+  | 'GetLogEvents'
+  | 'OpenCloudWatchLogView';
 
 // Input interface - command + params object
 interface CloudWatchToolInput {
@@ -53,7 +55,31 @@ interface GetLogEventsParams {
   startFromHead?: boolean;
 }
 
+interface OpenCloudWatchLogViewParams {
+  logGroupName: string;
+  logStreamName?: string; // Optional log stream name
+}
+
 export class CloudWatchLogTool implements vscode.LanguageModelTool<CloudWatchToolInput> {
+  /**
+   * Execute OpenCloudWatchLogView command - Opens CloudWatchLogView
+   */
+  private async executeOpenCloudWatchLogView(params: OpenCloudWatchLogViewParams): Promise<any> {
+    if (!Session.Current) {
+      throw new Error('Session not initialized');
+    }
+
+    // Open the CloudWatchLogView
+    CloudWatchLogView.Render(Session.Current.ExtensionUri, Session.Current.AwsRegion, params.logGroupName, params.logStreamName || '');
+
+    return {
+      success: true,
+      message: `CloudWatch Log View opened for log group: ${params.logGroupName}${params.logStreamName ? `, log stream: ${params.logStreamName}` : ''}`,
+      logGroupName: params.logGroupName,
+      logStreamName: params.logStreamName
+    };
+  }
+
   /**
    * Get CloudWatch Logs client with session configuration
    */
@@ -100,6 +126,8 @@ export class CloudWatchLogTool implements vscode.LanguageModelTool<CloudWatchToo
         return await this.describeLogStreams(params as DescribeLogStreamsParams);
       case 'GetLogEvents':
         return await this.getLogEvents(params as GetLogEventsParams);
+      case 'OpenCloudWatchLogView':
+        return await this.executeOpenCloudWatchLogView(params as OpenCloudWatchLogViewParams);
       default:
         throw new Error(`Unsupported command: ${command}`);
     }

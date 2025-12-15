@@ -1178,8 +1178,8 @@
         "name": "cloudWatchLogs",
         "toolReferenceName": "cloudWatchLogs",
         "displayName": "CloudWatch Logs Tool",
-        "modelDescription": "Execute CloudWatch Logs commands. ALWAYS provide params object. Examples: DescribeLogGroups {command:'DescribeLogGroups', params:{logGroupNamePrefix:'app'}}. DescribeLogStreams {command:'DescribeLogStreams', params:{logGroupName:'my-group'}}. GetLogEvents {command:'GetLogEvents', params:{logGroupName:'my-group', logStreamName:'stream', limit:50}}.",
-        "userDescription": "Query CloudWatch log groups, streams, and events",
+        "modelDescription": "Execute CloudWatch Logs commands. ALWAYS provide params object. Examples: DescribeLogGroups {command:'DescribeLogGroups', params:{logGroupNamePrefix:'app'}}. DescribeLogStreams {command:'DescribeLogStreams', params:{logGroupName:'my-group'}}. GetLogEvents {command:'GetLogEvents', params:{logGroupName:'my-group', logStreamName:'stream', limit:50}}. OpenCloudWatchLogView {command:'OpenCloudWatchLogView', params:{logGroupName:'my-group', logStreamName:'optional-stream'}}.",
+        "userDescription": "Query CloudWatch log groups, streams, events, and open log viewer",
         "tags": [
           "aws",
           "cloudwatch",
@@ -1200,7 +1200,8 @@
               "enum": [
                 "DescribeLogGroups",
                 "DescribeLogStreams",
-                "GetLogEvents"
+                "GetLogEvents",
+                "OpenCloudWatchLogView"
               ],
               "description": "The CloudWatch Logs command to execute"
             },
