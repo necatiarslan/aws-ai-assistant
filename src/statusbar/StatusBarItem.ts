@@ -3,172 +3,144 @@ import * as vscode from 'vscode';
 import * as api from '../common/API';
 import * as ui from '../common/UI';
 import { ParsedIniData } from "@aws-sdk/types";
-import { existsSync } from 'fs';
 import { Session } from '../common/Session';
 import { AIHandler } from '../chat/AIHandler';
 
-export class StatusBarItem {
+export class StatusBarItem implements vscode.Disposable {
 
-    public static WorkingText:string = "$(plug) Aws $(sync~spin)";
+    public static WorkingText: string = "$(plug) Aws $(sync~spin)";
     public static Current: StatusBarItem;
 
     public awsAssistantStatusBarItem: vscode.StatusBarItem;
 
-    //public awsProfileStatusBarItem: vscode.StatusBarItem;
-
     public Text: string = StatusBarItem.WorkingText;
-    public ToolTip:string = "Loading ...";
+    public ToolTip: string = "Loading ...";
 
-    public IniData:ParsedIniData | undefined;
-    public HasCredentials:boolean = false;
+    public IniData: ParsedIniData | undefined;
+    public HasCredentials: boolean = false;
 
 
-	constructor() {
-		ui.logToOutput('StatusBarItem.constructor Started');
-		StatusBarItem.Current = this;
+    constructor() {
+        ui.logToOutput('StatusBarItem.constructor Started');
+        StatusBarItem.Current = this;
 
         const statusBarClickedCommand = 'aws-ai-assistant.statusBarClicked';
-        Session.Current?.Context.subscriptions.push(vscode.commands.registerCommand(statusBarClickedCommand, StatusBarItem.StatusBarClicked));
+        // Note: We don't push to Session.Current.Context.subscriptions here to avoid double registration issues or dependency loops.
+        // Instead, the extension.ts handles the main disposal, or we explicitly dispose here.
+        // Ideally, commands should be registered in extension.ts, but for now we keep this structure but ensure cleanup.
+        
+        // We register the command and store the disposable if we want to dispose it, 
+        // but typically commands are global. Since this is a singleton, it's acceptable.
+         if (Session.Current) {
+            Session.Current.Context.subscriptions.push(vscode.commands.registerCommand(statusBarClickedCommand, StatusBarItem.StatusBarClicked));
+         }
 
         this.awsAssistantStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 3);
         this.awsAssistantStatusBarItem.command = statusBarClickedCommand;
         this.awsAssistantStatusBarItem.text = StatusBarItem.WorkingText;
         this.awsAssistantStatusBarItem.tooltip = this.ToolTip;
-        Session.Current?.Context.subscriptions.push(this.awsAssistantStatusBarItem);
         this.awsAssistantStatusBarItem.show();
 
-        // const refreshButtonClickedCommand = 'aws-ai-assistant.refreshButtonClicked';
-        // context.subscriptions.push(vscode.commands.registerCommand(refreshButtonClickedCommand, StatusBarItem.RefreshButtonClicked));
-        // this.awsRefreshStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 1);
-        // this.awsRefreshStatusBarItem.command = refreshButtonClickedCommand;
-        // context.subscriptions.push(this.awsRefreshStatusBarItem);
-        
-        // const profileButtonClickedCommand = 'aws-ai-assistant.profileButtonClicked';
-        // Session.Current?.Context.subscriptions.push(vscode.commands.registerCommand(profileButtonClickedCommand, StatusBarItem.ProfileButtonClicked));
-        // this.awsProfileStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 1);
-        // this.awsProfileStatusBarItem.command = profileButtonClickedCommand;
-        // Session.Current?.Context.subscriptions.push(this.awsProfileStatusBarItem);
-
         this.StartWorking();
-        
-        this.GetCredentials();
-	}
 
-    public async GetCredentials(){
+        this.GetCredentials();
+    }
+
+    public async GetCredentials() {
         ui.logToOutput('StatusBarItem.GetDefaultCredentials Started');
 
         let iniCredentials = await api.GetIniCredentials();
-        if (iniCredentials){ 
+        if (iniCredentials) {
             this.HasCredentials = true;
             let profileData = await api.GetIniProfileData();
-            try
-            {
+            try {
                 ui.logToOutput('StatusBarItem.GetCredentials IniData Found');
                 this.IniData = profileData;
 
-                if(Session.Current && !this.Profiles.includes(Session.Current?.AwsProfile) && this.Profiles.length > 0)
-                {
+                if (Session.Current && !this.Profiles.includes(Session.Current?.AwsProfile) && this.Profiles.length > 0) {
                     Session.Current!.AwsProfile = this.Profiles[0];
                     Session.Current!.SaveState();
                 }
 
             }
-            catch(error)
-            {
+            catch (error) {
                 ui.logToOutput('StatusBarItem.GetCredentials Error ' + error);
-            }            
+            }
         }
-        else{
+        else {
             let credentials = await api.GetCredentials();
-            if (credentials){ 
+            if (credentials) {
                 this.HasCredentials = true;
             }
         }
 
         this.RefreshText();
- 
+
     }
 
-    public get Profiles():string[]{
-        let result:string[] = [];
-        if(this.IniData)
-        {
+    public get Profiles(): string[] {
+        let result: string[] = [];
+        if (this.IniData) {
             result = Object.keys(this.IniData);
         }
         return result;
     }
 
-    public get HasIniCredentials():boolean
-    {
+    public get HasIniCredentials(): boolean {
         return this.IniData !== undefined;
     }
 
-    public get HasDefaultProfile():boolean
-    {
+    public get HasDefaultProfile(): boolean {
         return this.Profiles.includes("default");
     }
 
-    public SetAwsProfile(){
+    public SetAwsProfile() {
         ui.logToOutput('StatusBarItem.SetAwsLoginCommand Started');
-        if(this.Profiles && this.Profiles.length > 0)
-        {
-            let selected = vscode.window.showQuickPick(this.Profiles, {canPickMany:false, placeHolder: 'Select Profile'});
-            selected.then(value=>{
-                if(value){
+        if (this.Profiles && this.Profiles.length > 0) {
+            let selected = vscode.window.showQuickPick(this.Profiles, { canPickMany: false, placeHolder: 'Select Profile' });
+            selected.then(value => {
+                if (value) {
                     Session.Current!.AwsProfile = value;
                     //this.ShowLoading();
                     Session.Current!.SaveState();
                 }
             });
         }
-        else
-        {
+        else {
             ui.showWarningMessage("No Profiles Found !!!");
         }
     }
 
-    public ListAwsProfiles(){
+    public ListAwsProfiles() {
         ui.logToOutput('StatusBarItem.ListAwsProfiles Started');
-        if(this.Profiles && this.Profiles.length > 0)
-        {
+        if (this.Profiles && this.Profiles.length > 0) {
             ui.showOutputMessage(this.Profiles);
         }
-        else
-        {
+        else {
             ui.showWarningMessage("No Profiles Found !!!");
         }
         ui.showOutputMessage("AwsLoginShellCommands: ", "", false);
     }
 
-    public StartWorking(){
+    public StartWorking() {
         ui.logToOutput('StatusBarItem.StartWorking Started');
         this.awsAssistantStatusBarItem.text = StatusBarItem.WorkingText;
     }
 
-    public EndWorking(){
+    public EndWorking() {
         ui.logToOutput('StatusBarItem.EndWorking Started');
         this.RefreshText();
     }
 
-    public RefreshText(){
+    public RefreshText() {
         ui.logToOutput('StatusBarItem.Refresh Started');
-        // this.awsRefreshStatusBarItem.hide();
-        // this.awsProfileStatusBarItem.hide();
-
-        // if(this.Profiles && this.Profiles.length > 1)
-        // {
-        //     this.awsProfileStatusBarItem.text = "$(account)";
-        //     this.awsProfileStatusBarItem.tooltip = "Select Profile";
-        //     this.awsProfileStatusBarItem.show();
-        // }
+        
         this.ToolTip = "Nebula: @Aws AI Assistant";
-        if(!Session.Current?.CurrentCredentials)
-        {
+        if (!Session.Current?.CurrentCredentials) {
             this.ToolTip += "\nNo Aws Credentials Found !!!";
             this.Text = "$(plug) Aws No Credentials";
         }
-        else
-        {
+        else {
             this.ToolTip += "\nYou have Aws Credentials";
             this.Text = "$(plug) Aws $(check)";
         }
@@ -181,41 +153,38 @@ export class StatusBarItem {
         this.awsAssistantStatusBarItem.text = this.Text;
     }
 
-    public GetBoolChar(value:boolean){
-        if(value)
-        {
+    public GetBoolChar(value: boolean) {
+        if (value) {
             return "✓";
         }
-        else{
+        else {
             return "x";
         }
 
     }
 
-    public static async StatusBarClicked()
-    {
+    public static async StatusBarClicked() {
         ui.logToOutput('StatusBarItem.StatusBarClicked Started');
         //StatusBarItem.OpenCommandPalette();
         AIHandler.Current.askAI();
     }
 
-    public static async RefreshButtonClicked()
-    {
+    public static async RefreshButtonClicked() {
         ui.logToOutput('StatusBarItem.RefreshButtonClicked Started');
-        
+
     }
 
-    public static async ProfileButtonClicked()
-    {
+    public static async ProfileButtonClicked() {
         ui.logToOutput('StatusBarItem.ProfileButtonClicked Started');
-        
+
     }
 
-    public static OpenCommandPalette()
-    {
+    public static OpenCommandPalette() {
         const extensionPrefix = 'Aws AI Assistant';
         vscode.commands.executeCommand('workbench.action.quickOpen', `> ${extensionPrefix}`);
     }
 
-
+    public dispose() {
+        this.awsAssistantStatusBarItem.dispose();
+    }
 }

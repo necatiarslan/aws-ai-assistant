@@ -7,18 +7,18 @@ import { join, dirname, basename } from 'path';
 import * as archiver from 'archiver';
 import * as os from 'os';
 import { AIHandler } from '../chat/AIHandler';
+import { BaseTool, BaseToolInput } from './BaseTool';
 
 // Type for file encoding
 type FileEncoding = 'utf8' | 'ascii' | 'base64' | 'hex' | 'utf16le' | 'ucs2';
 
-// Input interface
-interface FileOperationsToolInput {
-  command: FileCommand;
-  params: Record<string, any>;
-}
-
 // Command type definition
 type FileCommand = 'ReadFile' | 'ReadFileStream' | 'ReadFileAsBase64' | 'GetFileInfo' | 'ListFiles' | 'ZipTextFile';
+
+// Input interface
+interface FileOperationsToolInput extends BaseToolInput {
+  command: FileCommand;
+}
 
 // Command parameter interfaces
 interface ReadFileParams {
@@ -48,8 +48,9 @@ interface ZipTextFileParams {
   outputPath?: string; // Optional custom output path
 }
 
-export class FileOperationsTool implements vscode.LanguageModelTool<FileOperationsToolInput> {
-  
+export class FileOperationsTool extends BaseTool<FileOperationsToolInput> {
+  protected readonly toolName = 'FileOperationsTool';
+
   /**
    * Read file as text
    */
@@ -260,20 +261,19 @@ export class FileOperationsTool implements vscode.LanguageModelTool<FileOperatio
     }
   }
 
-  /**
-   * Main command dispatcher
-   */
-  private async executeCommand(command: FileCommand, params: Record<string, any>): Promise<any> {
-    ui.logToOutput(`FileOperationsTool: Executing command: ${command}`);
-    ui.logToOutput(`FileOperationsTool: Command parameters: ${JSON.stringify(params)}`);
-
-    if("filePath" in params){
+  protected updateResourceContext(command: string, params: Record<string, any>): void {
+     if("filePath" in params){
       AIHandler.Current.updateLatestResource({ type: "File", name: params.filePath });
     }
     if("dirPath" in params){
       AIHandler.Current.updateLatestResource({ type: "Directory", name: params.dirPath });
     }
+  }
 
+  /**
+   * Main command dispatcher
+   */
+  protected async executeCommand(command: FileCommand, params: Record<string, any>): Promise<any> {
     switch (command) {
       case 'ReadFile':
         return await this.executeReadFile(params as ReadFileParams);
@@ -295,55 +295,6 @@ export class FileOperationsTool implements vscode.LanguageModelTool<FileOperatio
       
       default:
         throw new Error(`Unsupported command: ${command}`);
-    }
-  }
-
-  /**
-   * Tool invocation entry point
-   */
-  async invoke(
-    options: vscode.LanguageModelToolInvocationOptions<FileOperationsToolInput>,
-    token: vscode.CancellationToken
-  ): Promise<vscode.LanguageModelToolResult> {
-    const { command, params } = options.input;
-
-    try {
-      ui.logToOutput(`FileOperationsTool: Executing ${command} with params: ${JSON.stringify(params)}`);
-
-      // Execute the command
-      const result = await this.executeCommand(command, params);
-
-      // Build success response
-      const response = {
-        success: true,
-        command,
-        message: `${command} executed successfully`,
-        data: result,
-      };
-
-      ui.logToOutput(`FileOperationsTool: ${command} completed successfully`);
-      
-      return new vscode.LanguageModelToolResult([
-        new vscode.LanguageModelTextPart(JSON.stringify(response, null, 2))
-      ]);
-
-    } catch (error: any) {
-      // Build error response
-      const errorResponse = {
-        success: false,
-        command,
-        message: `Failed to execute ${command}`,
-        error: {
-          name: error.name || 'Error',
-          message: error.message || 'Unknown error',
-        }
-      };
-
-      ui.logToOutput(`FileOperationsTool: ${command} failed`, error);
-      
-      return new vscode.LanguageModelToolResult([
-        new vscode.LanguageModelTextPart(JSON.stringify(errorResponse, null, 2))
-      ]);
     }
   }
 }

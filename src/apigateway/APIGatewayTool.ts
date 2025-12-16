@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as ui from '../common/UI';
-import { Session } from '../common/Session';
+import { BaseTool, BaseToolInput } from '../common/BaseTool';
+import { ClientManager } from '../common/ClientManager';
 import {
   APIGatewayClient,
   GetAccountCommand,
@@ -47,54 +48,8 @@ import {
   GetUsagePlansCommand,
   GetVpcLinkCommand,
   GetVpcLinksCommand,
-  GetAccountCommandOutput,
-  GetApiKeyCommandOutput,
-  GetApiKeysCommandOutput,
-  GetAuthorizerCommandOutput,
-  GetAuthorizersCommandOutput,
-  GetBasePathMappingCommandOutput,
-  GetBasePathMappingsCommandOutput,
-  GetClientCertificateCommandOutput,
-  GetClientCertificatesCommandOutput,
-  GetDeploymentCommandOutput,
-  GetDeploymentsCommandOutput,
-  GetDocumentationPartCommandOutput,
-  GetDocumentationPartsCommandOutput,
-  GetDocumentationVersionCommandOutput,
-  GetDocumentationVersionsCommandOutput,
-  GetDomainNameCommandOutput,
-  GetDomainNamesCommandOutput,
-  GetExportCommandOutput,
-  GetGatewayResponseCommandOutput,
-  GetGatewayResponsesCommandOutput,
-  GetIntegrationCommandOutput,
-  GetIntegrationResponseCommandOutput,
-  GetMethodCommandOutput,
-  GetModelCommandOutput,
-  GetModelsCommandOutput,
-  GetRequestValidatorCommandOutput,
-  GetRequestValidatorsCommandOutput,
-  GetResourceCommandOutput,
-  GetResourcesCommandOutput,
-  GetRestApiCommandOutput,
-  GetRestApisCommandOutput,
-  GetSdkCommandOutput,
-  GetSdkTypeCommandOutput,
-  GetSdkTypesCommandOutput,
-  GetStageCommandOutput,
-  GetStagesCommandOutput,
-  GetTagsCommandOutput,
-  GetUsageCommandOutput,
-  GetUsagePlanCommandOutput,
-  GetUsagePlanKeyCommandOutput,
-  GetUsagePlanKeysCommandOutput,
-  GetUsagePlansCommandOutput,
-  GetVpcLinkCommandOutput,
-  GetVpcLinksCommandOutput,
 } from '@aws-sdk/client-api-gateway';
 import { AIHandler } from '../chat/AIHandler';
-
-let CurrentClient: APIGatewayClient | undefined;
 
 type APIGatewayCommand =
   | 'GetAccount'
@@ -140,131 +95,82 @@ type APIGatewayCommand =
   | 'GetUsagePlanKeys'
   | 'GetUsagePlans'
   | 'GetVpcLink'
-  | 'GetVpcLinks'
-  ;
+  | 'GetVpcLinks';
 
-interface APIGatewayToolInput {
+interface APIGatewayToolInput extends BaseToolInput {
   command: APIGatewayCommand;
-  params: Record<string, any>;
 }
 
-export class APIGatewayTool implements vscode.LanguageModelTool<APIGatewayToolInput> {
+export class APIGatewayTool extends BaseTool<APIGatewayToolInput> {
+  protected readonly toolName = 'APIGatewayTool';
+
   private async getClient(): Promise<APIGatewayClient> {
-    if (CurrentClient) {
-      return CurrentClient;
-    }
-    const credentials = await Session.Current?.GetCredentials();
-    CurrentClient = new APIGatewayClient({
-      credentials,
-      endpoint: Session.Current?.AwsEndPoint,
-      region: Session.Current?.AwsRegion,
+      return ClientManager.Instance.getClient('apigateway', async (session) => {
+      const credentials = await session.GetCredentials();
+      return new APIGatewayClient({
+        credentials,
+        endpoint: session.AwsEndPoint,
+        region: session.AwsRegion,
+      });
     });
-    ui.logToOutput(`APIGatewayTool: Client created (region=${Session.Current?.AwsRegion})`);
-    return CurrentClient;
   }
 
-  // Minimal wrappers: forward params as-is to AWS SDK
-  private async send<COut>(ctor: new (input: any) => { }, params: Record<string, any>): Promise<any> {
-    const client = await this.getClient();
-    const command = new (ctor as any)(params as any);
-    return await (client as any).send(command);
-  }
-
-  private async executeCommand(command: APIGatewayCommand, params: Record<string, any>): Promise<any> {
-    ui.logToOutput(`APIGatewayTool: Executing command: ${command}`);
-    ui.logToOutput(`APIGatewayTool: Command parameters: ${JSON.stringify(params)}`);
-
-    if (params?.restApiId) {
+  protected updateResourceContext(command: string, params: Record<string, any>): void {
+     if (params?.restApiId) {
       AIHandler.Current.updateLatestResource({ type: 'API Gateway REST API', name: params.restApiId });
     }
-
-    switch (command) {
-      case 'GetAccount': return await this.send<GetAccountCommandOutput>(GetAccountCommand, params);
-      case 'GetApiKey': return await this.send<GetApiKeyCommandOutput>(GetApiKeyCommand, params);
-      case 'GetApiKeys': return await this.send<GetApiKeysCommandOutput>(GetApiKeysCommand, params);
-      case 'GetAuthorizer': return await this.send<GetAuthorizerCommandOutput>(GetAuthorizerCommand, params);
-      case 'GetAuthorizers': return await this.send<GetAuthorizersCommandOutput>(GetAuthorizersCommand, params);
-      case 'GetBasePathMapping': return await this.send<GetBasePathMappingCommandOutput>(GetBasePathMappingCommand, params);
-      case 'GetBasePathMappings': return await this.send<GetBasePathMappingsCommandOutput>(GetBasePathMappingsCommand, params);
-      case 'GetClientCertificate': return await this.send<GetClientCertificateCommandOutput>(GetClientCertificateCommand, params);
-      case 'GetClientCertificates': return await this.send<GetClientCertificatesCommandOutput>(GetClientCertificatesCommand, params);
-      case 'GetDeployment': return await this.send<GetDeploymentCommandOutput>(GetDeploymentCommand, params);
-      case 'GetDeployments': return await this.send<GetDeploymentsCommandOutput>(GetDeploymentsCommand, params);
-      case 'GetDocumentationPart': return await this.send<GetDocumentationPartCommandOutput>(GetDocumentationPartCommand, params);
-      case 'GetDocumentationParts': return await this.send<GetDocumentationPartsCommandOutput>(GetDocumentationPartsCommand, params);
-      case 'GetDocumentationVersion': return await this.send<GetDocumentationVersionCommandOutput>(GetDocumentationVersionCommand, params);
-      case 'GetDocumentationVersions': return await this.send<GetDocumentationVersionsCommandOutput>(GetDocumentationVersionsCommand, params);
-      case 'GetDomainName': return await this.send<GetDomainNameCommandOutput>(GetDomainNameCommand, params);
-      case 'GetDomainNames': return await this.send<GetDomainNamesCommandOutput>(GetDomainNamesCommand, params);
-      case 'GetExport': return await this.send<GetExportCommandOutput>(GetExportCommand, params);
-      case 'GetGatewayResponse': return await this.send<GetGatewayResponseCommandOutput>(GetGatewayResponseCommand, params);
-      case 'GetGatewayResponses': return await this.send<GetGatewayResponsesCommandOutput>(GetGatewayResponsesCommand, params);
-      case 'GetIntegration': return await this.send<GetIntegrationCommandOutput>(GetIntegrationCommand, params);
-      case 'GetIntegrationResponse': return await this.send<GetIntegrationResponseCommandOutput>(GetIntegrationResponseCommand, params);
-      case 'GetMethod': return await this.send<GetMethodCommandOutput>(GetMethodCommand, params);
-      case 'GetModel': return await this.send<GetModelCommandOutput>(GetModelCommand, params);
-      case 'GetModels': return await this.send<GetModelsCommandOutput>(GetModelsCommand, params);
-      case 'GetRequestValidator': return await this.send<GetRequestValidatorCommandOutput>(GetRequestValidatorCommand, params);
-      case 'GetRequestValidators': return await this.send<GetRequestValidatorsCommandOutput>(GetRequestValidatorsCommand, params);
-      case 'GetResource': return await this.send<GetResourceCommandOutput>(GetResourceCommand, params);
-      case 'GetResources': return await this.send<GetResourcesCommandOutput>(GetResourcesCommand, params);
-      case 'GetRestApi': return await this.send<GetRestApiCommandOutput>(GetRestApiCommand, params);
-      case 'GetRestApis': return await this.send<GetRestApisCommandOutput>(GetRestApisCommand, params);
-      case 'GetSdk': return await this.send<GetSdkCommandOutput>(GetSdkCommand, params);
-      case 'GetSdkType': return await this.send<GetSdkTypeCommandOutput>(GetSdkTypeCommand, params);
-      case 'GetSdkTypes': return await this.send<GetSdkTypesCommandOutput>(GetSdkTypesCommand, params);
-      case 'GetStage': return await this.send<GetStageCommandOutput>(GetStageCommand, params);
-      case 'GetStages': return await this.send<GetStagesCommandOutput>(GetStagesCommand, params);
-      case 'GetTags': return await this.send<GetTagsCommandOutput>(GetTagsCommand, params);
-      case 'GetUsage': return await this.send<GetUsageCommandOutput>(GetUsageCommand, params);
-      case 'GetUsagePlan': return await this.send<GetUsagePlanCommandOutput>(GetUsagePlanCommand, params);
-      case 'GetUsagePlanKey': return await this.send<GetUsagePlanKeyCommandOutput>(GetUsagePlanKeyCommand, params);
-      case 'GetUsagePlanKeys': return await this.send<GetUsagePlanKeysCommandOutput>(GetUsagePlanKeysCommand, params);
-      case 'GetUsagePlans': return await this.send<GetUsagePlansCommandOutput>(GetUsagePlansCommand, params);
-      case 'GetVpcLink': return await this.send<GetVpcLinkCommandOutput>(GetVpcLinkCommand, params);
-      case 'GetVpcLinks': return await this.send<GetVpcLinksCommandOutput>(GetVpcLinksCommand, params);
-      default:
-        throw new Error(`Unsupported command: ${command}`);
-    }
   }
 
-  async invoke(
-    options: vscode.LanguageModelToolInvocationOptions<APIGatewayToolInput>,
-    token: vscode.CancellationToken
-  ): Promise<vscode.LanguageModelToolResult> {
-    const { command, params } = options.input;
-    try {
-      ui.logToOutput(`APIGatewayTool: Executing ${command} with params: ${JSON.stringify(params)}`);
-      const result = await this.executeCommand(command, params);
-      const response = {
-        success: true,
-        command,
-        message: `${command} executed successfully`,
-        data: result,
-        metadata: {
-          requestId: result.$metadata?.requestId,
-          httpStatusCode: result.$metadata?.httpStatusCode,
-        }
-      };
-      ui.logToOutput(`APIGatewayTool: ${command} completed successfully`);
-      return new vscode.LanguageModelToolResult([
-        new vscode.LanguageModelTextPart(JSON.stringify(response, null, 2))
-      ]);
-    } catch (error: any) {
-      const errorResponse = {
-        success: false,
-        command,
-        message: `Failed to execute ${command}`,
-        error: {
-          name: error.name || 'Error',
-          message: error.message || 'Unknown error',
-          code: error.Code || error.$metadata?.httpStatusCode,
-        }
-      };
-      ui.logToOutput(`APIGatewayTool: ${command} failed`, error);
-      return new vscode.LanguageModelToolResult([
-        new vscode.LanguageModelTextPart(JSON.stringify(errorResponse, null, 2))
-      ]);
+  protected async executeCommand(command: APIGatewayCommand, params: Record<string, any>): Promise<any> {
+    const client = await this.getClient();
+
+    switch (command) {
+      case 'GetAccount': return await client.send(new GetAccountCommand(params as any));
+      case 'GetApiKey': return await client.send(new GetApiKeyCommand(params as any));
+      case 'GetApiKeys': return await client.send(new GetApiKeysCommand(params as any));
+      case 'GetAuthorizer': return await client.send(new GetAuthorizerCommand(params as any));
+      case 'GetAuthorizers': return await client.send(new GetAuthorizersCommand(params as any));
+      case 'GetBasePathMapping': return await client.send(new GetBasePathMappingCommand(params as any));
+      case 'GetBasePathMappings': return await client.send(new GetBasePathMappingsCommand(params as any));
+      case 'GetClientCertificate': return await client.send(new GetClientCertificateCommand(params as any));
+      case 'GetClientCertificates': return await client.send(new GetClientCertificatesCommand(params as any));
+      case 'GetDeployment': return await client.send(new GetDeploymentCommand(params as any));
+      case 'GetDeployments': return await client.send(new GetDeploymentsCommand(params as any));
+      case 'GetDocumentationPart': return await client.send(new GetDocumentationPartCommand(params as any));
+      case 'GetDocumentationParts': return await client.send(new GetDocumentationPartsCommand(params as any));
+      case 'GetDocumentationVersion': return await client.send(new GetDocumentationVersionCommand(params as any));
+      case 'GetDocumentationVersions': return await client.send(new GetDocumentationVersionsCommand(params as any));
+      case 'GetDomainName': return await client.send(new GetDomainNameCommand(params as any));
+      case 'GetDomainNames': return await client.send(new GetDomainNamesCommand(params as any));
+      case 'GetExport': return await client.send(new GetExportCommand(params as any));
+      case 'GetGatewayResponse': return await client.send(new GetGatewayResponseCommand(params as any));
+      case 'GetGatewayResponses': return await client.send(new GetGatewayResponsesCommand(params as any));
+      case 'GetIntegration': return await client.send(new GetIntegrationCommand(params as any));
+      case 'GetIntegrationResponse': return await client.send(new GetIntegrationResponseCommand(params as any));
+      case 'GetMethod': return await client.send(new GetMethodCommand(params as any));
+      case 'GetModel': return await client.send(new GetModelCommand(params as any));
+      case 'GetModels': return await client.send(new GetModelsCommand(params as any));
+      case 'GetRequestValidator': return await client.send(new GetRequestValidatorCommand(params as any));
+      case 'GetRequestValidators': return await client.send(new GetRequestValidatorsCommand(params as any));
+      case 'GetResource': return await client.send(new GetResourceCommand(params as any));
+      case 'GetResources': return await client.send(new GetResourcesCommand(params as any));
+      case 'GetRestApi': return await client.send(new GetRestApiCommand(params as any));
+      case 'GetRestApis': return await client.send(new GetRestApisCommand(params as any));
+      case 'GetSdk': return await client.send(new GetSdkCommand(params as any));
+      case 'GetSdkType': return await client.send(new GetSdkTypeCommand(params as any));
+      case 'GetSdkTypes': return await client.send(new GetSdkTypesCommand(params as any));
+      case 'GetStage': return await client.send(new GetStageCommand(params as any));
+      case 'GetStages': return await client.send(new GetStagesCommand(params as any));
+      case 'GetTags': return await client.send(new GetTagsCommand(params as any));
+      case 'GetUsage': return await client.send(new GetUsageCommand(params as any));
+      case 'GetUsagePlan': return await client.send(new GetUsagePlanCommand(params as any));
+      case 'GetUsagePlanKey': return await client.send(new GetUsagePlanKeyCommand(params as any));
+      case 'GetUsagePlanKeys': return await client.send(new GetUsagePlanKeysCommand(params as any));
+      case 'GetUsagePlans': return await client.send(new GetUsagePlansCommand(params as any));
+      case 'GetVpcLink': return await client.send(new GetVpcLinkCommand(params as any));
+      case 'GetVpcLinks': return await client.send(new GetVpcLinksCommand(params as any));
+      default:
+        throw new Error(`Unsupported command: ${command}`);
     }
   }
 }

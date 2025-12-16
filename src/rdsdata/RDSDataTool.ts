@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as ui from '../common/UI';
-import { Session } from '../common/Session';
+import { BaseTool, BaseToolInput } from '../common/BaseTool';
+import { ClientManager } from '../common/ClientManager';
 import {
   RDSDataClient,
   BatchExecuteStatementCommand,
@@ -8,16 +9,8 @@ import {
   CommitTransactionCommand,
   ExecuteStatementCommand,
   RollbackTransactionCommand,
-  BatchExecuteStatementCommandOutput,
-  BeginTransactionCommandOutput,
-  CommitTransactionCommandOutput,
-  ExecuteStatementCommandOutput,
-  RollbackTransactionCommandOutput
 } from '@aws-sdk/client-rds-data';
 import { AIHandler } from '../chat/AIHandler';
-import { needsConfirmation, confirmProceed } from '../common/ActionGuard';
-
-let CurrentClient: RDSDataClient | undefined;
 
 type RDSDataCommand =
   | 'BatchExecuteStatement'
@@ -26,97 +19,42 @@ type RDSDataCommand =
   | 'ExecuteStatement'
   | 'RollbackTransaction';
 
-interface RDSDataToolInput {
+interface RDSDataToolInput extends BaseToolInput {
   command: RDSDataCommand;
-  params: Record<string, any>;
 }
 
-export class RDSDataTool implements vscode.LanguageModelTool<RDSDataToolInput> {
+export class RDSDataTool extends BaseTool<RDSDataToolInput> {
+  protected readonly toolName = 'RDSDataTool';
+
   private async getClient(): Promise<RDSDataClient> {
-    if (CurrentClient) {
-      return CurrentClient;
-    }
-    const credentials = await Session.Current?.GetCredentials();
-    CurrentClient = new RDSDataClient({
-      credentials,
-      endpoint: Session.Current?.AwsEndPoint,
-      region: Session.Current?.AwsRegion,
+      return ClientManager.Instance.getClient('rds-data', async (session) => {
+      const credentials = await session.GetCredentials();
+      return new RDSDataClient({
+        credentials,
+        endpoint: session.AwsEndPoint,
+        region: session.AwsRegion,
+      });
     });
-    ui.logToOutput(`RDSDataTool: Client created (region=${Session.Current?.AwsRegion})`);
-    return CurrentClient;
   }
 
-  private async send<COut>(ctor: new (input: any) => {}, params: Record<string, any>): Promise<any> {
-    const client = await this.getClient();
-    const command = new (ctor as any)(params as any);
-    return await (client as any).send(command);
-  }
-
-  private async executeCommand(command: RDSDataCommand, params: Record<string, any>): Promise<any> {
-    ui.logToOutput(`RDSDataTool: Executing command: ${command}`);
-    ui.logToOutput(`RDSDataTool: Command parameters: ${JSON.stringify(params)}`);
-
-    if (params?.database) {
+  protected updateResourceContext(command: string, params: Record<string, any>): void {
+     if (params?.database) {
       AIHandler.Current.updateLatestResource({ type: 'RDS Data database', name: params.database });
     }
+  }
+
+  protected async executeCommand(command: RDSDataCommand, params: Record<string, any>): Promise<any> {
+    const client = await this.getClient();
 
     switch (command) {
-      case 'BatchExecuteStatement': return await this.send<BatchExecuteStatementCommandOutput>(BatchExecuteStatementCommand, params);
-      case 'BeginTransaction': return await this.send<BeginTransactionCommandOutput>(BeginTransactionCommand, params);
-      case 'CommitTransaction': return await this.send<CommitTransactionCommandOutput>(CommitTransactionCommand, params);
-      case 'ExecuteStatement': return await this.send<ExecuteStatementCommandOutput>(ExecuteStatementCommand, params);
-      case 'RollbackTransaction': return await this.send<RollbackTransactionCommandOutput>(RollbackTransactionCommand, params);
+      case 'BatchExecuteStatement': return await client.send(new BatchExecuteStatementCommand(params as any));
+      case 'BeginTransaction': return await client.send(new BeginTransactionCommand(params as any));
+      case 'CommitTransaction': return await client.send(new CommitTransactionCommand(params as any));
+      case 'ExecuteStatement': return await client.send(new ExecuteStatementCommand(params as any));
+      case 'RollbackTransaction': return await client.send(new RollbackTransactionCommand(params as any));
       default:
         throw new Error(`Unsupported command: ${command}`);
     }
   }
-
-  async invoke(
-    options: vscode.LanguageModelToolInvocationOptions<RDSDataToolInput>,
-    token: vscode.CancellationToken
-  ): Promise<vscode.LanguageModelToolResult> {
-    const { command, params } = options.input;
-    try {
-      ui.logToOutput(`RDSDataTool: Executing ${command} with params: ${JSON.stringify(params)}`);
-      if (needsConfirmation(command)) {
-        const ok = await confirmProceed(command);
-        if (!ok) {
-          const cancelled = { success: false, command, message: 'User cancelled action command' };
-          return new vscode.LanguageModelToolResult([
-            new vscode.LanguageModelTextPart(JSON.stringify(cancelled, null, 2))
-          ]);
-        }
-      }
-      const result = await this.executeCommand(command, params);
-      const response = {
-        success: true,
-        command,
-        message: `${command} executed successfully`,
-        data: result,
-        metadata: {
-          requestId: result.$metadata?.requestId,
-          httpStatusCode: result.$metadata?.httpStatusCode,
-        }
-      };
-      ui.logToOutput(`RDSDataTool: ${command} completed successfully`);
-      return new vscode.LanguageModelToolResult([
-        new vscode.LanguageModelTextPart(JSON.stringify(response, null, 2))
-      ]);
-    } catch (error: any) {
-      const errorResponse = {
-        success: false,
-        command,
-        message: `Failed to execute ${command}`,
-        error: {
-          name: error.name || 'Error',
-          message: error.message || 'Unknown error',
-          code: error.Code || error.$metadata?.httpStatusCode,
-        }
-      };
-      ui.logToOutput(`RDSDataTool: ${command} failed`, error);
-      return new vscode.LanguageModelToolResult([
-        new vscode.LanguageModelTextPart(JSON.stringify(errorResponse, null, 2))
-      ]);
-    }
-  }
 }
+

@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as ui from '../common/UI';
-import { Session } from '../common/Session';
+import { BaseTool, BaseToolInput } from '../common/BaseTool';
+import { ClientManager } from '../common/ClientManager';
 import {
   DynamoDBClient,
   ListTablesCommand,
@@ -16,38 +17,8 @@ import {
   UpdateTableCommand,
   UpdateTimeToLiveCommand,
   ListTagsOfResourceCommand,
-  ListTablesCommandInput,
-  DescribeTableCommandInput,
-  CreateTableCommandInput,
-  DeleteTableCommandInput,
-  QueryCommandInput,
-  ScanCommandInput,
-  PutItemCommandInput,
-  UpdateItemCommandInput,
-  DeleteItemCommandInput,
-  GetItemCommandInput,
-  UpdateTableCommandInput,
-  UpdateTimeToLiveCommandInput,
-  ListTagsOfResourceCommandInput,
-  ListTablesCommandOutput,
-  DescribeTableCommandOutput,
-  CreateTableCommandOutput,
-  DeleteTableCommandOutput,
-  QueryCommandOutput,
-  ScanCommandOutput,
-  PutItemCommandOutput,
-  UpdateItemCommandOutput,
-  DeleteItemCommandOutput,
-  GetItemCommandOutput,
-  UpdateTableCommandOutput,
-  UpdateTimeToLiveCommandOutput,
-  ListTagsOfResourceCommandOutput
 } from '@aws-sdk/client-dynamodb';
 import { AIHandler } from '../chat/AIHandler';
-import { needsConfirmation, confirmProceed } from '../common/ActionGuard';
-
-// Cached client
-let CurrentDdbClient: DynamoDBClient | undefined;
 
 // Command type definition
 type DynamoDBCommand =
@@ -66,197 +37,75 @@ type DynamoDBCommand =
   | 'ListTagsOfResource';
 
 // Input interface - command + params object
-interface DynamoDBToolInput {
+interface DynamoDBToolInput extends BaseToolInput {
   command: DynamoDBCommand;
-  params: Record<string, any>;
 }
 
-export class DynamoDBTool implements vscode.LanguageModelTool<DynamoDBToolInput> {
-  /**
-   * Get DynamoDB client with session configuration
-   */
+export class DynamoDBTool extends BaseTool<DynamoDBToolInput> {
+  protected readonly toolName = 'DynamoDBTool';
+
   private async getClient(): Promise<DynamoDBClient> {
-    if (CurrentDdbClient !== undefined) {
-      return CurrentDdbClient;
-    }
-
-    const credentials = await Session.Current?.GetCredentials();
-
-    CurrentDdbClient = new DynamoDBClient({
-      credentials,
-      endpoint: Session.Current?.AwsEndPoint,
-      region: Session.Current?.AwsRegion,
+      return ClientManager.Instance.getClient('dynamodb', async (session) => {
+      const credentials = await session.GetCredentials();
+      return new DynamoDBClient({
+        credentials,
+        endpoint: session.AwsEndPoint,
+        region: session.AwsRegion,
+      });
     });
-
-    ui.logToOutput(`DynamoDBTool: Client created (region=${Session.Current?.AwsRegion})`);
-    return CurrentDdbClient;
   }
 
-  private async executeListTables(params: ListTablesCommandInput): Promise<ListTablesCommandOutput> {
-    const client = await this.getClient();
-    return await client.send(new ListTablesCommand(params));
-  }
-
-  private async executeDescribeTable(params: DescribeTableCommandInput): Promise<DescribeTableCommandOutput> {
-    const client = await this.getClient();
-    return await client.send(new DescribeTableCommand(params));
-  }
-
-  private async executeCreateTable(params: CreateTableCommandInput): Promise<CreateTableCommandOutput> {
-    const client = await this.getClient();
-    return await client.send(new CreateTableCommand(params));
-  }
-
-  private async executeDeleteTable(params: DeleteTableCommandInput): Promise<DeleteTableCommandOutput> {
-    const client = await this.getClient();
-    return await client.send(new DeleteTableCommand(params));
-  }
-
-  private async executeQuery(params: QueryCommandInput): Promise<QueryCommandOutput> {
-    const client = await this.getClient();
-    return await client.send(new QueryCommand(params));
-  }
-
-  private async executeScan(params: ScanCommandInput): Promise<ScanCommandOutput> {
-    const client = await this.getClient();
-    return await client.send(new ScanCommand(params));
-  }
-
-  private async executePutItem(params: PutItemCommandInput): Promise<PutItemCommandOutput> {
-    const client = await this.getClient();
-    return await client.send(new PutItemCommand(params));
-  }
-
-  private async executeUpdateItem(params: UpdateItemCommandInput): Promise<UpdateItemCommandOutput> {
-    const client = await this.getClient();
-    return await client.send(new UpdateItemCommand(params));
-  }
-
-  private async executeDeleteItem(params: DeleteItemCommandInput): Promise<DeleteItemCommandOutput> {
-    const client = await this.getClient();
-    return await client.send(new DeleteItemCommand(params));
-  }
-
-  private async executeGetItem(params: GetItemCommandInput): Promise<GetItemCommandOutput> {
-    const client = await this.getClient();
-    return await client.send(new GetItemCommand(params));
-  }
-
-  private async executeUpdateTable(params: UpdateTableCommandInput): Promise<UpdateTableCommandOutput> {
-    const client = await this.getClient();
-    return await client.send(new UpdateTableCommand(params));
-  }
-
-  private async executeUpdateTimeToLive(params: UpdateTimeToLiveCommandInput): Promise<UpdateTimeToLiveCommandOutput> {
-    const client = await this.getClient();
-    return await client.send(new UpdateTimeToLiveCommand(params));
-  }
-
-  private async executeListTagsOfResource(params: ListTagsOfResourceCommandInput): Promise<ListTagsOfResourceCommandOutput> {
-    const client = await this.getClient();
-    return await client.send(new ListTagsOfResourceCommand(params));
-  }
-
-  /**
-   * Main command dispatcher - easily extensible
-   */
-  private async executeCommand(command: DynamoDBCommand, params: Record<string, any>): Promise<any> {
-    ui.logToOutput(`DynamoDBTool: Executing command: ${command}`);
-    ui.logToOutput(`DynamoDBTool: Command parameters: ${JSON.stringify(params)}`);
-
-    if("TableName" in params){
+  protected updateResourceContext(command: string, params: Record<string, any>): void {
+    if ("TableName" in params) {
       AIHandler.Current.updateLatestResource({ type: "DynamoDB Table", name: params["TableName"] });
     }
+  }
+
+  protected async executeCommand(command: DynamoDBCommand, params: Record<string, any>): Promise<any> {
+    const client = await this.getClient();
 
     switch (command) {
       case 'ListTables':
-        return await this.executeListTables(params as ListTablesCommandInput);
+        return await client.send(new ListTablesCommand(params as any));
+
       case 'DescribeTable':
-        return await this.executeDescribeTable(params as DescribeTableCommandInput);
+        return await client.send(new DescribeTableCommand(params as any));
+
       case 'CreateTable':
-        return await this.executeCreateTable(params as CreateTableCommandInput);
+        return await client.send(new CreateTableCommand(params as any));
+
       case 'DeleteTable':
-        return await this.executeDeleteTable(params as DeleteTableCommandInput);
+        return await client.send(new DeleteTableCommand(params as any));
+
       case 'Query':
-        return await this.executeQuery(params as QueryCommandInput);
+        return await client.send(new QueryCommand(params as any));
+
       case 'Scan':
-        return await this.executeScan(params as ScanCommandInput);
+        return await client.send(new ScanCommand(params as any));
+
       case 'PutItem':
-        return await this.executePutItem(params as PutItemCommandInput);
+        return await client.send(new PutItemCommand(params as any));
+
       case 'UpdateItem':
-        return await this.executeUpdateItem(params as UpdateItemCommandInput);
+        return await client.send(new UpdateItemCommand(params as any));
+
       case 'DeleteItem':
-        return await this.executeDeleteItem(params as DeleteItemCommandInput);
+        return await client.send(new DeleteItemCommand(params as any));
+
       case 'GetItem':
-        return await this.executeGetItem(params as GetItemCommandInput);
+        return await client.send(new GetItemCommand(params as any));
+
       case 'UpdateTable':
-        return await this.executeUpdateTable(params as UpdateTableCommandInput);
+        return await client.send(new UpdateTableCommand(params as any));
+
       case 'UpdateTimeToLive':
-        return await this.executeUpdateTimeToLive(params as UpdateTimeToLiveCommandInput);
+        return await client.send(new UpdateTimeToLiveCommand(params as any));
+
       case 'ListTagsOfResource':
-        return await this.executeListTagsOfResource(params as ListTagsOfResourceCommandInput);
+        return await client.send(new ListTagsOfResourceCommand(params as any));
+
       default:
         throw new Error(`Unsupported command: ${command}`);
-    }
-  }
-
-  /**
-   * Tool invocation entry point
-   */
-  async invoke(
-    options: vscode.LanguageModelToolInvocationOptions<DynamoDBToolInput>,
-    token: vscode.CancellationToken
-  ): Promise<vscode.LanguageModelToolResult> {
-    const { command, params } = options.input;
-
-    try {
-      ui.logToOutput(`DynamoDBTool: Executing ${command} with params: ${JSON.stringify(params)}`);
-
-      if (needsConfirmation(command)) {
-        const ok = await confirmProceed(command);
-        if (!ok) {
-          const cancelled = { success: false, command, message: 'User cancelled action command' };
-          return new vscode.LanguageModelToolResult([
-            new vscode.LanguageModelTextPart(JSON.stringify(cancelled, null, 2))
-          ]);
-        }
-      }
-
-      const result = await this.executeCommand(command, params);
-
-      const response = {
-        success: true,
-        command,
-        message: `${command} executed successfully`,
-        data: result,
-        metadata: {
-          requestId: result.$metadata?.requestId,
-          httpStatusCode: result.$metadata?.httpStatusCode,
-        }
-      };
-
-      ui.logToOutput(`DynamoDBTool: ${command} completed successfully`);
-
-      return new vscode.LanguageModelToolResult([
-        new vscode.LanguageModelTextPart(JSON.stringify(response, null, 2))
-      ]);
-    } catch (error: any) {
-      const errorResponse = {
-        success: false,
-        command,
-        message: `Failed to execute ${command}`,
-        error: {
-          name: error.name || 'Error',
-          message: error.message || 'Unknown error',
-          code: error.Code || error.$metadata?.httpStatusCode,
-        }
-      };
-
-      ui.logToOutput(`DynamoDBTool: ${command} failed`, error);
-
-      return new vscode.LanguageModelToolResult([
-        new vscode.LanguageModelTextPart(JSON.stringify(errorResponse, null, 2))
-      ]);
     }
   }
 }

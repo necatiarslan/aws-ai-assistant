@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as ui from '../common/UI';
-import { Session } from '../common/Session';
+import { BaseTool, BaseToolInput } from '../common/BaseTool';
+import { ClientManager } from '../common/ClientManager';
 import {
   RDSClient,
   DescribeAccountAttributesCommand,
@@ -38,44 +39,8 @@ import {
   DescribeValidDBInstanceModificationsCommand,
   DownloadDBLogFilePortionCommand,
   ListTagsForResourceCommand,
-  DescribeAccountAttributesCommandOutput,
-  DescribeBlueGreenDeploymentsCommandOutput,
-  DescribeCertificatesCommandOutput,
-  DescribeDBClusterAutomatedBackupsCommandOutput,
-  DescribeDBClusterParameterGroupsCommandOutput,
-  DescribeDBClustersCommandOutput,
-  DescribeDBClusterSnapshotsCommandOutput,
-  DescribeDBEngineVersionsCommandOutput,
-  DescribeDBInstanceAutomatedBackupsCommandOutput,
-  DescribeDBInstancesCommandOutput,
-  DescribeDBLogFilesCommandOutput,
-  DescribeDBParameterGroupsCommandOutput,
-  DescribeDBProxiesCommandOutput,
-  DescribeDBProxyEndpointsCommandOutput,
-  DescribeDBRecommendationsCommandOutput,
-  DescribeDBSecurityGroupsCommandOutput,
-  DescribeDBSnapshotAttributesCommandOutput,
-  DescribeDBSnapshotsCommandOutput,
-  DescribeDBSubnetGroupsCommandOutput,
-  DescribeEngineDefaultParametersCommandOutput,
-  DescribeEventsCommandOutput,
-  DescribeEventSubscriptionsCommandOutput,
-  DescribeExportTasksCommandOutput,
-  DescribeGlobalClustersCommandOutput,
-  DescribeIntegrationsCommandOutput,
-  DescribeOptionGroupsCommandOutput,
-  DescribeOrderableDBInstanceOptionsCommandOutput,
-  DescribePendingMaintenanceActionsCommandOutput,
-  DescribeReservedDBInstancesCommandOutput,
-  DescribeReservedDBInstancesOfferingsCommandOutput,
-  DescribeSourceRegionsCommandOutput,
-  DescribeTenantDatabasesCommandOutput,
-  DescribeValidDBInstanceModificationsCommandOutput,
-  DownloadDBLogFilePortionCommandOutput,
-  ListTagsForResourceCommandOutput,
 } from '@aws-sdk/client-rds';
 import { AIHandler } from '../chat/AIHandler';
-let CurrentClient: RDSClient | undefined;
 
 type RDSCommand =
   | 'DescribeAccountAttributes'
@@ -114,120 +79,73 @@ type RDSCommand =
   | 'DownloadDBLogFilePortion'
   | 'ListTagsForResource';
 
-interface RDSToolInput {
+interface RDSToolInput extends BaseToolInput {
   command: RDSCommand;
-  params: Record<string, any>;
 }
 
-export class RDSTool implements vscode.LanguageModelTool<RDSToolInput> {
+export class RDSTool extends BaseTool<RDSToolInput> {
+  protected readonly toolName = 'RDSTool';
+
   private async getClient(): Promise<RDSClient> {
-    if (CurrentClient) {
-      return CurrentClient;
-    }
-    const credentials = await Session.Current?.GetCredentials();
-    CurrentClient = new RDSClient({
-      credentials,
-      endpoint: Session.Current?.AwsEndPoint,
-      region: Session.Current?.AwsRegion,
+      return ClientManager.Instance.getClient('rds', async (session) => {
+      const credentials = await session.GetCredentials();
+      return new RDSClient({
+        credentials,
+        endpoint: session.AwsEndPoint,
+        region: session.AwsRegion,
+      });
     });
-    ui.logToOutput(`RDSTool: Client created (region=${Session.Current?.AwsRegion})`);
-    return CurrentClient;
   }
 
-  private async send<COut>(ctor: new (input: any) => {}, params: Record<string, any>): Promise<any> {
-    const client = await this.getClient();
-    const command = new (ctor as any)(params as any);
-    return await (client as any).send(command);
-  }
-
-  private async executeCommand(command: RDSCommand, params: Record<string, any>): Promise<any> {
-    ui.logToOutput(`RDSTool: Executing command: ${command}`);
-    ui.logToOutput(`RDSTool: Command parameters: ${JSON.stringify(params)}`);
-
-    if (params?.DBInstanceIdentifier) {
+  protected updateResourceContext(command: string, params: Record<string, any>): void {
+     if (params?.DBInstanceIdentifier) {
       AIHandler.Current.updateLatestResource({ type: 'RDS DB Instance', name: params.DBInstanceIdentifier });
     }
-
-    switch (command) {
-      case 'DescribeAccountAttributes': return await this.send<DescribeAccountAttributesCommandOutput>(DescribeAccountAttributesCommand, params);
-      case 'DescribeBlueGreenDeployments': return await this.send<DescribeBlueGreenDeploymentsCommandOutput>(DescribeBlueGreenDeploymentsCommand, params);
-      case 'DescribeCertificates': return await this.send<DescribeCertificatesCommandOutput>(DescribeCertificatesCommand, params);
-      
-      case 'DescribeDBClusterAutomatedBackups': return await this.send<DescribeDBClusterAutomatedBackupsCommandOutput>(DescribeDBClusterAutomatedBackupsCommand, params);
-      case 'DescribeDBClusterParameterGroups': return await this.send<DescribeDBClusterParameterGroupsCommandOutput>(DescribeDBClusterParameterGroupsCommand, params);
-      case 'DescribeDBClusters': return await this.send<DescribeDBClustersCommandOutput>(DescribeDBClustersCommand, params);
-      case 'DescribeDBClusterSnapshots': return await this.send<DescribeDBClusterSnapshotsCommandOutput>(DescribeDBClusterSnapshotsCommand, params);
-      case 'DescribeDBEngineVersions': return await this.send<DescribeDBEngineVersionsCommandOutput>(DescribeDBEngineVersionsCommand, params);
-      case 'DescribeDBInstanceAutomatedBackups': return await this.send<DescribeDBInstanceAutomatedBackupsCommandOutput>(DescribeDBInstanceAutomatedBackupsCommand, params);
-      case 'DescribeDBInstances': return await this.send<DescribeDBInstancesCommandOutput>(DescribeDBInstancesCommand, params);
-      case 'DescribeDBLogFiles': return await this.send<DescribeDBLogFilesCommandOutput>(DescribeDBLogFilesCommand, params);
-      case 'DescribeDBParameterGroups': return await this.send<DescribeDBParameterGroupsCommandOutput>(DescribeDBParameterGroupsCommand, params);
-      case 'DescribeDBProxies': return await this.send<DescribeDBProxiesCommandOutput>(DescribeDBProxiesCommand, params);
-      case 'DescribeDBProxyEndpoints': return await this.send<DescribeDBProxyEndpointsCommandOutput>(DescribeDBProxyEndpointsCommand, params);
-      case 'DescribeDBRecommendations': return await this.send<DescribeDBRecommendationsCommandOutput>(DescribeDBRecommendationsCommand, params);
-      case 'DescribeDBSecurityGroups': return await this.send<DescribeDBSecurityGroupsCommandOutput>(DescribeDBSecurityGroupsCommand, params);
-      case 'DescribeDBSnapshotAttributes': return await this.send<DescribeDBSnapshotAttributesCommandOutput>(DescribeDBSnapshotAttributesCommand, params);
-      case 'DescribeDBSnapshots': return await this.send<DescribeDBSnapshotsCommandOutput>(DescribeDBSnapshotsCommand, params);
-      case 'DescribeDBSubnetGroups': return await this.send<DescribeDBSubnetGroupsCommandOutput>(DescribeDBSubnetGroupsCommand, params);
-      case 'DescribeEngineDefaultParameters': return await this.send<DescribeEngineDefaultParametersCommandOutput>(DescribeEngineDefaultParametersCommand, params);
-      case 'DescribeEvents': return await this.send<DescribeEventsCommandOutput>(DescribeEventsCommand, params);
-      case 'DescribeEventSubscriptions': return await this.send<DescribeEventSubscriptionsCommandOutput>(DescribeEventSubscriptionsCommand, params);
-      case 'DescribeExportTasks': return await this.send<DescribeExportTasksCommandOutput>(DescribeExportTasksCommand, params);
-      case 'DescribeGlobalClusters': return await this.send<DescribeGlobalClustersCommandOutput>(DescribeGlobalClustersCommand, params);
-      
-      case 'DescribeIntegrations': return await this.send<DescribeIntegrationsCommandOutput>(DescribeIntegrationsCommand, params);
-      case 'DescribeOptionGroups': return await this.send<DescribeOptionGroupsCommandOutput>(DescribeOptionGroupsCommand, params);
-      case 'DescribeOrderableDBInstanceOptions': return await this.send<DescribeOrderableDBInstanceOptionsCommandOutput>(DescribeOrderableDBInstanceOptionsCommand, params);
-      case 'DescribePendingMaintenanceActions': return await this.send<DescribePendingMaintenanceActionsCommandOutput>(DescribePendingMaintenanceActionsCommand, params);
-      case 'DescribeReservedDBInstances': return await this.send<DescribeReservedDBInstancesCommandOutput>(DescribeReservedDBInstancesCommand, params);
-      case 'DescribeReservedDBInstancesOfferings': return await this.send<DescribeReservedDBInstancesOfferingsCommandOutput>(DescribeReservedDBInstancesOfferingsCommand, params);
-      case 'DescribeSourceRegions': return await this.send<DescribeSourceRegionsCommandOutput>(DescribeSourceRegionsCommand, params);
-      case 'DescribeTenantDatabases': return await this.send<DescribeTenantDatabasesCommandOutput>(DescribeTenantDatabasesCommand, params);
-      case 'DescribeValidDBInstanceModifications': return await this.send<DescribeValidDBInstanceModificationsCommandOutput>(DescribeValidDBInstanceModificationsCommand, params);
-      case 'DownloadDBLogFilePortion': return await this.send<DownloadDBLogFilePortionCommandOutput>(DownloadDBLogFilePortionCommand, params);
-      case 'ListTagsForResource': return await this.send<ListTagsForResourceCommandOutput>(ListTagsForResourceCommand, params);
-      default:
-        throw new Error(`Unsupported command: ${command}`);
-    }
   }
 
-  async invoke(
-    options: vscode.LanguageModelToolInvocationOptions<RDSToolInput>,
-    token: vscode.CancellationToken
-  ): Promise<vscode.LanguageModelToolResult> {
-    const { command, params } = options.input;
-    try {
-      ui.logToOutput(`RDSTool: Executing ${command} with params: ${JSON.stringify(params)}`);
-      const result = await this.executeCommand(command, params);
-      const response = {
-        success: true,
-        command,
-        message: `${command} executed successfully`,
-        data: result,
-        metadata: {
-          requestId: result.$metadata?.requestId,
-          httpStatusCode: result.$metadata?.httpStatusCode,
-        }
-      };
-      ui.logToOutput(`RDSTool: ${command} completed successfully`);
-      return new vscode.LanguageModelToolResult([
-        new vscode.LanguageModelTextPart(JSON.stringify(response, null, 2))
-      ]);
-    } catch (error: any) {
-      const errorResponse = {
-        success: false,
-        command,
-        message: `Failed to execute ${command}`,
-        error: {
-          name: error.name || 'Error',
-          message: error.message || 'Unknown error',
-          code: error.Code || error.$metadata?.httpStatusCode,
-        }
-      };
-      ui.logToOutput(`RDSTool: ${command} failed`, error);
-      return new vscode.LanguageModelToolResult([
-        new vscode.LanguageModelTextPart(JSON.stringify(errorResponse, null, 2))
-      ]);
+  protected async executeCommand(command: RDSCommand, params: Record<string, any>): Promise<any> {
+    const client = await this.getClient();
+
+    switch (command) {
+      case 'DescribeAccountAttributes': return await client.send(new DescribeAccountAttributesCommand(params));
+      case 'DescribeBlueGreenDeployments': return await client.send(new DescribeBlueGreenDeploymentsCommand(params));
+      case 'DescribeCertificates': return await client.send(new DescribeCertificatesCommand(params));
+      
+      case 'DescribeDBClusterAutomatedBackups': return await client.send(new DescribeDBClusterAutomatedBackupsCommand(params));
+      case 'DescribeDBClusterParameterGroups': return await client.send(new DescribeDBClusterParameterGroupsCommand(params));
+      case 'DescribeDBClusters': return await client.send(new DescribeDBClustersCommand(params));
+      case 'DescribeDBClusterSnapshots': return await client.send(new DescribeDBClusterSnapshotsCommand(params));
+      case 'DescribeDBEngineVersions': return await client.send(new DescribeDBEngineVersionsCommand(params));
+      case 'DescribeDBInstanceAutomatedBackups': return await client.send(new DescribeDBInstanceAutomatedBackupsCommand(params));
+      case 'DescribeDBInstances': return await client.send(new DescribeDBInstancesCommand(params));
+      case 'DescribeDBLogFiles': return await client.send(new DescribeDBLogFilesCommand(params as any));
+      case 'DescribeDBParameterGroups': return await client.send(new DescribeDBParameterGroupsCommand(params));
+      case 'DescribeDBProxies': return await client.send(new DescribeDBProxiesCommand(params));
+      case 'DescribeDBProxyEndpoints': return await client.send(new DescribeDBProxyEndpointsCommand(params));
+      case 'DescribeDBRecommendations': return await client.send(new DescribeDBRecommendationsCommand(params));
+      case 'DescribeDBSecurityGroups': return await client.send(new DescribeDBSecurityGroupsCommand(params));
+      case 'DescribeDBSnapshotAttributes': return await client.send(new DescribeDBSnapshotAttributesCommand(params as any));
+      case 'DescribeDBSnapshots': return await client.send(new DescribeDBSnapshotsCommand(params));
+      case 'DescribeDBSubnetGroups': return await client.send(new DescribeDBSubnetGroupsCommand(params));
+      case 'DescribeEngineDefaultParameters': return await client.send(new DescribeEngineDefaultParametersCommand(params as any));
+      case 'DescribeEvents': return await client.send(new DescribeEventsCommand(params));
+      case 'DescribeEventSubscriptions': return await client.send(new DescribeEventSubscriptionsCommand(params));
+      case 'DescribeExportTasks': return await client.send(new DescribeExportTasksCommand(params));
+      case 'DescribeGlobalClusters': return await client.send(new DescribeGlobalClustersCommand(params));
+      
+      case 'DescribeIntegrations': return await client.send(new DescribeIntegrationsCommand(params));
+      case 'DescribeOptionGroups': return await client.send(new DescribeOptionGroupsCommand(params));
+      case 'DescribeOrderableDBInstanceOptions': return await client.send(new DescribeOrderableDBInstanceOptionsCommand(params as any));
+      case 'DescribePendingMaintenanceActions': return await client.send(new DescribePendingMaintenanceActionsCommand(params));
+      case 'DescribeReservedDBInstances': return await client.send(new DescribeReservedDBInstancesCommand(params));
+      case 'DescribeReservedDBInstancesOfferings': return await client.send(new DescribeReservedDBInstancesOfferingsCommand(params));
+      case 'DescribeSourceRegions': return await client.send(new DescribeSourceRegionsCommand(params));
+      case 'DescribeTenantDatabases': return await client.send(new DescribeTenantDatabasesCommand(params));
+      case 'DescribeValidDBInstanceModifications': return await client.send(new DescribeValidDBInstanceModificationsCommand(params as any));
+      case 'DownloadDBLogFilePortion': return await client.send(new DownloadDBLogFilePortionCommand(params as any));
+      case 'ListTagsForResource': return await client.send(new ListTagsForResourceCommand(params as any));
+      default:
+        throw new Error(`Unsupported command: ${command}`);
     }
   }
 }

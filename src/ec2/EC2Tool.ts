@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import * as ui from '../common/UI';
-import { Session } from '../common/Session';
+import { BaseTool, BaseToolInput } from '../common/BaseTool';
+import { ClientManager } from '../common/ClientManager';
+import { AIHandler } from '../chat/AIHandler';
 import {
   EC2Client,
   DescribeAccountAttributesCommand,
@@ -21,28 +23,7 @@ import {
   GetHostReservationPurchasePreviewCommand,
   GetLaunchTemplateDataCommand,
   GetPasswordDataCommand,
-  DescribeAccountAttributesCommandOutput,
-  DescribeAddressesCommandOutput,
-  DescribeAvailabilityZonesCommandOutput,
-  DescribeImagesCommandOutput,
-  DescribeInstancesCommandOutput,
-  DescribeInstanceStatusCommandOutput,
-  DescribeKeyPairsCommandOutput,
-  DescribeRegionsCommandOutput,
-  DescribeSecurityGroupsCommandOutput,
-  DescribeSnapshotsCommandOutput,
-  DescribeSubnetsCommandOutput,
-  DescribeTagsCommandOutput,
-  DescribeVolumesCommandOutput,
-  DescribeVpcsCommandOutput,
-  GetConsoleOutputCommandOutput,
-  GetHostReservationPurchasePreviewCommandOutput,
-  GetLaunchTemplateDataCommandOutput,
-  GetPasswordDataCommandOutput,
 } from '@aws-sdk/client-ec2';
-import { AIHandler } from '../chat/AIHandler';
-
-let CurrentEC2Client: EC2Client | undefined;
 
 type EC2Command =
   | 'DescribeAccountAttributes'
@@ -64,205 +45,74 @@ type EC2Command =
   | 'GetLaunchTemplateData'
   | 'GetPasswordData';
 
-interface EC2ToolInput {
+interface EC2ToolInput extends BaseToolInput {
   command: EC2Command;
-  params: Record<string, any>;
 }
 
-export class EC2Tool implements vscode.LanguageModelTool<EC2ToolInput> {
+export class EC2Tool extends BaseTool<EC2ToolInput> {
+  protected readonly toolName = 'EC2Tool';
+
   private async getClient(): Promise<EC2Client> {
-    if (CurrentEC2Client) {
-      return CurrentEC2Client;
-    }
-    const credentials = await Session.Current?.GetCredentials();
-    CurrentEC2Client = new EC2Client({
-      credentials,
-      endpoint: Session.Current?.AwsEndPoint,
-      region: Session.Current?.AwsRegion,
+    return ClientManager.Instance.getClient('ec2', async (session) => {
+      const credentials = await session.GetCredentials();
+      return new EC2Client({
+        credentials,
+        endpoint: session.AwsEndPoint,
+        region: session.AwsRegion,
+      });
     });
-    ui.logToOutput(`EC2Tool: Client created (region=${Session.Current?.AwsRegion})`);
-    return CurrentEC2Client;
   }
 
-  private async executeDescribeAccountAttributes(params: Record<string, any>): Promise<DescribeAccountAttributesCommandOutput> {
-    const client = await this.getClient();
-    const command = new DescribeAccountAttributesCommand(params as any);
-    return await client.send(command);
-  }
-  private async executeDescribeAddresses(params: Record<string, any>): Promise<DescribeAddressesCommandOutput> {
-    const client = await this.getClient();
-    const command = new DescribeAddressesCommand(params as any);
-    return await client.send(command);
-  }
-  private async executeDescribeAvailabilityZones(params: Record<string, any>): Promise<DescribeAvailabilityZonesCommandOutput> {
-    const client = await this.getClient();
-    const command = new DescribeAvailabilityZonesCommand(params as any);
-    return await client.send(command);
-  }
-  private async executeDescribeImages(params: Record<string, any>): Promise<DescribeImagesCommandOutput> {
-    const client = await this.getClient();
-    const command = new DescribeImagesCommand(params as any);
-    return await client.send(command);
-  }
-  private async executeDescribeInstances(params: Record<string, any>): Promise<DescribeInstancesCommandOutput> {
-    const client = await this.getClient();
-    const command = new DescribeInstancesCommand(params as any);
-    return await client.send(command);
-  }
-  private async executeDescribeInstanceStatus(params: Record<string, any>): Promise<DescribeInstanceStatusCommandOutput> {
-    const client = await this.getClient();
-    const command = new DescribeInstanceStatusCommand(params as any);
-    return await client.send(command);
-  }
-  private async executeDescribeKeyPairs(params: Record<string, any>): Promise<DescribeKeyPairsCommandOutput> {
-    const client = await this.getClient();
-    const command = new DescribeKeyPairsCommand(params as any);
-    return await client.send(command);
-  }
-  private async executeDescribeRegions(params: Record<string, any>): Promise<DescribeRegionsCommandOutput> {
-    const client = await this.getClient();
-    const command = new DescribeRegionsCommand(params as any);
-    return await client.send(command);
-  }
-  private async executeDescribeSecurityGroups(params: Record<string, any>): Promise<DescribeSecurityGroupsCommandOutput> {
-    const client = await this.getClient();
-    const command = new DescribeSecurityGroupsCommand(params as any);
-    return await client.send(command);
-  }
-  private async executeDescribeSnapshots(params: Record<string, any>): Promise<DescribeSnapshotsCommandOutput> {
-    const client = await this.getClient();
-    const command = new DescribeSnapshotsCommand(params as any);
-    return await client.send(command);
-  }
-  private async executeDescribeSubnets(params: Record<string, any>): Promise<DescribeSubnetsCommandOutput> {
-    const client = await this.getClient();
-    const command = new DescribeSubnetsCommand(params as any);
-    return await client.send(command);
-  }
-  private async executeDescribeTags(params: Record<string, any>): Promise<DescribeTagsCommandOutput> {
-    const client = await this.getClient();
-    const command = new DescribeTagsCommand(params as any);
-    return await client.send(command);
-  }
-  private async executeDescribeVolumes(params: Record<string, any>): Promise<DescribeVolumesCommandOutput> {
-    const client = await this.getClient();
-    const command = new DescribeVolumesCommand(params as any);
-    return await client.send(command);
-  }
-  private async executeDescribeVpcs(params: Record<string, any>): Promise<DescribeVpcsCommandOutput> {
-    const client = await this.getClient();
-    const command = new DescribeVpcsCommand(params as any);
-    return await client.send(command);
-  }
-  private async executeGetConsoleOutput(params: Record<string, any>): Promise<GetConsoleOutputCommandOutput> {
-    const client = await this.getClient();
-    const command = new GetConsoleOutputCommand(params as any);
-    return await client.send(command);
-  }
-  private async executeGetHostReservationPurchasePreview(params: Record<string, any>): Promise<GetHostReservationPurchasePreviewCommandOutput> {
-    const client = await this.getClient();
-    const command = new GetHostReservationPurchasePreviewCommand(params as any);
-    return await client.send(command);
-  }
-  private async executeGetLaunchTemplateData(params: Record<string, any>): Promise<GetLaunchTemplateDataCommandOutput> {
-    const client = await this.getClient();
-    const command = new GetLaunchTemplateDataCommand(params as any);
-    return await client.send(command);
-  }
-  private async executeGetPasswordData(params: Record<string, any>): Promise<GetPasswordDataCommandOutput> {
-    const client = await this.getClient();
-    const command = new GetPasswordDataCommand(params as any);
-    return await client.send(command);
-  }
-
-  private async executeCommand(command: EC2Command, params: Record<string, any>): Promise<any> {
-    ui.logToOutput(`EC2Tool: Executing command: ${command}`);
-    ui.logToOutput(`EC2Tool: Command parameters: ${JSON.stringify(params)}`);
-
+  protected updateResourceContext(command: string, params: Record<string, any>): void {
     if (params?.InstanceId || (Array.isArray(params?.InstanceIds) && params.InstanceIds.length > 0)) {
-      const name = params.InstanceId || params.InstanceIds?.[0];
-      AIHandler.Current.updateLatestResource({ type: 'EC2 Instance', name });
+        const name = params.InstanceId || params.InstanceIds?.[0];
+        AIHandler.Current.updateLatestResource({ type: 'EC2 Instance', name });
     }
+  }
+
+  protected async executeCommand(command: EC2Command, params: Record<string, any>): Promise<any> {
+    const client = await this.getClient();
 
     switch (command) {
       case 'DescribeAccountAttributes':
-        return await this.executeDescribeAccountAttributes(params);
+        return await client.send(new DescribeAccountAttributesCommand(params as any));
       case 'DescribeAddresses':
-        return await this.executeDescribeAddresses(params);
+        return await client.send(new DescribeAddressesCommand(params as any));
       case 'DescribeAvailabilityZones':
-        return await this.executeDescribeAvailabilityZones(params);
+        return await client.send(new DescribeAvailabilityZonesCommand(params as any));
       case 'DescribeImages':
-        return await this.executeDescribeImages(params);
+        return await client.send(new DescribeImagesCommand(params as any));
       case 'DescribeInstances':
-        return await this.executeDescribeInstances(params);
+        return await client.send(new DescribeInstancesCommand(params as any));
       case 'DescribeInstanceStatus':
-        return await this.executeDescribeInstanceStatus(params);
+        return await client.send(new DescribeInstanceStatusCommand(params as any));
       case 'DescribeKeyPairs':
-        return await this.executeDescribeKeyPairs(params);
+        return await client.send(new DescribeKeyPairsCommand(params as any));
       case 'DescribeRegions':
-        return await this.executeDescribeRegions(params);
+        return await client.send(new DescribeRegionsCommand(params as any));
       case 'DescribeSecurityGroups':
-        return await this.executeDescribeSecurityGroups(params);
+        return await client.send(new DescribeSecurityGroupsCommand(params as any));
       case 'DescribeSnapshots':
-        return await this.executeDescribeSnapshots(params);
+        return await client.send(new DescribeSnapshotsCommand(params as any));
       case 'DescribeSubnets':
-        return await this.executeDescribeSubnets(params);
+        return await client.send(new DescribeSubnetsCommand(params as any));
       case 'DescribeTags':
-        return await this.executeDescribeTags(params);
+        return await client.send(new DescribeTagsCommand(params as any));
       case 'DescribeVolumes':
-        return await this.executeDescribeVolumes(params);
+        return await client.send(new DescribeVolumesCommand(params as any));
       case 'DescribeVpcs':
-        return await this.executeDescribeVpcs(params);
+        return await client.send(new DescribeVpcsCommand(params as any));
       case 'GetConsoleOutput':
-        return await this.executeGetConsoleOutput(params);
+        return await client.send(new GetConsoleOutputCommand(params as any));
       case 'GetHostReservationPurchasePreview':
-        return await this.executeGetHostReservationPurchasePreview(params);
+        return await client.send(new GetHostReservationPurchasePreviewCommand(params as any));
       case 'GetLaunchTemplateData':
-        return await this.executeGetLaunchTemplateData(params);
+        return await client.send(new GetLaunchTemplateDataCommand(params as any));
       case 'GetPasswordData':
-        return await this.executeGetPasswordData(params);
+        return await client.send(new GetPasswordDataCommand(params as any));
       default:
         throw new Error(`Unsupported command: ${command}`);
     }
   }
-
-  async invoke(
-    options: vscode.LanguageModelToolInvocationOptions<EC2ToolInput>,
-    token: vscode.CancellationToken
-  ): Promise<vscode.LanguageModelToolResult> {
-    const { command, params } = options.input;
-    try {
-      ui.logToOutput(`EC2Tool: Executing ${command} with params: ${JSON.stringify(params)}`);
-      const result = await this.executeCommand(command, params);
-      const response = {
-        success: true,
-        command,
-        message: `${command} executed successfully`,
-        data: result,
-        metadata: {
-          requestId: result.$metadata?.requestId,
-          httpStatusCode: result.$metadata?.httpStatusCode,
-        }
-      };
-      ui.logToOutput(`EC2Tool: ${command} completed successfully`);
-      return new vscode.LanguageModelToolResult([
-        new vscode.LanguageModelTextPart(JSON.stringify(response, null, 2))
-      ]);
-    } catch (error: any) {
-      const errorResponse = {
-        success: false,
-        command,
-        message: `Failed to execute ${command}`,
-        error: {
-          name: error.name || 'Error',
-          message: error.message || 'Unknown error',
-          code: error.Code || error.$metadata?.httpStatusCode,
-        }
-      };
-      ui.logToOutput(`EC2Tool: ${command} failed`, error);
-      return new vscode.LanguageModelToolResult([
-        new vscode.LanguageModelTextPart(JSON.stringify(errorResponse, null, 2))
-      ]);
-    }
-  }
 }
+

@@ -2,11 +2,12 @@ import * as vscode from 'vscode';
 import * as ui from './common/UI';
 import { StatusBarItem } from './statusbar/StatusBarItem';
 import { Session } from './common/Session';
+import { ClientManager } from './common/ClientManager';
 import { TestAwsConnectionTool } from './sts/TestAwsConnectionTool';
 import { STSTool } from './sts/STSTool';
 import * as stsAPI from './sts/API';
 import { AIHandler } from './chat/AIHandler';
-import { S3Tool as S3Tool } from './s3/S3Tool';
+import { S3Tool } from './s3/S3Tool';
 import { SNSTool } from './sns/SNSTool';
 import { SQSTool } from './sqs/SQSTool';
 import { EC2Tool } from './ec2/EC2Tool';
@@ -28,11 +29,20 @@ import { S3Explorer } from './s3/S3Explorer';
 export function activate(context: vscode.ExtensionContext) {
 	ui.logToOutput('Aws AI Assistant is now active!');
 
-	new Session(context);
+	// Initialize Core Services
+	const session = new Session(context);
 	new AIHandler();
-	new StatusBarItem();
+	const statusBar = new StatusBarItem();
+	const clientManager = ClientManager.Instance;
 
-	
+	// Register disposables
+	context.subscriptions.push(
+		session,
+		statusBar,
+		clientManager,
+		{ dispose: () => ui.dispose() }
+	);
+
 	// Register language model tools
 	context.subscriptions.push(
 		vscode.lm.registerTool('testAwsConnection', new TestAwsConnectionTool()),
@@ -43,8 +53,8 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.lm.registerTool('sns', new SNSTool()),
 		vscode.lm.registerTool('apigateway', new APIGatewayTool()),
 		vscode.lm.registerTool('rds', new RDSTool()),
-    	vscode.lm.registerTool('rdsdata', new RDSDataTool()),
-    	vscode.lm.registerTool('cloudformation', new CloudFormationTool()),
+		vscode.lm.registerTool('rdsdata', new RDSDataTool()),
+		vscode.lm.registerTool('cloudformation', new CloudFormationTool()),
 		vscode.lm.registerTool('fileOperations', new FileOperationsTool()),
 		vscode.lm.registerTool('session', new SessionTool()),
 		vscode.lm.registerTool('cloudWatchLogs', new CloudWatchLogTool()),
@@ -57,57 +67,58 @@ export function activate(context: vscode.ExtensionContext) {
 
 	ui.logToOutput('Language model tools registered');
 
-	// Command to set AWS Endpoint
-	vscode.commands.registerCommand('aws-ai-assistant.SetAwsEndpoint', async () => {
-		Session.Current?.SetAwsEndpoint();
-	});
+	// Register Commands
+	context.subscriptions.push(
+		vscode.commands.registerCommand('aws-ai-assistant.SetAwsEndpoint', async () => {
+			Session.Current?.SetAwsEndpoint();
+		}),
 
-	// Command to set default AWS Region
-	vscode.commands.registerCommand('aws-ai-assistant.SetDefaultRegion', async () => {
-		Session.Current?.SetAwsRegion();
-	});
-	
-	vscode.commands.registerCommand('aws-ai-assistant.RefreshCredentials', () => {
-		Session.Current?.RefreshCredentials();
-	});
+		vscode.commands.registerCommand('aws-ai-assistant.SetDefaultRegion', async () => {
+			Session.Current?.SetAwsRegion();
+		}),
 
-	vscode.commands.registerCommand('aws-ai-assistant.ListAwsProfiles', () => {
-		StatusBarItem.Current.ListAwsProfiles();
-	});
+		vscode.commands.registerCommand('aws-ai-assistant.RefreshCredentials', () => {
+			Session.Current?.RefreshCredentials();
+		}),
 
-	vscode.commands.registerCommand('aws-ai-assistant.SetAwsProfile', () => {
-		StatusBarItem.Current.SetAwsProfile();
-	});
+		vscode.commands.registerCommand('aws-ai-assistant.ListAwsProfiles', () => {
+			StatusBarItem.Current.ListAwsProfiles();
+		}),
 
-	vscode.commands.registerCommand('aws-ai-assistant.TestAwsConnectivity', async () => {
-		let result = await stsAPI.TestAwsConnection();
-		if (result.isSuccessful) {
-			ui.showInfoMessage('AWS connectivity test successful.');
-		} else {
-			ui.showErrorMessage('AWS connectivity test failed.', result.error);
-		}
-	});
+		vscode.commands.registerCommand('aws-ai-assistant.SetAwsProfile', () => {
+			StatusBarItem.Current.SetAwsProfile();
+		}),
 
-	vscode.commands.registerCommand('aws-ai-assistant.OpenCloudWatchView', async (logGroup: string, logStream?: string) => {
-		if (!Session.Current) {
-			ui.showErrorMessage('Session not initialized', new Error('No session'));
-			return;
-		}
-		const region = Session.Current.AwsRegion;
-		const stream = logStream || '';
-		CloudWatchLogView.Render(Session.Current.ExtensionUri, region, logGroup, stream);
-	});
+		vscode.commands.registerCommand('aws-ai-assistant.TestAwsConnectivity', async () => {
+			const result = await stsAPI.TestAwsConnection();
+			if (result.isSuccessful) {
+				ui.showInfoMessage('AWS connectivity test successful.');
+			} else {
+				ui.showErrorMessage('AWS connectivity test failed.', result.error);
+			}
+		}),
 
-	vscode.commands.registerCommand('aws-ai-assistant.OpenS3ExplorerView', async (bucket: string, key?: string) => {
-		if (!Session.Current) {
-			ui.showErrorMessage('Session not initialized', new Error('No session'));
-			return;
-		}
-		S3Explorer.Render(Session.Current.ExtensionUri, bucket, key);
-	});
+		vscode.commands.registerCommand('aws-ai-assistant.OpenCloudWatchView', async (logGroup: string, logStream?: string) => {
+			if (!Session.Current) {
+				ui.showErrorMessage('Session not initialized', new Error('No session'));
+				return;
+			}
+			const region = Session.Current.AwsRegion;
+			const stream = logStream || '';
+			CloudWatchLogView.Render(Session.Current.ExtensionUri, region, logGroup, stream);
+		}),
 
+		vscode.commands.registerCommand('aws-ai-assistant.OpenS3ExplorerView', async (bucket: string, key?: string) => {
+			if (!Session.Current) {
+				ui.showErrorMessage('Session not initialized', new Error('No session'));
+				return;
+			}
+			S3Explorer.Render(Session.Current.ExtensionUri, bucket, key);
+		})
+	);
 }
 
 export function deactivate() {
 	ui.logToOutput('Aws AI Assistant is now de-active!');
 }
+

@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as ui from '../common/UI';
-import { Session } from '../common/Session';
+import { BaseTool, BaseToolInput } from '../common/BaseTool';
+import { ClientManager } from '../common/ClientManager';
 import {
   SFNClient,
   DescribeExecutionCommand,
@@ -9,17 +10,8 @@ import {
   ListStateMachinesCommand,
   StartExecutionCommand,
   UpdateStateMachineCommand,
-  DescribeExecutionCommandOutput,
-  DescribeStateMachineCommandOutput,
-  ListExecutionsCommandOutput,
-  ListStateMachinesCommandOutput,
-  StartExecutionCommandOutput,
-  UpdateStateMachineCommandOutput
 } from '@aws-sdk/client-sfn';
 import { AIHandler } from '../chat/AIHandler';
-
-// Cached client
-let CurrentSfClient: SFNClient | undefined;
 
 // Command type definition
 type StepFuncCommand =
@@ -31,9 +23,8 @@ type StepFuncCommand =
   | 'UpdateStateMachine';
 
 // Input interface - command + params object
-interface StepFuncToolInput {
+interface StepFuncToolInput extends BaseToolInput {
   command: StepFuncCommand;
-  params: Record<string, any>;
 }
 
 // Command parameter interfaces for type safety
@@ -74,52 +65,54 @@ interface UpdateStateMachineParams {
   versionDescription?: string;
 }
 
-export class StepFuncTool implements vscode.LanguageModelTool<StepFuncToolInput> {
-  /**
-   * Get Step Functions client with session configuration
-   */
+export class StepFuncTool extends BaseTool<StepFuncToolInput> {
+  protected readonly toolName = 'StepFuncTool';
+
   private async getClient(): Promise<SFNClient> {
-    if (CurrentSfClient !== undefined) {
-      return CurrentSfClient;
-    }
-
-    const credentials = await Session.Current?.GetCredentials();
-
-    CurrentSfClient = new SFNClient({
-      credentials,
-      endpoint: Session.Current?.AwsEndPoint,
-      region: Session.Current?.AwsRegion,
+      return ClientManager.Instance.getClient('sfn', async (session) => {
+      const credentials = await session.GetCredentials();
+      return new SFNClient({
+        credentials,
+        endpoint: session.AwsEndPoint,
+        region: session.AwsRegion,
+      });
     });
-
-    ui.logToOutput(`StepFuncTool: Client created (region=${Session.Current?.AwsRegion})`);
-    return CurrentSfClient;
   }
 
-  private async executeDescribeExecution(params: DescribeExecutionParams): Promise<DescribeExecutionCommandOutput> {
+  protected updateResourceContext(command: string, params: Record<string, any>): void {
+    if ("stateMachineArn" in params) {
+        AIHandler.Current.updateLatestResource({ type: 'Step Function State Machine', name: params.stateMachineArn });
+    }
+  }
+
+  protected async executeCommand(command: StepFuncCommand, params: Record<string, any>): Promise<any> {
     const client = await this.getClient();
-    const command = new DescribeExecutionCommand(params);
-    return await client.send(command);
-  }
 
-  private async executeDescribeStateMachine(params: DescribeStateMachineParams): Promise<DescribeStateMachineCommandOutput> {
-    const client = await this.getClient();
-    const command = new DescribeStateMachineCommand(params);
-    return await client.send(command);
-  }
+    switch (command) {
+      case 'DescribeExecution':
+        return await client.send(new DescribeExecutionCommand(params as DescribeExecutionParams));
 
-  private async executeListExecutions(params: ListExecutionsParams): Promise<ListExecutionsCommandOutput> {
-    const client = await this.getClient();
-    const command = new ListExecutionsCommand(params);
-    return await client.send(command);
-  }
+      case 'DescribeStateMachine':
+        return await client.send(new DescribeStateMachineCommand(params as DescribeStateMachineParams));
 
-  private async executeListStateMachines(params: ListStateMachinesParams): Promise<ListStateMachinesCommandOutput> {
-    const client = await this.getClient();
-    const command = new ListStateMachinesCommand(params);
-    return await client.send(command);
-  }
+      case 'ListExecutions':
+        return await client.send(new ListExecutionsCommand(params as ListExecutionsParams));
 
-  private async executeStartExecution(params: StartExecutionParams): Promise<StartExecutionCommandOutput> {
+      case 'ListStateMachines':
+        return await client.send(new ListStateMachinesCommand(params as ListStateMachinesParams));
+
+      case 'StartExecution':
+        return await this.executeStartExecution(params as StartExecutionParams);
+
+      case 'UpdateStateMachine':
+        return await client.send(new UpdateStateMachineCommand(params as UpdateStateMachineParams));
+
+      default:
+        throw new Error(`Unsupported command: ${command}`);
+    }
+  }
+  
+  private async executeStartExecution(params: StartExecutionParams): Promise<any> {
     const client = await this.getClient();
     const commandParams: any = { ...params };
 
@@ -130,90 +123,5 @@ export class StepFuncTool implements vscode.LanguageModelTool<StepFuncToolInput>
 
     const command = new StartExecutionCommand(commandParams);
     return await client.send(command);
-  }
-
-  private async executeUpdateStateMachine(params: UpdateStateMachineParams): Promise<UpdateStateMachineCommandOutput> {
-    const client = await this.getClient();
-    const command = new UpdateStateMachineCommand(params);
-    return await client.send(command);
-  }
-
-  /**
-   * Main command dispatcher - easily extensible
-   */
-  private async executeCommand(command: StepFuncCommand, params: Record<string, any>): Promise<any> {
-    ui.logToOutput(`StepFuncTool: Executing command: ${command}`);
-    ui.logToOutput(`StepFuncTool: Command parameters: ${JSON.stringify(params)}`);
-
-    if("stateMachineArn" in params){
-      AIHandler.Current.updateLatestResource({ type: 'Step Function State Machine', name: params.stateMachineArn });
-    }
-
-    switch (command) {
-      case 'DescribeExecution':
-        return await this.executeDescribeExecution(params as DescribeExecutionParams);
-      case 'DescribeStateMachine':
-        return await this.executeDescribeStateMachine(params as DescribeStateMachineParams);
-      case 'ListExecutions':
-        return await this.executeListExecutions(params as ListExecutionsParams);
-      case 'ListStateMachines':
-        return await this.executeListStateMachines(params as ListStateMachinesParams);
-      case 'StartExecution':
-        return await this.executeStartExecution(params as StartExecutionParams);
-      case 'UpdateStateMachine':
-        return await this.executeUpdateStateMachine(params as UpdateStateMachineParams);
-      default:
-        throw new Error(`Unsupported command: ${command}`);
-    }
-  }
-
-  /**
-   * Tool invocation entry point
-   */
-  async invoke(
-    options: vscode.LanguageModelToolInvocationOptions<StepFuncToolInput>,
-    token: vscode.CancellationToken
-  ): Promise<vscode.LanguageModelToolResult> {
-    const { command, params } = options.input;
-
-    try {
-      ui.logToOutput(`StepFuncTool: Executing ${command} with params: ${JSON.stringify(params)}`);
-
-      const result = await this.executeCommand(command, params);
-
-      const response = {
-        success: true,
-        command,
-        message: `${command} executed successfully`,
-        data: result,
-        metadata: {
-          requestId: result.$metadata?.requestId,
-          httpStatusCode: result.$metadata?.httpStatusCode,
-        }
-      };
-
-      ui.logToOutput(`StepFuncTool: ${command} completed successfully`);
-
-      return new vscode.LanguageModelToolResult([
-        new vscode.LanguageModelTextPart(JSON.stringify(response, null, 2))
-      ]);
-    } catch (error: any) {
-      const errorResponse = {
-        success: false,
-        command,
-        message: `Failed to execute ${command}`,
-        error: {
-          name: error.name || 'Error',
-          message: error.message || 'Unknown error',
-          code: error.Code || error.$metadata?.httpStatusCode,
-        }
-      };
-
-      ui.logToOutput(`StepFuncTool: ${command} failed`, error);
-
-      return new vscode.LanguageModelToolResult([
-        new vscode.LanguageModelTextPart(JSON.stringify(errorResponse, null, 2))
-      ]);
-    }
   }
 }

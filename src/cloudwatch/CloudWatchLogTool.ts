@@ -1,20 +1,16 @@
 import * as vscode from 'vscode';
 import * as ui from '../common/UI';
+import { BaseTool, BaseToolInput } from '../common/BaseTool';
+import { ClientManager } from '../common/ClientManager';
 import { Session } from '../common/Session';
 import {
   CloudWatchLogsClient,
   DescribeLogGroupsCommand,
   DescribeLogStreamsCommand,
   GetLogEventsCommand,
-  DescribeLogGroupsCommandOutput,
-  DescribeLogStreamsCommandOutput,
-  GetLogEventsCommandOutput
 } from '@aws-sdk/client-cloudwatch-logs';
 import { AIHandler } from '../chat/AIHandler';
 import { CloudWatchLogView } from './CloudWatchLogView';
-
-// Cached client
-let CurrentCwClient: CloudWatchLogsClient | undefined;
 
 // Command type definition
 type CloudWatchCommand =
@@ -24,47 +20,25 @@ type CloudWatchCommand =
   | 'OpenCloudWatchLogView';
 
 // Input interface - command + params object
-interface CloudWatchToolInput {
+interface CloudWatchToolInput extends BaseToolInput {
   command: CloudWatchCommand;
-  params: Record<string, any>;
 }
 
-// Parameter interfaces
-interface DescribeLogGroupsParams {
-  logGroupNamePrefix?: string;
-  limit?: number;
-  nextToken?: string;
-}
+export class CloudWatchLogTool extends BaseTool<CloudWatchToolInput> {
+  protected readonly toolName = 'CloudWatchLogTool';
 
-interface DescribeLogStreamsParams {
-  logGroupName: string;
-  logStreamNamePrefix?: string;
-  orderBy?: 'LogStreamName' | 'LastEventTime';
-  descending?: boolean;
-  limit?: number;
-  nextToken?: string;
-}
+  private async getClient(): Promise<CloudWatchLogsClient> {
+      return ClientManager.Instance.getClient('cloudwatchlogs', async (session) => {
+      const credentials = await session.GetCredentials();
+      return new CloudWatchLogsClient({
+        credentials,
+        region: session.AwsRegion,
+        endpoint: session.AwsEndPoint,
+      });
+    });
+  }
 
-interface GetLogEventsParams {
-  logGroupName: string;
-  logStreamName: string;
-  startTime?: number; // millis
-  endTime?: number;   // millis
-  nextToken?: string;
-  limit?: number;
-  startFromHead?: boolean;
-}
-
-interface OpenCloudWatchLogViewParams {
-  logGroupName: string;
-  logStreamName?: string; // Optional log stream name
-}
-
-export class CloudWatchLogTool implements vscode.LanguageModelTool<CloudWatchToolInput> {
-  /**
-   * Execute OpenCloudWatchLogView command - Opens CloudWatchLogView
-   */
-  private async executeOpenCloudWatchLogView(params: OpenCloudWatchLogViewParams): Promise<any> {
+  private async executeOpenCloudWatchLogView(params: any): Promise<any> {
     if (!Session.Current) {
       throw new Error('Session not initialized');
     }
@@ -80,108 +54,29 @@ export class CloudWatchLogTool implements vscode.LanguageModelTool<CloudWatchToo
     };
   }
 
-  /**
-   * Get CloudWatch Logs client with session configuration
-   */
-  private async getClient(): Promise<CloudWatchLogsClient> {
-    if (CurrentCwClient !== undefined) {
-      return CurrentCwClient;
+  protected updateResourceContext(command: string, params: Record<string, any>): void {
+     if ("logGroupName" in params) {
+      AIHandler.Current.updateLatestResource({ type: "CloudWatch Log Group", name: params.logGroupName });
     }
-
-    const credentials = await Session.Current?.GetCredentials();
-
-    CurrentCwClient = new CloudWatchLogsClient({
-      credentials,
-      region: Session.Current?.AwsRegion,
-      endpoint: Session.Current?.AwsEndPoint,
-    });
-
-    ui.logToOutput(`CloudWatchLogTool: Client created (region=${Session.Current?.AwsRegion})`);
-    return CurrentCwClient;
+    if ("logStreamName" in params) {
+      AIHandler.Current.updateLatestResource({ type: "CloudWatch Log Stream", name: params.logStreamName });
+    }
   }
 
-  private async describeLogGroups(params: DescribeLogGroupsParams): Promise<DescribeLogGroupsCommandOutput> {
+  protected async executeCommand(command: CloudWatchCommand, params: Record<string, any>): Promise<any> {
     const client = await this.getClient();
-    const command = new DescribeLogGroupsCommand(params);
-    return await client.send(command);
-  }
 
-  private async describeLogStreams(params: DescribeLogStreamsParams): Promise<DescribeLogStreamsCommandOutput> {
-    const client = await this.getClient();
-    const command = new DescribeLogStreamsCommand(params);
-    return await client.send(command);
-  }
-
-  private async getLogEvents(params: GetLogEventsParams): Promise<GetLogEventsCommandOutput> {
-    const client = await this.getClient();
-    const command = new GetLogEventsCommand(params);
-    return await client.send(command);
-  }
-
-  private async dispatch(command: CloudWatchCommand, params: Record<string, any>): Promise<any> {
     switch (command) {
       case 'DescribeLogGroups':
-        return await this.describeLogGroups(params as DescribeLogGroupsParams);
+        return await client.send(new DescribeLogGroupsCommand(params as any));
       case 'DescribeLogStreams':
-        return await this.describeLogStreams(params as DescribeLogStreamsParams);
+        return await client.send(new DescribeLogStreamsCommand(params as any));
       case 'GetLogEvents':
-        return await this.getLogEvents(params as GetLogEventsParams);
+        return await client.send(new GetLogEventsCommand(params as any));
       case 'OpenCloudWatchLogView':
-        return await this.executeOpenCloudWatchLogView(params as OpenCloudWatchLogViewParams);
+        return await this.executeOpenCloudWatchLogView(params);
       default:
         throw new Error(`Unsupported command: ${command}`);
-    }
-  }
-
-  async invoke(
-    options: vscode.LanguageModelToolInvocationOptions<CloudWatchToolInput>,
-    token: vscode.CancellationToken
-  ): Promise<vscode.LanguageModelToolResult> {
-    const { command, params } = options.input;
-
-    try {
-      ui.logToOutput(`CloudWatchLogTool: Executing ${command} with params: ${JSON.stringify(params)}`);
-
-      if ("logGroupName" in params) {
-        AIHandler.Current.updateLatestResource({ type: "CloudWatch Log Group", name: params.logGroupName });
-      }
-      if ("logStreamName" in params) {
-        AIHandler.Current.updateLatestResource({ type: "CloudWatch Log Stream", name: params.logStreamName });
-      }
-
-      const result = await this.dispatch(command, params);
-
-      const response = {
-        success: true,
-        command,
-        message: `${command} executed successfully`,
-        data: result,
-        metadata: {
-          requestId: result.$metadata?.requestId,
-          httpStatusCode: result.$metadata?.httpStatusCode,
-        }
-      };
-
-      ui.logToOutput(`CloudWatchLogTool: ${command} completed successfully`);
-      return new vscode.LanguageModelToolResult([
-        new vscode.LanguageModelTextPart(JSON.stringify(response, null, 2))
-      ]);
-    } catch (error: any) {
-      const errorResponse = {
-        success: false,
-        command,
-        message: `Failed to execute ${command}`,
-        error: {
-          name: error?.name || 'Error',
-          message: error?.message || 'Unknown error',
-          code: error?.Code || error?.$metadata?.httpStatusCode,
-        }
-      };
-
-      ui.logToOutput(`CloudWatchLogTool: ${command} failed`, error instanceof Error ? error : undefined);
-      return new vscode.LanguageModelToolResult([
-        new vscode.LanguageModelTextPart(JSON.stringify(errorResponse, null, 2))
-      ]);
     }
   }
 }

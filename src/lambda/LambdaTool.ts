@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as ui from '../common/UI';
-import { Session } from '../common/Session';
+import { BaseTool, BaseToolInput } from '../common/BaseTool';
+import { ClientManager } from '../common/ClientManager';
 import {
   LambdaClient,
   ListFunctionsCommand,
@@ -11,20 +12,8 @@ import {
   TagResourceCommand,
   UntagResourceCommand,
   InvokeCommand,
-  ListFunctionsCommandOutput,
-  GetFunctionCommandOutput,
-  GetFunctionConfigurationCommandOutput,
-  UpdateFunctionCodeCommandOutput,
-  ListTagsCommandOutput,
-  TagResourceCommandOutput,
-  UntagResourceCommandOutput,
-  InvokeCommandOutput
 } from '@aws-sdk/client-lambda';
 import { AIHandler } from '../chat/AIHandler';
-import { needsConfirmation, confirmProceed } from '../common/ActionGuard';
-
-// Cached client
-let CurrentLambdaClient: LambdaClient | undefined;
 
 // Command type definition
 type LambdaCommand =
@@ -38,9 +27,8 @@ type LambdaCommand =
   | 'Invoke';
 
 // Input interface - command + params object
-interface LambdaToolInput {
+interface LambdaToolInput extends BaseToolInput {
   command: LambdaCommand;
-  params: Record<string, any>;
 }
 
 // Command parameter interfaces for type safety
@@ -97,41 +85,61 @@ interface InvokeParams {
   Qualifier?: string;
 }
 
-export class LambdaTool implements vscode.LanguageModelTool<LambdaToolInput> {
-  /**
-   * Get Lambda Client with session configuration
-   */
-  private async getLambdaClient(): Promise<LambdaClient> {
-    if (CurrentLambdaClient !== undefined) {
-      return CurrentLambdaClient;
-    }
+export class LambdaTool extends BaseTool<LambdaToolInput> {
+  protected readonly toolName = 'LambdaTool';
 
-    const credentials = await Session.Current?.GetCredentials();
-
-    CurrentLambdaClient = new LambdaClient({
-      credentials,
-      endpoint: Session.Current?.AwsEndPoint,
-      region: Session.Current?.AwsRegion,
+  private async getClient(): Promise<LambdaClient> {
+    return ClientManager.Instance.getClient('lambda', async (session) => {
+      const credentials = await session.GetCredentials();
+      return new LambdaClient({
+        credentials,
+        endpoint: session.AwsEndPoint,
+        region: session.AwsRegion,
+      });
     });
-
-    ui.logToOutput(`LambdaTool: Lambda client created (region=${Session.Current?.AwsRegion})`);
-    return CurrentLambdaClient;
   }
 
-  /**
-   * Execute ListFunctions command
-   */
-  private async executeListFunctions(params: ListFunctionsParams): Promise<ListFunctionsCommandOutput> {
-    const client = await this.getLambdaClient();
-    const command = new ListFunctionsCommand(params);
-    return await client.send(command);
+  protected updateResourceContext(command: string, params: Record<string, any>): void {
+     if ("FunctionName" in params) {
+      AIHandler.Current.updateLatestResource({ type: 'Lambda Function', name: params["FunctionName"] });
+    }
   }
 
-  /**
-   * Execute GetFunction command
-   */
-  private async executeGetFunction(params: GetFunctionParams): Promise<GetFunctionCommandOutput> {
-    const client = await this.getLambdaClient();
+  protected async executeCommand(command: LambdaCommand, params: Record<string, any>): Promise<any> {
+    const client = await this.getClient();
+
+    switch (command) {
+      case 'ListFunctions':
+        return await client.send(new ListFunctionsCommand(params as ListFunctionsParams));
+      
+      case 'GetFunction':
+        return await this.executeGetFunction(params as GetFunctionParams);
+      
+      case 'GetFunctionConfiguration':
+        return await this.executeGetFunctionConfiguration(params as GetFunctionConfigurationParams);
+      
+      case 'UpdateFunctionCode':
+        return await this.executeUpdateFunctionCode(params as UpdateFunctionCodeParams);
+      
+      case 'ListTags':
+        return await client.send(new ListTagsCommand(params as ListTagsParams));
+      
+      case 'TagResource':
+        return await client.send(new TagResourceCommand(params as TagResourceParams));
+      
+      case 'UntagResource':
+        return await client.send(new UntagResourceCommand(params as UntagResourceParams));
+      
+      case 'Invoke':
+        return await this.executeInvoke(params as InvokeParams);
+      
+      default:
+        throw new Error(`Unsupported command: ${command}`);
+    }
+  }
+
+  private async executeGetFunction(params: GetFunctionParams): Promise<any> {
+    const client = await this.getClient();
     const command = new GetFunctionCommand(params);
     const result = await client.send(command);
     
@@ -142,15 +150,11 @@ export class LambdaTool implements vscode.LanguageModelTool<LambdaToolInput> {
         name: result.Configuration.LoggingConfig.LogGroup 
       });
     }
-    
     return result;
   }
 
-  /**
-   * Execute GetFunctionConfiguration command
-   */
-  private async executeGetFunctionConfiguration(params: GetFunctionConfigurationParams): Promise<GetFunctionConfigurationCommandOutput> {
-    const client = await this.getLambdaClient();
+  private async executeGetFunctionConfiguration(params: GetFunctionConfigurationParams): Promise<any> {
+    const client = await this.getClient();
     const command = new GetFunctionConfigurationCommand(params);
     const result = await client.send(command);
     
@@ -161,15 +165,11 @@ export class LambdaTool implements vscode.LanguageModelTool<LambdaToolInput> {
         name: result.LoggingConfig.LogGroup 
       });
     }
-    
     return result;
   }
 
-  /**
-   * Execute UpdateFunctionCode command
-   */
-  private async executeUpdateFunctionCode(params: UpdateFunctionCodeParams): Promise<UpdateFunctionCodeCommandOutput> {
-    const client = await this.getLambdaClient();
+  private async executeUpdateFunctionCode(params: UpdateFunctionCodeParams): Promise<any> {
+    const client = await this.getClient();
     
     // Convert base64 string to Uint8Array if ZipFile is provided as string
     const commandParams: any = { ...params };
@@ -181,38 +181,8 @@ export class LambdaTool implements vscode.LanguageModelTool<LambdaToolInput> {
     return await client.send(command);
   }
 
-  /**
-   * Execute ListTags command
-   */
-  private async executeListTags(params: ListTagsParams): Promise<ListTagsCommandOutput> {
-    const client = await this.getLambdaClient();
-    const command = new ListTagsCommand(params);
-    return await client.send(command);
-  }
-
-  /**
-   * Execute TagResource command
-   */
-  private async executeTagResource(params: TagResourceParams): Promise<TagResourceCommandOutput> {
-    const client = await this.getLambdaClient();
-    const command = new TagResourceCommand(params);
-    return await client.send(command);
-  }
-
-  /**
-   * Execute UntagResource command
-   */
-  private async executeUntagResource(params: UntagResourceParams): Promise<UntagResourceCommandOutput> {
-    const client = await this.getLambdaClient();
-    const command = new UntagResourceCommand(params);
-    return await client.send(command);
-  }
-
-  /**
-   * Execute Invoke command
-   */
-  private async executeInvoke(params: InvokeParams): Promise<InvokeCommandOutput> {
-    const client = await this.getLambdaClient();
+  private async executeInvoke(params: InvokeParams): Promise<any> {
+    const client = await this.getClient();
     const command = new InvokeCommand(params);
     const result = await client.send(command);
     
@@ -228,109 +198,5 @@ export class LambdaTool implements vscode.LanguageModelTool<LambdaToolInput> {
     
     return result;
   }
-
-  /**
-   * Main command dispatcher - easily extensible
-   */
-  private async executeCommand(command: LambdaCommand, params: Record<string, any>): Promise<any> {
-    ui.logToOutput(`LambdaTool: Executing command: ${command}`);
-    ui.logToOutput(`LambdaTool: Command parameters: ${JSON.stringify(params)}`);
-
-    if("FunctionName" in params){
-      AIHandler.Current.updateLatestResource({ type: 'Lambda Function', name: params["FunctionName"] });
-    }
-
-    switch (command) {
-      case 'ListFunctions':
-        return await this.executeListFunctions(params as ListFunctionsParams);
-      
-      case 'GetFunction':
-        return await this.executeGetFunction(params as GetFunctionParams);
-      
-      case 'GetFunctionConfiguration':
-        return await this.executeGetFunctionConfiguration(params as GetFunctionConfigurationParams);
-      
-      case 'UpdateFunctionCode':
-        return await this.executeUpdateFunctionCode(params as UpdateFunctionCodeParams);
-      
-      case 'ListTags':
-        return await this.executeListTags(params as ListTagsParams);
-      
-      case 'TagResource':
-        return await this.executeTagResource(params as TagResourceParams);
-      
-      case 'UntagResource':
-        return await this.executeUntagResource(params as UntagResourceParams);
-      
-      case 'Invoke':
-        return await this.executeInvoke(params as InvokeParams);
-      
-      default:
-        throw new Error(`Unsupported command: ${command}`);
-    }
-  }
-
-  /**
-   * Tool invocation entry point
-   */
-  async invoke(
-    options: vscode.LanguageModelToolInvocationOptions<LambdaToolInput>,
-    token: vscode.CancellationToken
-  ): Promise<vscode.LanguageModelToolResult> {
-    const { command, params } = options.input;
-
-    try {
-      ui.logToOutput(`LambdaTool: Executing ${command} with params: ${JSON.stringify(params)}`);
-
-      if (needsConfirmation(command)) {
-        const ok = await confirmProceed(command);
-        if (!ok) {
-          const cancelled = { success: false, command, message: 'User cancelled action command' };
-          return new vscode.LanguageModelToolResult([
-            new vscode.LanguageModelTextPart(JSON.stringify(cancelled, null, 2))
-          ]);
-        }
-      }
-
-      // Execute the command
-      const result = await this.executeCommand(command, params);
-
-      // Build success response
-      const response = {
-        success: true,
-        command,
-        message: `${command} executed successfully`,
-        data: result,
-        metadata: {
-          requestId: result.$metadata?.requestId,
-          httpStatusCode: result.$metadata?.httpStatusCode,
-        }
-      };
-
-      ui.logToOutput(`LambdaTool: ${command} completed successfully`);
-      
-      return new vscode.LanguageModelToolResult([
-        new vscode.LanguageModelTextPart(JSON.stringify(response, null, 2))
-      ]);
-
-    } catch (error: any) {
-      // Build error response
-      const errorResponse = {
-        success: false,
-        command,
-        message: `Failed to execute ${command}`,
-        error: {
-          name: error.name || 'Error',
-          message: error.message || 'Unknown error',
-          code: error.Code || error.$metadata?.httpStatusCode,
-        }
-      };
-
-      ui.logToOutput(`LambdaTool: ${command} failed`, error);
-      
-      return new vscode.LanguageModelToolResult([
-        new vscode.LanguageModelTextPart(JSON.stringify(errorResponse, null, 2))
-      ]);
-    }
-  }
 }
+

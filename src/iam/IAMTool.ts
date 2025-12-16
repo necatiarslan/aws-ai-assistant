@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as ui from '../common/UI';
-import { Session } from '../common/Session';
+import { BaseTool, BaseToolInput } from '../common/BaseTool';
+import { ClientManager } from '../common/ClientManager';
 import {
   IAMClient,
   GetRoleCommand,
@@ -13,21 +14,8 @@ import {
   GetPolicyVersionCommand,
   ListPoliciesCommand,
   ListPolicyVersionsCommand,
-  GetRoleCommandOutput,
-  GetRolePolicyCommandOutput,
-  ListAttachedRolePoliciesCommandOutput,
-  ListRolePoliciesCommandOutput,
-  ListRolesCommandOutput,
-  ListRoleTagsCommandOutput,
-  GetPolicyCommandOutput,
-  GetPolicyVersionCommandOutput,
-  ListPoliciesCommandOutput,
-  ListPolicyVersionsCommandOutput
 } from '@aws-sdk/client-iam';
 import { AIHandler } from '../chat/AIHandler';
-
-// Cached credentials and client
-let CurrentIamClient: IAMClient | undefined;
 
 // Command type definition
 type IAMCommand =
@@ -43,225 +31,56 @@ type IAMCommand =
   | 'ListPolicyVersions';
 
 // Input interface - command + params object
-interface IAMToolInput {
+interface IAMToolInput extends BaseToolInput {
   command: IAMCommand;
-  params: Record<string, any>;
 }
 
-// Command parameter interfaces
-interface GetRoleParams {
-  RoleName: string;
-}
+export class IAMTool extends BaseTool<IAMToolInput> {
+  protected readonly toolName = 'IAMTool';
 
-interface GetRolePolicyParams {
-  RoleName: string;
-  PolicyName: string;
-}
-
-interface ListAttachedRolePoliciesParams {
-  RoleName: string;
-  PathPrefix?: string;
-  Marker?: string;
-  MaxItems?: number;
-}
-
-interface ListRolePoliciesParams {
-  RoleName: string;
-  Marker?: string;
-  MaxItems?: number;
-}
-
-interface ListRolesParams {
-  PathPrefix?: string;
-  Marker?: string;
-  MaxItems?: number;
-}
-
-interface ListRoleTagsParams {
-  RoleName: string;
-  Marker?: string;
-  MaxItems?: number;
-}
-
-interface GetPolicyParams {
-  PolicyArn: string;
-}
-
-interface GetPolicyVersionParams {
-  PolicyArn: string;
-  VersionId: string;
-}
-
-interface ListPoliciesParams {
-  Scope?: 'All' | 'AWS' | 'Local';
-  OnlyAttached?: boolean;
-  PathPrefix?: string;
-  Marker?: string;
-  MaxItems?: number;
-  PolicyUsageFilter?: 'PermissionsPolicy' | 'PermissionsBoundary';
-}
-
-interface ListPolicyVersionsParams {
-  PolicyArn: string;
-  Marker?: string;
-  MaxItems?: number;
-}
-
-export class IAMTool implements vscode.LanguageModelTool<IAMToolInput> {
-  /**
-   * Get IAM client with session configuration
-   */
   private async getClient(): Promise<IAMClient> {
-    if (CurrentIamClient !== undefined) {
-      return CurrentIamClient;
-    }
-
-    const credentials = await Session.Current?.GetCredentials();
-
-    CurrentIamClient = new IAMClient({
-      credentials,
-      endpoint: Session.Current?.AwsEndPoint,
-      region: Session.Current?.AwsRegion,
+      return ClientManager.Instance.getClient('iam', async (session) => {
+      const credentials = await session.GetCredentials();
+      return new IAMClient({
+        credentials,
+        endpoint: session.AwsEndPoint,
+        region: session.AwsRegion,
+      });
     });
-
-    ui.logToOutput(`IAMTool: Client created (region=${Session.Current?.AwsRegion})`);
-    return CurrentIamClient;
   }
 
-  private async executeGetRole(params: GetRoleParams): Promise<GetRoleCommandOutput> {
-    const client = await this.getClient();
-    return await client.send(new GetRoleCommand(params));
-  }
-
-  private async executeGetRolePolicy(params: GetRolePolicyParams): Promise<GetRolePolicyCommandOutput> {
-    const client = await this.getClient();
-    return await client.send(new GetRolePolicyCommand(params));
-  }
-
-  private async executeListAttachedRolePolicies(params: ListAttachedRolePoliciesParams): Promise<ListAttachedRolePoliciesCommandOutput> {
-    const client = await this.getClient();
-    return await client.send(new ListAttachedRolePoliciesCommand(params));
-  }
-
-  private async executeListRolePolicies(params: ListRolePoliciesParams): Promise<ListRolePoliciesCommandOutput> {
-    const client = await this.getClient();
-    return await client.send(new ListRolePoliciesCommand(params));
-  }
-
-  private async executeListRoles(params: ListRolesParams): Promise<ListRolesCommandOutput> {
-    const client = await this.getClient();
-    return await client.send(new ListRolesCommand(params));
-  }
-
-  private async executeListRoleTags(params: ListRoleTagsParams): Promise<ListRoleTagsCommandOutput> {
-    const client = await this.getClient();
-    return await client.send(new ListRoleTagsCommand(params));
-  }
-
-  private async executeGetPolicy(params: GetPolicyParams): Promise<GetPolicyCommandOutput> {
-    const client = await this.getClient();
-    return await client.send(new GetPolicyCommand(params));
-  }
-
-  private async executeGetPolicyVersion(params: GetPolicyVersionParams): Promise<GetPolicyVersionCommandOutput> {
-    const client = await this.getClient();
-    return await client.send(new GetPolicyVersionCommand(params));
-  }
-
-  private async executeListPolicies(params: ListPoliciesParams): Promise<ListPoliciesCommandOutput> {
-    const client = await this.getClient();
-    return await client.send(new ListPoliciesCommand(params));
-  }
-
-  private async executeListPolicyVersions(params: ListPolicyVersionsParams): Promise<ListPolicyVersionsCommandOutput> {
-    const client = await this.getClient();
-    return await client.send(new ListPolicyVersionsCommand(params));
-  }
-
-  /**
-   * Main command dispatcher - easily extensible
-   */
-  private async executeCommand(command: IAMCommand, params: Record<string, any>): Promise<any> {
-    ui.logToOutput(`IAMTool: Executing command: ${command}`);
-    ui.logToOutput(`IAMTool: Command parameters: ${JSON.stringify(params)}`);
-
-    if("RoleName" in params){
+  protected updateResourceContext(command: string, params: Record<string, any>): void {
+     if("RoleName" in params){
       AIHandler.Current.updateLatestResource({ type: 'Role', name: params["RoleName"] });
     }
+  }
+
+  protected async executeCommand(command: IAMCommand, params: Record<string, any>): Promise<any> {
+    const client = await this.getClient();
 
     switch (command) {
       case 'GetRole':
-        return await this.executeGetRole(params as GetRoleParams);
+        return await client.send(new GetRoleCommand(params as any));
       case 'GetRolePolicy':
-        return await this.executeGetRolePolicy(params as GetRolePolicyParams);
+        return await client.send(new GetRolePolicyCommand(params as any));
       case 'ListAttachedRolePolicies':
-        return await this.executeListAttachedRolePolicies(params as ListAttachedRolePoliciesParams);
+        return await client.send(new ListAttachedRolePoliciesCommand(params as any));
       case 'ListRolePolicies':
-        return await this.executeListRolePolicies(params as ListRolePoliciesParams);
+        return await client.send(new ListRolePoliciesCommand(params as any));
       case 'ListRoles':
-        return await this.executeListRoles(params as ListRolesParams);
+        return await client.send(new ListRolesCommand(params as any));
       case 'ListRoleTags':
-        return await this.executeListRoleTags(params as ListRoleTagsParams);
+        return await client.send(new ListRoleTagsCommand(params as any));
       case 'GetPolicy':
-        return await this.executeGetPolicy(params as GetPolicyParams);
+        return await client.send(new GetPolicyCommand(params as any));
       case 'GetPolicyVersion':
-        return await this.executeGetPolicyVersion(params as GetPolicyVersionParams);
+        return await client.send(new GetPolicyVersionCommand(params as any));
       case 'ListPolicies':
-        return await this.executeListPolicies(params as ListPoliciesParams);
+        return await client.send(new ListPoliciesCommand(params as any));
       case 'ListPolicyVersions':
-        return await this.executeListPolicyVersions(params as ListPolicyVersionsParams);
+        return await client.send(new ListPolicyVersionsCommand(params as any));
       default:
         throw new Error(`Unsupported command: ${command}`);
-    }
-  }
-
-  /**
-   * Tool invocation entry point
-   */
-  async invoke(
-    options: vscode.LanguageModelToolInvocationOptions<IAMToolInput>,
-    token: vscode.CancellationToken
-  ): Promise<vscode.LanguageModelToolResult> {
-    const { command, params } = options.input;
-
-    try {
-      ui.logToOutput(`IAMTool: Executing ${command} with params: ${JSON.stringify(params)}`);
-
-      const result = await this.executeCommand(command, params);
-
-      const response = {
-        success: true,
-        command,
-        message: `${command} executed successfully`,
-        data: result,
-        metadata: {
-          requestId: result.$metadata?.requestId,
-          httpStatusCode: result.$metadata?.httpStatusCode,
-        }
-      };
-
-      ui.logToOutput(`IAMTool: ${command} completed successfully`);
-
-      return new vscode.LanguageModelToolResult([
-        new vscode.LanguageModelTextPart(JSON.stringify(response, null, 2))
-      ]);
-    } catch (error: any) {
-      const errorResponse = {
-        success: false,
-        command,
-        message: `Failed to execute ${command}`,
-        error: {
-          name: error.name || 'Error',
-          message: error.message || 'Unknown error',
-          code: error.Code || error.$metadata?.httpStatusCode,
-        }
-      };
-
-      ui.logToOutput(`IAMTool: ${command} failed`, error);
-
-      return new vscode.LanguageModelToolResult([
-        new vscode.LanguageModelTextPart(JSON.stringify(errorResponse, null, 2))
-      ]);
     }
   }
 }

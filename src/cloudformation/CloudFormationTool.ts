@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as ui from '../common/UI';
-import { Session } from '../common/Session';
+import { BaseTool, BaseToolInput } from '../common/BaseTool';
+import { ClientManager } from '../common/ClientManager';
 import {
   CloudFormationClient,
   BatchDescribeTypeConfigurationsCommand,
@@ -41,7 +42,6 @@ import {
   ListTypeVersionsCommand
 } from '@aws-sdk/client-cloudformation';
 import { AIHandler } from '../chat/AIHandler';
-let CurrentClient: CloudFormationClient | undefined;
 
 type CFNCommand =
   | 'BatchDescribeTypeConfigurations'
@@ -94,25 +94,22 @@ type CFNCommand =
   | 'ListTypes'
   | 'ListTypeVersions';
 
-interface CloudFormationToolInput {
+interface CloudFormationToolInput extends BaseToolInput {
   command: CFNCommand;
-  params: Record<string, any>;
 }
 
-export class CloudFormationTool implements vscode.LanguageModelTool<CloudFormationToolInput> {
+export class CloudFormationTool extends BaseTool<CloudFormationToolInput> {
+  protected readonly toolName = 'CloudFormationTool';
 
   private async getClient(): Promise<CloudFormationClient> {
-    if (CurrentClient) {
-      return CurrentClient;
-    }
-    const credentials = await Session.Current?.GetCredentials();
-    CurrentClient = new CloudFormationClient({
-      credentials,
-      endpoint: Session.Current?.AwsEndPoint,
-      region: Session.Current?.AwsRegion,
+      return ClientManager.Instance.getClient('cloudformation', async (session) => {
+      const credentials = await session.GetCredentials();
+      return new CloudFormationClient({
+        credentials,
+        endpoint: session.AwsEndPoint,
+        region: session.AwsRegion,
+      });
     });
-    ui.logToOutput(`CloudFormationTool: Client created (region=${Session.Current?.AwsRegion})`);
-    return CurrentClient;
   }
 
   private async send(ctor: new (input: any) => {}, params: Record<string, any>): Promise<any> {
@@ -125,14 +122,13 @@ export class CloudFormationTool implements vscode.LanguageModelTool<CloudFormati
     throw new Error(`${command} is not supported in this SDK version`);
   }
 
-  private async executeCommand(command: CFNCommand, params: Record<string, any>): Promise<any> {
-    ui.logToOutput(`CloudFormationTool: Executing command: ${command}`);
-    ui.logToOutput(`CloudFormationTool: Command parameters: ${JSON.stringify(params)}`);
-
-    if (params?.StackName) {
+  protected updateResourceContext(command: string, params: Record<string, any>): void {
+     if (params?.StackName) {
       AIHandler.Current.updateLatestResource({ type: 'CloudFormation Stack', name: params.StackName });
     }
+  }
 
+  protected async executeCommand(command: CFNCommand, params: Record<string, any>): Promise<any> {
     switch (command) {
       case 'BatchDescribeTypeConfigurations': return await this.send(BatchDescribeTypeConfigurationsCommand, params);
       case 'DescribeAccountLimits': return await this.send(DescribeAccountLimitsCommand, params);
@@ -185,46 +181,6 @@ export class CloudFormationTool implements vscode.LanguageModelTool<CloudFormati
       case 'ListTypeVersions': return await this.send(ListTypeVersionsCommand, params);
       default:
         throw new Error(`Unsupported command: ${command}`);
-    }
-  }
-
-  async invoke(
-    options: vscode.LanguageModelToolInvocationOptions<CloudFormationToolInput>,
-    token: vscode.CancellationToken
-  ): Promise<vscode.LanguageModelToolResult> {
-    const { command, params } = options.input;
-    try {
-      ui.logToOutput(`CloudFormationTool: Executing ${command} with params: ${JSON.stringify(params)}`);
-      const result = await this.executeCommand(command, params);
-      const response = {
-        success: true,
-        command,
-        message: `${command} executed successfully`,
-        data: result,
-        metadata: {
-          requestId: result.$metadata?.requestId,
-          httpStatusCode: result.$metadata?.httpStatusCode,
-        }
-      };
-      ui.logToOutput(`CloudFormationTool: ${command} completed successfully`);
-      return new vscode.LanguageModelToolResult([
-        new vscode.LanguageModelTextPart(JSON.stringify(response, null, 2))
-      ]);
-    } catch (error: any) {
-      const errorResponse = {
-        success: false,
-        command,
-        message: `Failed to execute ${command}`,
-        error: {
-          name: error.name || 'Error',
-          message: error.message || 'Unknown error',
-          code: error.Code || error.$metadata?.httpStatusCode,
-        }
-      };
-      ui.logToOutput(`CloudFormationTool: ${command} failed`, error);
-      return new vscode.LanguageModelToolResult([
-        new vscode.LanguageModelTextPart(JSON.stringify(errorResponse, null, 2))
-      ]);
     }
   }
 }
