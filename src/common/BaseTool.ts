@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as ui from './UI';
 import { needsConfirmation, confirmProceed } from './ActionGuard';
 import { AIHandler } from '../chat/AIHandler';
+import { CommandHistoryManager } from './CommandHistoryManager';
 
 export interface BaseToolInput {
     command: string;
@@ -34,61 +35,83 @@ export abstract class BaseTool<TInput extends BaseToolInput> implements vscode.L
     ): Promise<vscode.LanguageModelToolResult> {
         const { command, params } = options.input;
 
-        try {
-            ui.logToOutput(`${this.toolName}: Executing ${command} with params: ${JSON.stringify(params)}`);
+            
+            const startTime = Date.now();
+            let success = false;
+            let responseData: any = null;
 
-            if (needsConfirmation(command)) {
-                const ok = await confirmProceed(command);
-                if (!ok) {
-                    const cancelled = { success: false, command, message: 'User cancelled action command' };
-                    return new vscode.LanguageModelToolResult([
-                        new vscode.LanguageModelTextPart(JSON.stringify(cancelled, null, 2))
-                    ]);
+            try {
+                ui.logToOutput(`${this.toolName}: Executing ${command} with params: ${JSON.stringify(params)}`);
+
+                if (needsConfirmation(command)) {
+                    const ok = await confirmProceed(command);
+                    if (!ok) {
+                        const cancelled = { success: false, command, message: 'User cancelled action command' };
+                        responseData = cancelled;
+                        return new vscode.LanguageModelToolResult([
+                            new vscode.LanguageModelTextPart(JSON.stringify(cancelled, null, 2))
+                        ]);
+                    }
                 }
+
+                // Update chat context if needed
+                this.updateResourceContext(command, params);
+
+                // Execute the command
+                const result = await this.executeCommand(command, params);
+                success = true; // If executeCommand doesn't throw, we assume success or at least handled failure within executeCommand returning a result. 
+                // However, the original code wraps success in a response object.
+                
+                // Build success response
+                const response = {
+                    success: true,
+                    command,
+                    message: `${command} executed successfully`,
+                    data: result,
+                    metadata: {
+                        requestId: result?.$metadata?.requestId,
+                        httpStatusCode: result?.$metadata?.httpStatusCode,
+                    }
+                };
+                responseData = response;
+
+                ui.logToOutput(`${this.toolName}: ${command} completed successfully`);
+
+                return new vscode.LanguageModelToolResult([
+                    new vscode.LanguageModelTextPart(JSON.stringify(response, null, 2))
+                ]);
+
+            } catch (error: any) {
+                // Build error response
+                const errorResponse = {
+                    success: false,
+                    command,
+                    message: `Failed to execute ${command}`,
+                    error: {
+                        name: error.name || 'Error',
+                        message: error.message || 'Unknown error',
+                        code: error.Code || error.$metadata?.httpStatusCode,
+                    }
+                };
+                responseData = errorResponse;
+                success = false;
+
+                ui.logToOutput(`${this.toolName}: ${command} failed`, error);
+
+                return new vscode.LanguageModelToolResult([
+                    new vscode.LanguageModelTextPart(JSON.stringify(errorResponse, null, 2))
+                ]);
+            } finally {
+                const durationMs = Date.now() - startTime;
+                CommandHistoryManager.Instance.add({
+                    timestamp: startTime,
+                    toolName: this.toolName,
+                    command,
+                    params,
+                    response: responseData,
+                    success,
+                    durationMs
+                });
             }
-
-            // Update chat context if needed
-            this.updateResourceContext(command, params);
-
-            // Execute the command
-            const result = await this.executeCommand(command, params);
-
-            // Build success response
-            const response = {
-                success: true,
-                command,
-                message: `${command} executed successfully`,
-                data: result,
-                metadata: {
-                    requestId: result?.$metadata?.requestId,
-                    httpStatusCode: result?.$metadata?.httpStatusCode,
-                }
-            };
-
-            ui.logToOutput(`${this.toolName}: ${command} completed successfully`);
-
-            return new vscode.LanguageModelToolResult([
-                new vscode.LanguageModelTextPart(JSON.stringify(response, null, 2))
-            ]);
-
-        } catch (error: any) {
-            // Build error response
-            const errorResponse = {
-                success: false,
-                command,
-                message: `Failed to execute ${command}`,
-                error: {
-                    name: error.name || 'Error',
-                    message: error.message || 'Unknown error',
-                    code: error.Code || error.$metadata?.httpStatusCode,
-                }
-            };
-
-            ui.logToOutput(`${this.toolName}: ${command} failed`, error);
-
-            return new vscode.LanguageModelToolResult([
-                new vscode.LanguageModelTextPart(JSON.stringify(errorResponse, null, 2))
-            ]);
         }
-    }
 }

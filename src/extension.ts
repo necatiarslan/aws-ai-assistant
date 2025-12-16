@@ -25,6 +25,7 @@ import { RDSDataTool } from './rdsdata/RDSDataTool';
 import { CloudFormationTool } from './cloudformation/CloudFormationTool';
 import { CloudWatchLogView } from './cloudwatch/CloudWatchLogView';
 import { S3Explorer } from './s3/S3Explorer';
+import { CommandHistoryView } from './common/CommandHistoryView';
 
 export function activate(context: vscode.ExtensionContext) {
 	ui.logToOutput('Aws AI Assistant is now active!');
@@ -108,13 +109,22 @@ export function activate(context: vscode.ExtensionContext) {
 			CloudWatchLogView.Render(Session.Current.ExtensionUri, region, logGroup, stream);
 		}),
 
+
 		vscode.commands.registerCommand('aws-ai-assistant.OpenS3ExplorerView', async (bucket: string, key?: string) => {
 			if (!Session.Current) {
 				ui.showErrorMessage('Session not initialized', new Error('No session'));
 				return;
 			}
 			S3Explorer.Render(Session.Current.ExtensionUri, bucket, key);
-		})
+		}),
+
+        vscode.commands.registerCommand('aws-ai-assistant.ShowCommandHistory', () => {
+            if (!Session.Current) {
+                ui.showErrorMessage('Session not initialized', new Error('No session'));
+                return;
+            }
+            CommandHistoryView.Render(Session.Current.ExtensionUri);
+        })
 	);
 }
 

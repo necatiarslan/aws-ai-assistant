@@ -1933,6 +1933,10 @@
       {
         "command": "aws-ai-assistant.OpenS3ExplorerView",
         "title": "Aws AI Assistant:Open S3 Explorer View"
+      },
+      {
+        "command": "aws-ai-assistant.ShowCommandHistory",
+        "title": "Aws AI Assistant:Show Command History"
       }
     ]
   },
