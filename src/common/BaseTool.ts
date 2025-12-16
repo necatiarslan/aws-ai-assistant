@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import * as ui from './UI';
 import { needsConfirmation, confirmProceed } from './ActionGuard';
-import { AIHandler } from '../chat/AIHandler';
 import { CommandHistoryManager } from './CommandHistoryManager';
 
 export interface BaseToolInput {

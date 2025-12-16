@@ -1,5 +1,3 @@
-import * as vscode from 'vscode';
-import * as ui from '../common/UI';
 import { Session } from '../common/Session';
 import { BaseTool, BaseToolInput } from '../common/BaseTool';
 import { ClientManager } from '../common/ClientManager';

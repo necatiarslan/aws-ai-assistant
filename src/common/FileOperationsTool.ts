@@ -1,8 +1,7 @@
 import * as vscode from 'vscode';
 import * as ui from './UI';
 import * as fs from 'fs';
-import { createReadStream, readFileSync } from 'fs';
-import { Readable } from 'stream';
+import { readFileSync } from 'fs';
 import { join, dirname, basename } from 'path';
 import * as archiver from 'archiver';
 import * as os from 'os';
