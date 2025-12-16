@@ -1,6 +1,6 @@
 {
   "name": "aws-ai-assistant",
-  "displayName": "Nebula: AWS AI Assistant",
+  "displayName": "Goggles: AWS AI Assistant",
   "description": "Access AWS services through AI chat and tools within VS Code.",
   "version": "1.0.0",
   "publisher": "NecatiARSLAN",
@@ -1904,39 +1904,39 @@
     "commands": [
       {
         "command": "aws-ai-assistant.RefreshCredentials",
-        "title": "Nebula:Refresh Credentials"
+        "title": "Goggles:Refresh Credentials"
       },
       {
         "command": "aws-ai-assistant.ListAwsProfiles",
-        "title": "Nebula:List Profiles"
+        "title": "Goggles:List Profiles"
       },
       {
         "command": "aws-ai-assistant.SetAwsProfile",
-        "title": "Nebula:Set Active Profile"
+        "title": "Goggles:Set Active Profile"
       },
       {
         "command": "aws-ai-assistant.TestAwsConnectivity",
-        "title": "Nebula:Test Aws Connectivity"
+        "title": "Goggles:Test Aws Connectivity"
       },
       {
         "command": "aws-ai-assistant.SetAwsEndpoint",
-        "title": "Nebula:Set AWS Endpoint"
+        "title": "Goggles:Set AWS Endpoint"
       },
       {
         "command": "aws-ai-assistant.SetDefaultRegion",
-        "title": "Nebula:Set Default AWS Region"
+        "title": "Goggles:Set Default AWS Region"
       },
       {
         "command": "aws-ai-assistant.OpenCloudWatchView",
-        "title": "Nebula:Open CloudWatch Log View"
+        "title": "Goggles:Open CloudWatch Log View"
       },
       {
         "command": "aws-ai-assistant.OpenS3ExplorerView",
-        "title": "Nebula:Open S3 Explorer View"
+        "title": "Goggles:Open S3 Explorer View"
       },
       {
         "command": "aws-ai-assistant.ShowCommandHistory",
-        "title": "Nebula:Show Command History"
+        "title": "Goggles:Show Command History"
       }
     ]
   },

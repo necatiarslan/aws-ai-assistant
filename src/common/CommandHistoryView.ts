@@ -76,7 +76,7 @@ export class CommandHistoryView {
             <script type="module" src="${vscodeElementsUri}"></script>
             <link rel="stylesheet" href="${styleUri}">
             <link href="${codiconsUri}" rel="stylesheet" id="vscode-codicon-stylesheet"/>
-            <title>Nebula Command History</title>
+            <title>Goggles Command History</title>
             <style>
                 table { width: 100%; border-collapse: collapse; }
                 th, td { border: 1px solid var(--vscode-editor-lineHighlightBorder); padding: 5px; text-align: left; }
@@ -84,7 +84,7 @@ export class CommandHistoryView {
             </style>
         </head>
         <body>
-            <h1>Nebula Command History</h1>
+            <h1>Goggles Command History</h1>
             <div style="margin-bottom: 10px;">
                 <vscode-button appearance="primary" id="refresh">Refresh</vscode-button>
                 <vscode-button appearance="secondary" id="clear">Clear History</vscode-button>

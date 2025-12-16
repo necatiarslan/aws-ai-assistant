@@ -191,7 +191,7 @@ export class AIHandler {
       if (usedAppreciated || defaultPromptUsed) {
           stream.markdown("\n\n\n")
           stream.markdown("\n🙏 [Donate](https://github.com/sponsors/necatiarslan) if you found me useful!");
-          stream.markdown("\n🤔 Request a [New Feature](https://github.com/necatiarslan/aws-ai-assistant/issues/new)");
+          stream.markdown("\n🤔 [New Feature](https://github.com/necatiarslan/aws-ai-assistant/issues/new) Request");
       }
       MessageHub.EndWorking();
     } catch (err) {

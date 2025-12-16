@@ -135,7 +135,7 @@ export class StatusBarItem implements vscode.Disposable {
     public RefreshText() {
         ui.logToOutput('StatusBarItem.Refresh Started');
         
-        this.ToolTip = "Nebula: @Aws AI Assistant";
+        this.ToolTip = "Goggles: @Aws AI Assistant";
         if (!Session.Current?.CurrentCredentials) {
             this.ToolTip += "\nNo Aws Credentials Found !!!";
             this.Text = "$(plug) Aws No Credentials";

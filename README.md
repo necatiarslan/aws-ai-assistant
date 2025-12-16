@@ -1,11 +1,8 @@
-# Nebula: AWS AI Assistant
-AWS Monitoring Management in Your Chat Experience
+# Goggles: AWS AI Assistant
 
-Now VsCode Copilot can talk to AWS on your behalf!
+![screenshoot](media/extension/extension-icon-512.png)
 
-![screenshoot](media/extension/extension-icon.png)
-
-Nebula is a Visual Studio Code extension that brings AWS management into your chat experience. Use natural language to inspect and operate AWS resources with your existing credentials. The extension exposes AWS-aware tools that execute actions directly on your behalf.
+Goggles is a Visual Studio Code extension that brings AWS management into your chat experience. Use natural language to inspect and operate AWS resources with your existing credentials. The extension exposes AWS-aware tools that execute actions directly on your behalf.
 
 ## 🔑 Supported AWS Services
 - S3
@@ -62,8 +59,8 @@ Nebula is a Visual Studio Code extension that brings AWS management into your ch
 
 ## Quick Start
 
-1. **Set profile/region**: Use the status bar AWS selector or run "Nebula: Set AWS Profile" / "Nebula: Set Default Region" from the Command Palette.
-2. **Test connectivity**: Run "Nebula: Test AWS Connectivity" to verify STS access.
+1. **Set profile/region**: Use the status bar AWS selector or run "Goggles: Set AWS Profile" / "Goggles: Set Default Region" from the Command Palette.
+2. **Test connectivity**: Run "Goggles: Test AWS Connectivity" to verify STS access.
 3. **Open Chat**: Open Chat (@aws) and ask a question, for example:
    - List my S3 buckets
    - Tail the latest CloudWatch log events for /aws/lambda/my-fn
