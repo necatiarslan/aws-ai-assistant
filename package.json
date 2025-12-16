@@ -1904,39 +1904,39 @@
     "commands": [
       {
         "command": "aws-ai-assistant.RefreshCredentials",
-        "title": "Aws AI Assistant:Refresh Credentials"
+        "title": "Nebula:Refresh Credentials"
       },
       {
         "command": "aws-ai-assistant.ListAwsProfiles",
-        "title": "Aws AI Assistant:List Profiles"
+        "title": "Nebula:List Profiles"
       },
       {
         "command": "aws-ai-assistant.SetAwsProfile",
-        "title": "Aws AI Assistant:Set Active Profile"
+        "title": "Nebula:Set Active Profile"
       },
       {
         "command": "aws-ai-assistant.TestAwsConnectivity",
-        "title": "Aws AI Assistant:Test Aws Connectivity"
+        "title": "Nebula:Test Aws Connectivity"
       },
       {
         "command": "aws-ai-assistant.SetAwsEndpoint",
-        "title": "Aws AI Assistant:Set AWS Endpoint"
+        "title": "Nebula:Set AWS Endpoint"
       },
       {
         "command": "aws-ai-assistant.SetDefaultRegion",
-        "title": "Aws AI Assistant:Set Default AWS Region"
+        "title": "Nebula:Set Default AWS Region"
       },
       {
         "command": "aws-ai-assistant.OpenCloudWatchView",
-        "title": "Aws AI Assistant:Open CloudWatch Log View"
+        "title": "Nebula:Open CloudWatch Log View"
       },
       {
         "command": "aws-ai-assistant.OpenS3ExplorerView",
-        "title": "Aws AI Assistant:Open S3 Explorer View"
+        "title": "Nebula:Open S3 Explorer View"
       },
       {
         "command": "aws-ai-assistant.ShowCommandHistory",
-        "title": "Aws AI Assistant:Show Command History"
+        "title": "Nebula:Show Command History"
       }
     ]
   },

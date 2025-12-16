@@ -62,8 +62,8 @@ Nebula is a Visual Studio Code extension that brings AWS management into your ch
 
 ## Quick Start
 
-1. **Set profile/region**: Use the status bar AWS selector or run "AWS AI Assistant: Set AWS Profile" / "AWS AI Assistant: Set Default Region" from the Command Palette.
-2. **Test connectivity**: Run "AWS AI Assistant: Test AWS Connectivity" to verify STS access.
+1. **Set profile/region**: Use the status bar AWS selector or run "Nebula: Set AWS Profile" / "Nebula: Set Default Region" from the Command Palette.
+2. **Test connectivity**: Run "Nebula: Test AWS Connectivity" to verify STS access.
 3. **Open Chat**: Open Chat (@aws) and ask a question, for example:
    - List my S3 buckets
    - Tail the latest CloudWatch log events for /aws/lambda/my-fn
