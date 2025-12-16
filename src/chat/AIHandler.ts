@@ -28,7 +28,7 @@ export class AIHandler {
     if(!Session.Current){ return; }
 
     const context: vscode.ExtensionContext = Session.Current?.Context
-    participant.iconPath = vscode.Uri.joinPath(context.extensionUri, 'media', 'aws-assistant-icon.png');
+    participant.iconPath = vscode.Uri.joinPath(context.extensionUri, 'media', 'extension', 'chat-icon.png');
     context.subscriptions.push(participant);
   }
 

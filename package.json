@@ -8,12 +8,15 @@
     "type": "git",
     "url": "https://github.com/necatiarslan/aws-ai-assistant"
   },
-  "icon": "media/aws-ai-assistant-logo.png",
+  "icon": "media/extension/extension-icon.png",
   "engines": {
     "vscode": "^1.104.0"
   },
   "categories": [
-    "Other"
+    "Other",
+    "AI",
+    "Chat",
+    "Azure"
   ],
   "activationEvents": [
     "onStartupFinished"
