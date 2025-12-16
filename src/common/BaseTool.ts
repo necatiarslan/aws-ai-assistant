@@ -62,7 +62,7 @@ export abstract class BaseTool<TInput extends BaseToolInput> implements vscode.L
                 // However, the original code wraps success in a response object.
                 
                 // Build success response
-                const response = {
+                const response: any = {
                     success: true,
                     command,
                     message: `${command} executed successfully`,
@@ -72,6 +72,25 @@ export abstract class BaseTool<TInput extends BaseToolInput> implements vscode.L
                         httpStatusCode: result?.$metadata?.httpStatusCode,
                     }
                 };
+                
+                // Check for pagination tokens in the result
+                if (result?.NextContinuationToken) {
+                    response.pagination = {
+                        hasMore: true,
+                        nextContinuationToken: result.NextContinuationToken
+                    };
+                } else if (result?.NextToken) {
+                    response.pagination = {
+                        hasMore: true,
+                        nextToken: result.NextToken
+                    };
+                } else if (result?.NextMarker) {
+                    response.pagination = {
+                        hasMore: true,
+                        nextMarker: result.NextMarker
+                    };
+                }
+                
                 responseData = response;
 
                 ui.logToOutput(`${this.toolName}: ${command} completed successfully`);

@@ -13,6 +13,7 @@ export class AIHandler {
 
   private latestResource: { [type: string]: { type: string; name: string; arn?: string } } = {};
   private latestResponse: string = '';
+  private paginationContext: { toolName: string; command: string; params: any; paginationToken: string; tokenType: string } | null = null;
 
   constructor() {
     AIHandler.Current = this;
@@ -129,6 +130,28 @@ export class AIHandler {
                 .join('\n');
 
               this.latestResponse = resultText;
+              
+              // Check for pagination tokens in the response
+              try {
+                const parsedResponse = JSON.parse(resultText);
+                if (parsedResponse?.pagination?.hasMore) {
+                  const pagination = parsedResponse.pagination;
+                  const tokenType = Object.keys(pagination).find(k => k.endsWith('Token') && k !== 'hasMore');
+                  if (tokenType && pagination[tokenType]) {
+                    const input = toolCall.input as any;
+                    this.paginationContext = {
+                      toolName: toolCall.name,
+                      command: input.command,
+                      params: input.params || {},
+                      paginationToken: pagination[tokenType],
+                      tokenType: tokenType
+                    };
+                  }
+                }
+              } catch (parseErr) {
+                // If response is not JSON, ignore pagination detection
+              }
+              
               // Add result to history
               messages.push(
                 vscode.LanguageModelChatMessage.User([
@@ -185,6 +208,15 @@ export class AIHandler {
           command: 'aws-ai-assistant.OpenS3ExplorerView',
           title: 'Open S3 View',
           arguments: [bucket]
+        });
+      }
+
+      if (this.paginationContext) {
+        stream.markdown("\n\n");
+        stream.button({
+          command: 'aws-ai-assistant.LoadMoreResults',
+          title: 'Load More',
+          arguments: [this.paginationContext]
         });
       }
 

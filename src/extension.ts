@@ -124,7 +124,28 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             }
             CommandHistoryView.Render(Session.Current.ExtensionUri);
-        })
+        }),
+
+		vscode.commands.registerCommand('aws-ai-assistant.LoadMoreResults', async (paginationContext: any) => {
+			if (!paginationContext) {
+				ui.showErrorMessage('Pagination context not available', new Error('No pagination context'));
+				return;
+			}
+
+			// Add pagination token to params based on tokenType
+			const updatedParams = { ...paginationContext.params };
+			if (paginationContext.tokenType === 'NextContinuationToken') {
+				updatedParams.ContinuationToken = paginationContext.paginationToken;
+			} else if (paginationContext.tokenType === 'NextToken') {
+				updatedParams.NextToken = paginationContext.paginationToken;
+			} else if (paginationContext.tokenType === 'NextMarker') {
+				updatedParams.Marker = paginationContext.paginationToken;
+			}
+
+			// Create and send a new chat request with the pagination params
+			const prompt = `Continue loading more results for: ${paginationContext.command} with previous parameters`;
+			await AIHandler.Current.askAI(prompt);
+		})
 	);
 }
 
