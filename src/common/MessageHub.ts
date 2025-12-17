@@ -11,3 +11,11 @@ export function EndWorking(){
 export function CredentialsChanged(){
     StatusBarItem.Current?.RefreshText();
 }
+
+export function StartAwsCommand(){
+    StatusBarItem.Current?.StartAwsCommand();
+}
+
+export function EndAwsCommand(){
+    // todo: implement if needed
+}

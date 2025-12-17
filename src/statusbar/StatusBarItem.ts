@@ -9,6 +9,7 @@ import { AIHandler } from '../chat/AIHandler';
 export class StatusBarItem implements vscode.Disposable {
 
     public static WorkingText: string = "$(plug) Aws $(sync~spin)";
+    public static ExecutingAwsCommandText: string = "$(plug) Aws $(loading~spin)";
     public static Current: StatusBarItem;
 
     public awsAssistantStatusBarItem: vscode.StatusBarItem;
@@ -132,8 +133,13 @@ export class StatusBarItem implements vscode.Disposable {
         this.RefreshText();
     }
 
+    public StartAwsCommand() {
+        ui.logToOutput('StatusBarItem.StartAwsCommand Started');
+        this.awsAssistantStatusBarItem.text = StatusBarItem.ExecutingAwsCommandText;
+    }
+
     public RefreshText() {
-        ui.logToOutput('StatusBarItem.Refresh Started');
+        ui.logToOutput('StatusBarItem.RefreshText Started');
         
         this.ToolTip = "Goggles: @Aws AI Assistant";
         if (!Session.Current?.CurrentCredentials) {

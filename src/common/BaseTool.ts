@@ -3,6 +3,7 @@ import * as ui from './UI';
 import { needsConfirmation, confirmProceed } from './ActionGuard';
 import { CommandHistoryManager } from './CommandHistoryManager';
 import { Session } from './Session';
+import * as MessageHub from './MessageHub';
 
 export interface BaseToolInput {
     command: string;
@@ -86,9 +87,11 @@ export abstract class BaseTool<TInput extends BaseToolInput> implements vscode.L
                 this.updateResourceContext(command, params);
 
                 // Execute the command
+                MessageHub.StartAwsCommand();
                 const result = await this.executeCommand(command, params);
                 success = true; // If executeCommand doesn't throw, we assume success or at least handled failure within executeCommand returning a result. 
                 // However, the original code wraps success in a response object.
+                MessageHub.EndAwsCommand();
                 
                 // Build success response
                 const response: any = {
@@ -160,5 +163,5 @@ export abstract class BaseTool<TInput extends BaseToolInput> implements vscode.L
                     durationMs
                 });
             }
-        }
+    }
 }

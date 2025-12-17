@@ -221,7 +221,7 @@ export class ServiceAccessView {
             <meta name="viewport" content="width=device-width,initial-scale=1.0">
             <script type="module" src="${vscodeElementsUri}"></script>
             <link href="${codiconsUri}" rel="stylesheet" id="vscode-codicon-stylesheet"/>
-            <title>Goggles Service Access Settings</title>
+            <title>Service Access Settings</title>
             <style>
                 body {
                     padding: 20px;
