@@ -995,7 +995,7 @@
       {
         "name": "s3",
         "toolReferenceName": "s3Generic",
-        "displayName": "S3 Generic Tool",
+        "displayName": "S3 Tool",
         "modelDescription": "Execute S3 commands. ALWAYS provide params object. Examples: ListObjectsV2 {command:'ListObjectsV2', params:{Bucket:'bucket-name'}}. PutObject {command:'PutObject', params:{Bucket:'name', Key:'path', Body:'content'}}. DeleteObject {command:'DeleteObject', params:{Bucket:'name', Key:'path'}}. CopyObject {command:'CopyObject', params:{Bucket:'name', CopySource:'/bucket/key', Key:'new-path'}}. OpenS3Explorer {command:'OpenS3Explorer', params:{Bucket:'bucket-name', Key:'optional/path/'}}.",
         "userDescription": "Execute S3 commands including read, write, delete operations, and open S3 Explorer view",
         "tags": [
@@ -1032,6 +1032,7 @@
                 "PutObject",
                 "DeleteObject",
                 "CopyObject",
+                "SelectObjectContent",
                 "OpenS3Explorer"
               ],
               "description": "The S3 command to execute"
@@ -1107,6 +1108,22 @@
                 "AsText": {
                   "type": "boolean",
                   "description": "Return file content as text for analysis (optional for GetObject)"
+                },
+                "Expression": {
+                  "type": "string",
+                  "description": "SQL expression for querying object content (REQUIRED for SelectObjectContent, e.g., 'SELECT * FROM S3Object')"
+                },
+                "ExpressionType": {
+                  "type": "string",
+                  "description": "Type of expression (REQUIRED for SelectObjectContent, value: SQL)"
+                },
+                "InputSerialization": {
+                  "type": "object",
+                  "description": "Format of the input data (REQUIRED for SelectObjectContent, e.g., {CSV: {FileHeaderInfo: 'USE'}} or {JSON: {Type: 'DOCUMENT'}})"
+                },
+                "OutputSerialization": {
+                  "type": "object",
+                  "description": "Format for output data (REQUIRED for SelectObjectContent, e.g., {CSV: {}} or {JSON: {}})"
                 }
               }
             }

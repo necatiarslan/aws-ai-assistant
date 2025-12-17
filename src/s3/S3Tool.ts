@@ -19,6 +19,7 @@ import {
   PutObjectCommand,
   DeleteObjectCommand,
   CopyObjectCommand,
+  SelectObjectContentCommand,
   MetadataDirective
 } from '@aws-sdk/client-s3';
 
@@ -35,6 +36,7 @@ type S3Command =
   | 'ListObjectVersions'
   | 'GetBucketPolicy'
   | 'GetBucketNotificationConfiguration'
+  | 'SelectObjectContent'
   | 'OpenS3Explorer';
 
 // Input interface
@@ -54,6 +56,7 @@ interface CopyObjectParams { Bucket: string; CopySource: string; Key: string; Me
 interface GetBucketPolicyParams { Bucket: string; }
 interface GetBucketNotificationConfigurationParams { Bucket: string; }
 interface GetObjectParams { Bucket: string; Key: string; VersionId?: string; DownloadToTemp?: boolean; AsText?: boolean; }
+interface SelectObjectContentParams { Bucket: string; Key: string; Expression: string; ExpressionType: string; InputSerialization: any; OutputSerialization: any; }
 interface OpenS3ExplorerParams { Bucket: string; Key?: string; }
 
 export class S3Tool extends BaseTool<S3ToolInput> {
@@ -113,6 +116,9 @@ export class S3Tool extends BaseTool<S3ToolInput> {
 
       case 'CopyObject':
         return await client.send(new CopyObjectCommand(params as CopyObjectParams));
+
+      case 'SelectObjectContent':
+        return await this.handleSelectObjectContent(client, params as SelectObjectContentParams);
 
       case 'OpenS3Explorer':
         return await this.handleOpenS3Explorer(params as OpenS3ExplorerParams);
@@ -177,6 +183,44 @@ export class S3Tool extends BaseTool<S3ToolInput> {
         Message: 'File content returned as base64'
       };
     }
+  }
+
+  private async handleSelectObjectContent(client: S3Client, params: SelectObjectContentParams): Promise<any> {
+    const command = new SelectObjectContentCommand({
+      Bucket: params.Bucket,
+      Key: params.Key,
+      Expression: params.Expression,
+      ExpressionType: params.ExpressionType as "SQL",
+      InputSerialization: params.InputSerialization,
+      OutputSerialization: params.OutputSerialization
+    });
+    
+    const result = await client.send(command);
+    
+    // Process the event stream
+    const records: string[] = [];
+    if (result.Payload) {
+      for await (const event of result.Payload) {
+        if (event.Records) {
+          const recordsBuffer = event.Records.Payload;
+          if (recordsBuffer) {
+            records.push(Buffer.from(recordsBuffer).toString('utf-8'));
+          }
+        }
+      }
+    }
+    
+    return {
+      Bucket: params.Bucket,
+      Key: params.Key,
+      Expression: params.Expression,
+      Records: records.join(''),
+      RecordCount: records.length,
+      $metadata: {
+        httpStatusCode: result.$metadata?.httpStatusCode,
+        requestId: result.$metadata?.requestId,
+      }
+    };
   }
 
   private async handleOpenS3Explorer(params: OpenS3ExplorerParams): Promise<any> {
