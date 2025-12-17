@@ -1954,6 +1954,10 @@
       {
         "command": "aws-ai-assistant.ShowCommandHistory",
         "title": "Goggles:Show Command History"
+      },
+      {
+        "command": "aws-ai-assistant.OpenServiceAccessView",
+        "title": "Goggles:Service Access Settings"
       }
     ]
   },

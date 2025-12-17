@@ -13,6 +13,8 @@ export class Session implements vscode.Disposable {
     public AwsEndPoint: string | undefined;
     public AwsRegion: string = "us-east-1";
     public CurrentCredentials: AwsCredentialIdentity | undefined;
+    public DisabledTools: Set<string> = new Set<string>();
+    public DisabledCommands: Map<string, Set<string>> = new Map<string, Set<string>>();
 
     private _onDidChangeSession = new vscode.EventEmitter<void>();
     public readonly onDidChangeSession = this._onDidChangeSession.event;
@@ -32,6 +34,15 @@ export class Session implements vscode.Disposable {
             this.Context.globalState.update('AwsProfile', Session.Current?.AwsProfile);
             this.Context.globalState.update('AwsEndPoint', Session.Current?.AwsEndPoint);
             this.Context.globalState.update('AwsRegion', Session.Current?.AwsRegion);
+            
+            // Save disabled tools and commands
+            this.Context.globalState.update('DisabledTools', Array.from(Session.Current?.DisabledTools || []));
+            const disabledCommandsObj: Record<string, string[]> = {};
+            Session.Current?.DisabledCommands.forEach((commands, tool) => {
+                disabledCommandsObj[tool] = Array.from(commands);
+            });
+            this.Context.globalState.update('DisabledCommands', disabledCommandsObj);
+            
             this._onDidChangeSession.fire();
         } catch (error: any) {
             ui.logToOutput("Session.SaveState Error !!!", error);
@@ -49,6 +60,20 @@ export class Session implements vscode.Disposable {
             if (AwsEndPointTemp) { Session.Current!.AwsEndPoint = AwsEndPointTemp; }
             if (AwsRegionTemp) { Session.Current!.AwsRegion = AwsRegionTemp; }
             if (AwsProfileTemp) { Session.Current!.AwsProfile = AwsProfileTemp; }
+
+            // Load disabled tools and commands
+            const disabledToolsArray: string[] | undefined = this.Context.globalState.get('DisabledTools');
+            if (disabledToolsArray) {
+                Session.Current!.DisabledTools = new Set(disabledToolsArray);
+            }
+            
+            const disabledCommandsObj: Record<string, string[]> | undefined = this.Context.globalState.get('DisabledCommands');
+            if (disabledCommandsObj) {
+                Session.Current!.DisabledCommands = new Map();
+                Object.entries(disabledCommandsObj).forEach(([tool, commands]) => {
+                    Session.Current!.DisabledCommands.set(tool, new Set(commands));
+                });
+            }
 
         } catch (error: any) {
             ui.logToOutput("Session.LoadState Error !!!", error);

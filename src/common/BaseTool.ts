@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as ui from './UI';
 import { needsConfirmation, confirmProceed } from './ActionGuard';
 import { CommandHistoryManager } from './CommandHistoryManager';
+import { Session } from './Session';
 
 export interface BaseToolInput {
     command: string;
@@ -41,6 +42,34 @@ export abstract class BaseTool<TInput extends BaseToolInput> implements vscode.L
 
             try {
                 ui.logToOutput(`${this.toolName}: Executing ${command} with params: ${JSON.stringify(params)}`);
+
+                // Check if tool or command is disabled
+                if (Session.Current?.DisabledTools.has(this.toolName)) {
+                    const disabledResponse = { 
+                        success: false, 
+                        command, 
+                        message: `Tool '${this.toolName}' is disabled. Enable it in Service Access Settings (Command Palette: Goggles:Service Access Settings)` 
+                    };
+                    responseData = disabledResponse;
+                    ui.logToOutput(`${this.toolName}: Tool is disabled`);
+                    return new vscode.LanguageModelToolResult([
+                        new vscode.LanguageModelTextPart(JSON.stringify(disabledResponse, null, 2))
+                    ]);
+                }
+
+                const disabledCommands = Session.Current?.DisabledCommands.get(this.toolName);
+                if (disabledCommands?.has(command)) {
+                    const disabledResponse = { 
+                        success: false, 
+                        command, 
+                        message: `Command '${command}' in tool '${this.toolName}' is disabled. Enable it in Service Access Settings (Command Palette: Goggles:Service Access Settings)` 
+                    };
+                    responseData = disabledResponse;
+                    ui.logToOutput(`${this.toolName}: Command ${command} is disabled`);
+                    return new vscode.LanguageModelToolResult([
+                        new vscode.LanguageModelTextPart(JSON.stringify(disabledResponse, null, 2))
+                    ]);
+                }
 
                 if (needsConfirmation(command)) {
                     const ok = await confirmProceed(command);
