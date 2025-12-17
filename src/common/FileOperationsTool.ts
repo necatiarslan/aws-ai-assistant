@@ -51,10 +51,67 @@ export class FileOperationsTool extends BaseTool<FileOperationsToolInput> {
   protected readonly toolName = 'FileOperationsTool';
 
   /**
+   * Resolve file path - check workspace first if available
+   */
+  private resolveFilePath(filePath: string): string {
+    // If path is absolute, use it as is
+    if (require('path').isAbsolute(filePath)) {
+      return filePath;
+    }
+
+    // Check if workspace is open
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (workspaceFolders && workspaceFolders.length > 0) {
+      const workspaceRoot = workspaceFolders[0].uri.fsPath;
+      const workspacePath = join(workspaceRoot, filePath);
+      
+      // Check if file exists in workspace
+      if (fs.existsSync(workspacePath)) {
+        ui.logToOutput(`FileOperationsTool: Resolved to workspace path: ${workspacePath}`);
+        return workspacePath;
+      }
+      
+      ui.logToOutput(`FileOperationsTool: File not found in workspace, treating as absolute: ${filePath}`);
+    }
+
+    // No workspace or file not found in workspace - treat as absolute
+    return filePath;
+  }
+
+  /**
+   * Resolve directory path - check workspace first if available
+   */
+  private resolveDirPath(dirPath: string): string {
+    // If path is absolute, use it as is
+    if (require('path').isAbsolute(dirPath)) {
+      return dirPath;
+    }
+
+    // Check if workspace is open
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (workspaceFolders && workspaceFolders.length > 0) {
+      const workspaceRoot = workspaceFolders[0].uri.fsPath;
+      const workspacePath = join(workspaceRoot, dirPath);
+      
+      // Check if directory exists in workspace
+      if (fs.existsSync(workspacePath) && fs.statSync(workspacePath).isDirectory()) {
+        ui.logToOutput(`FileOperationsTool: Resolved to workspace directory: ${workspacePath}`);
+        return workspacePath;
+      }
+      
+      ui.logToOutput(`FileOperationsTool: Directory not found in workspace, treating as absolute: ${dirPath}`);
+    }
+
+    // No workspace or directory not found in workspace - treat as absolute
+    return dirPath;
+  }
+
+  /**
    * Read file as text
    */
   private async executeReadFile(params: ReadFileParams): Promise<any> {
-    const { filePath, encoding = 'utf8' as FileEncoding } = params;
+    const { encoding = 'utf8' as FileEncoding } = params;
+    const filePath = this.resolveFilePath(params.filePath);
     
     try {
       ui.logToOutput(`FileOperationsTool: Reading file: ${filePath}`);
@@ -76,7 +133,7 @@ export class FileOperationsTool extends BaseTool<FileOperationsToolInput> {
    * Read file as stream and return chunks
    */
   private async executeReadFileStream(params: ReadFileStreamParams): Promise<any> {
-    const { filePath } = params;
+    const filePath = this.resolveFilePath(params.filePath);
     
     try {
       ui.logToOutput(`FileOperationsTool: Reading file stream: ${filePath}`);
@@ -101,7 +158,7 @@ export class FileOperationsTool extends BaseTool<FileOperationsToolInput> {
    * Read file as Base64
    */
   private async executeReadFileAsBase64(params: ReadFileAsBase64Params): Promise<any> {
-    const { filePath } = params;
+    const filePath = this.resolveFilePath(params.filePath);
     
     try {
       ui.logToOutput(`FileOperationsTool: Reading file as Base64: ${filePath}`);
@@ -124,7 +181,7 @@ export class FileOperationsTool extends BaseTool<FileOperationsToolInput> {
    * Get file information (stats)
    */
   private async executeGetFileInfo(params: GetFileInfoParams): Promise<any> {
-    const { filePath } = params;
+    const filePath = this.resolveFilePath(params.filePath);
     
     try {
       ui.logToOutput(`FileOperationsTool: Getting file info: ${filePath}`);
@@ -150,7 +207,8 @@ export class FileOperationsTool extends BaseTool<FileOperationsToolInput> {
    * List files in directory
    */
   private async executeListFiles(params: ListFilesParams): Promise<any> {
-    const { dirPath, recursive = false } = params;
+    const { recursive = false } = params;
+    const dirPath = this.resolveDirPath(params.dirPath);
     
     try {
       ui.logToOutput(`FileOperationsTool: Listing files in: ${dirPath}`);
@@ -193,7 +251,8 @@ export class FileOperationsTool extends BaseTool<FileOperationsToolInput> {
    * Zip a text file or directory
    */
   private async executeZipTextFile(params: ZipTextFileParams): Promise<any> {
-    const { filePath, outputPath } = params;
+    const { outputPath } = params;
+    const filePath = this.resolveFilePath(params.filePath);
     
     try {
       ui.logToOutput(`FileOperationsTool: Zipping file: ${filePath}`);

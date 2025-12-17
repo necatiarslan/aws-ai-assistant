@@ -12,7 +12,7 @@ export class CommandHistoryView {
     private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri) {
         this.extensionUri = extensionUri;
         this._panel = panel;
-        this._panel.onDidDispose(this.dispose, null, this._disposables);
+        //this._panel.onDidDispose(this.dispose, null, this._disposables);
         this._setWebviewMessageListener(this._panel.webview);
         this.RenderHtml();
     }
