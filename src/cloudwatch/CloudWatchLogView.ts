@@ -527,17 +527,17 @@ export class CloudWatchLogView {
     }
 
     public dispose() {
-        ui.logToOutput('CloudWatchLogView.dispose Started');
-        CloudWatchLogView.Current = undefined;
+        // ui.logToOutput('CloudWatchLogView.dispose Started');
+        // CloudWatchLogView.Current = undefined;
 
-        this._panel.dispose();
+        // this._panel.dispose();
 
-        while (this._disposables.length) {
-            const disposable = this._disposables.pop();
-            if (disposable) {
-                disposable.dispose();
-            }
-        }
+        // while (this._disposables.length) {
+        //     const disposable = this._disposables.pop();
+        //     if (disposable) {
+        //         disposable.dispose();
+        //     }
+        // }
     }
 
     async StartTimer() {

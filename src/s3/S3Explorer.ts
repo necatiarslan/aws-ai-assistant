@@ -1151,25 +1151,25 @@ export class S3Explorer {
     }
 
     public dispose() {
-        ui.logToOutput('S3Explorer.dispose Started');
+        // ui.logToOutput('S3Explorer.dispose Started');
         
-        // Clear auto-refresh interval if active
-        if (this._autoRefreshInterval) {
-            clearInterval(this._autoRefreshInterval);
-            this._autoRefreshInterval = undefined;
-        }
+        // // Clear auto-refresh interval if active
+        // if (this._autoRefreshInterval) {
+        //     clearInterval(this._autoRefreshInterval);
+        //     this._autoRefreshInterval = undefined;
+        // }
         
-        S3Explorer.Current = undefined;
+        // S3Explorer.Current = undefined;
 
-        if(this._panel)
-            this._panel.dispose();
+        // if(this._panel)
+        //     this._panel.dispose();
 
-        while (this._disposables.length) {
-            const disposable = this._disposables.pop();
-            if (disposable) {
-                disposable.dispose();
-            }
-        }
+        // while (this._disposables.length) {
+        //     const disposable = this._disposables.pop();
+        //     if (disposable) {
+        //         disposable.dispose();
+        //     }
+        // }
     }
 
 }
