@@ -191,6 +191,6 @@ export class StatusBarItem implements vscode.Disposable {
     }
 
     public dispose() {
-        // this.awsAssistantStatusBarItem.dispose();
+        this.awsAssistantStatusBarItem.dispose();
     }
 }

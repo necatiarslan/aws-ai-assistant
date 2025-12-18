@@ -455,13 +455,13 @@ export class ServiceAccessView {
     }
 
     public dispose() {
-        // ServiceAccessView.Current = undefined;
-        // this._panel.dispose();
-        // while (this._disposables.length) {
-        //     const disposable = this._disposables.pop();
-        //     if (disposable) {
-        //         disposable.dispose();
-        //     }
-        // }
+        ServiceAccessView.Current = undefined;
+        this._panel.dispose();
+        while (this._disposables.length) {
+            const disposable = this._disposables.pop();
+            if (disposable) {
+                disposable.dispose();
+            }
+        }
     }
 }

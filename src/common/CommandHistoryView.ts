@@ -135,13 +135,13 @@ export class CommandHistoryView {
     }
 
     public dispose() {
-        // CommandHistoryView.Current = undefined;
-        // this._panel.dispose();
-        // while (this._disposables.length) {
-        //     const disposable = this._disposables.pop();
-        //     if (disposable) {
-        //         disposable.dispose();
-        //     }
-        // }
+        CommandHistoryView.Current = undefined;
+        this._panel.dispose();
+        while (this._disposables.length) {
+            const disposable = this._disposables.pop();
+            if (disposable) {
+                disposable.dispose();
+            }
+        }
     }
 }
