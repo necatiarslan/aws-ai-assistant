@@ -4,6 +4,7 @@ import * as path from "path";
 import * as os from "os";
 import * as ui from './UI';
 import { CommandHistoryManager } from "./CommandHistoryManager";
+import { AIHandler } from "../chat/AIHandler";
 
 export class CommandHistoryView {
     public static Current: CommandHistoryView | undefined;
@@ -91,6 +92,7 @@ export class CommandHistoryView {
                 <vscode-button appearance="primary" id="refresh">Refresh</vscode-button>
                 <vscode-button appearance="secondary" id="clear">Clear History</vscode-button>
                 <vscode-button appearance="secondary" id="export">Export JSON</vscode-button>
+                <vscode-button appearance="secondary" id="exportChat">Export Chat History</vscode-button>
             </div>
             <table>
                 <tr>
@@ -115,6 +117,9 @@ export class CommandHistoryView {
                 document.getElementById('export').addEventListener('click', () => {
                     vscode.postMessage({ command: 'export' });
                 });
+                document.getElementById('exportChat').addEventListener('click', () => {
+                    vscode.postMessage({ command: 'exportChat' });
+                });
             </script>
         </body>
         </html>
@@ -135,6 +140,9 @@ export class CommandHistoryView {
                         return;
                     case "export":
                         void this._exportHistory();
+                        return;
+                    case "exportChat":
+                        void this._exportChatHistory();
                         return;
                 }
             },
@@ -169,6 +177,45 @@ export class CommandHistoryView {
         } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
             vscode.window.showErrorMessage(`Failed to export command history: ${message}`);
+        }
+    }
+
+    private async _exportChatHistory() {
+        try {
+            const chatHistory = AIHandler.Current?.getChatHistory() || [];
+            if (chatHistory.length === 0) {
+                vscode.window.showInformationMessage("No chat history to export.");
+                return;
+            }
+
+            const defaultFileName = `chat-history-${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
+            const defaultUri = vscode.Uri.file(path.join(os.homedir(), defaultFileName));
+            const targetUri = await vscode.window.showSaveDialog({
+                filters: { JSON: ["json"] },
+                defaultUri,
+                saveLabel: "Export"
+            });
+
+            if (!targetUri) {
+                return;
+            }
+
+            const exportData = {
+                exportedAt: new Date().toISOString(),
+                totalEntries: chatHistory.length,
+                history: chatHistory.map(entry => ({
+                    timestamp: new Date(entry.timestamp).toISOString(),
+                    userMessage: entry.userMessage,
+                    assistantResponse: entry.assistantResponse
+                }))
+            };
+
+            const content = JSON.stringify(exportData, null, 2);
+            await vscode.workspace.fs.writeFile(targetUri, new TextEncoder().encode(content));
+            vscode.window.showInformationMessage(`Chat history exported to ${targetUri.fsPath}`);
+        } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            vscode.window.showErrorMessage(`Failed to export chat history: ${message}`);
         }
     }
 

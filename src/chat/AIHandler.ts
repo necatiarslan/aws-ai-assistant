@@ -4,15 +4,25 @@ import { Session } from '../common/Session';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as MessageHub from '../common/MessageHub';
+import { encodingForModel } from 'js-tiktoken';
 
 const PARTICIPANT_ID = 'aws-ai-assistant.chat';
 const DEFAULT_PROMPT = "How can I assist you with AWS today?";
+const MAX_HISTORY_TOKENS = 2000;
+const MAX_RESPONSE_LENGTH = 500;
+
+export interface ChatHistoryEntry {
+  timestamp: number;
+  userMessage: string;
+  assistantResponse: string;
+}
 
 export class AIHandler {
   public static Current: AIHandler;
 
-  private latestResource: { [type: string]: { type: string; name: string; arn?: string } } = {};
+  private latestResources: { [type: string]: { type: string; name: string; arn?: string } } = {};
   private paginationContext: { toolName: string; command: string; params: any; paginationToken: string; tokenType: string } | null = null;
+  private chatHistory: ChatHistoryEntry[] = [];
 
   constructor() {
     AIHandler.Current = this;
@@ -20,7 +30,60 @@ export class AIHandler {
   }
 
   public updateLatestResource(resource: { type: string; name: string; arn?: string }): void {
-    this.latestResource[resource.type] = resource;
+    this.latestResources[resource.type] = resource;
+  }
+
+  public addChatHistoryEntry(userMessage: string, assistantResponse: string): void {
+    this.chatHistory.push({
+      timestamp: Date.now(),
+      userMessage,
+      assistantResponse
+    });
+  }
+
+  public getChatHistory(): ChatHistoryEntry[] {
+    return this.chatHistory;
+  }
+
+  public clearChatHistory(): void {
+    this.chatHistory = [];
+  }
+
+  private _estimateTokens(text: string): number {
+    try {
+      const enc = encodingForModel('gpt-4');
+      return enc.encode(text).length;
+    } catch (err) {
+      // Fallback: rough estimate of ~4 chars per token
+      return Math.ceil(text.length / 4);
+    }
+  }
+
+  private _truncateResponse(text: string): string {
+    if (text.length <= MAX_RESPONSE_LENGTH) {
+      return text;
+    }
+    return text.substring(0, MAX_RESPONSE_LENGTH) + '... [truncated]';
+  }
+
+  private _summarizeResources(): vscode.LanguageModelChatMessage[] {
+    const resources = Object.values(this.latestResources);
+    if (resources.length === 0) {
+      return [];
+    }
+
+    // Group resources by type
+    const grouped: { [type: string]: number } = {};
+    for (const resource of resources) {
+      grouped[resource.type] = (grouped[resource.type] || 0) + 1;
+    }
+
+    // Build summary message
+    const summary = Object.entries(grouped)
+      .map(([type, count]) => `${count} ${type}${count > 1 ? 's' : ''}`)
+      .join(', ');
+
+    return [vscode.LanguageModelChatMessage.User(`Recent AWS resources: ${summary}`)];
   }
 
   public registerChatParticipant(): void {
@@ -50,6 +113,21 @@ export class AIHandler {
     };
     const cancelListener = token.onCancellationRequested(endWorkingOnce);
 
+    // Capture assistant response
+    let assistantResponse = '';
+    const wrappedStream = {
+      markdown: (value: string | vscode.MarkdownString) => {
+        assistantResponse += typeof value === 'string' ? value : value.value;
+        return stream.markdown(value);
+      },
+      progress: (value: string) => stream.progress(value),
+      button: (command: vscode.Command) => stream.button(command),
+      filetree: (value: vscode.ChatResponseFileTree[], baseUri: vscode.Uri) => stream.filetree(value, baseUri),
+      reference: (value: vscode.Uri | vscode.Location, iconPath?: vscode.Uri | vscode.ThemeIcon | undefined) => stream.reference(value, iconPath),
+      anchor: (value: vscode.Uri, title?: string | undefined) => stream.anchor(value, title),
+      push: (part: vscode.ChatResponsePart) => stream.push(part)
+    } as vscode.ChatResponseStream;
+
     try {
       const tools: vscode.LanguageModelChatTool[] = this.getToolsFromPackageJson();
       const messages: vscode.LanguageModelChatMessage[] = this.buildInitialMessages(request, context);
@@ -58,21 +136,24 @@ export class AIHandler {
 
       const [model] = await vscode.lm.selectChatModels();
       if (!model) {
-        stream.markdown('No suitable AI model found.');
+        wrappedStream.markdown('No suitable AI model found.');
         endWorkingOnce();
         return;
       }
       ui.logToOutput(`AIHandler: Using model ${model.family} (${model.name})`);
       
-      await this.runToolCallingLoop(model, messages, tools, stream, token);
-      this.renderResponseButtons(stream);
+      await this.runToolCallingLoop(model, messages, tools, wrappedStream, token);
+      this.renderResponseButtons(wrappedStream);
+      
+      // Add chat history entry
+      this.addChatHistoryEntry(request.prompt, assistantResponse);
       
       if (usedAppreciated || defaultPromptUsed) {
-        this.renderAppreciationMessage(stream);
+        this.renderAppreciationMessage(wrappedStream);
       }
       endWorkingOnce();
     } catch (err) {
-      this.handleError(err, stream);
+      this.handleError(err, wrappedStream);
       endWorkingOnce();
     } finally {
       cancelListener.dispose();
@@ -80,23 +161,35 @@ export class AIHandler {
   }
 
   private buildInitialMessages(request: vscode.ChatRequest, chatContext: vscode.ChatContext): vscode.LanguageModelChatMessage[] {
-    const messages: vscode.LanguageModelChatMessage[] = [
-      vscode.LanguageModelChatMessage.User(
-        `You are an expert in Amazon Web Services (AWS). You have access to tools to perform various AWS operations. Use the available tools when appropriate to help the user.
-        Don't provide JSON responses unless specifically asked. Always format your responses in markdown.'}`
-      )
-    ];
+    const messages: vscode.LanguageModelChatMessage[] = [];
+    
+    messages.push(vscode.LanguageModelChatMessage.User(`AWS Expert: Use tools for tasks. Respond in Markdown; no JSON unless requested.`));
 
     if (Session.Current) {
       const contextInfo = `Context:\nAWS Profile: ${Session.Current.AwsProfile || 'N/A'}\nAWS Region: ${Session.Current.AwsRegion || 'N/A'}\nAWS Endpoint: ${Session.Current.AwsEndPoint || 'default'}`;
       messages.push(vscode.LanguageModelChatMessage.User(contextInfo));
     }
 
-    // Loop through the latest 6 entries from context.history (only previous @aws interactions)
-    const recentHistory = chatContext.history.slice(-8);
-    for (const turn of recentHistory) {
+    // Calculate token budget and add history dynamically
+    let tokenCount = this._estimateTokens(
+      messages.map(m => typeof m.content === 'string' ? m.content : '').join('\n')
+    );
+    const historyTokenBudget = MAX_HISTORY_TOKENS - 500; // Reserve 500 for current request + resources
+    
+    const allHistory = chatContext.history.slice().reverse(); // Newest first
+    
+    for (const turn of allHistory) {
+      if (tokenCount >= historyTokenBudget) {
+        break;
+      }
+
       if (turn instanceof vscode.ChatRequestTurn) {
+        const reqTokens = this._estimateTokens(turn.prompt);
+        if (tokenCount + reqTokens > historyTokenBudget) {
+          break;
+        }
         messages.push(vscode.LanguageModelChatMessage.User(turn.prompt));
+        tokenCount += reqTokens;
         continue;
       }
 
@@ -107,15 +200,20 @@ export class AIHandler {
           .join('\n');
 
         if (responseContent) {
-          messages.push(vscode.LanguageModelChatMessage.Assistant(responseContent));
+          const truncated = this._truncateResponse(responseContent);
+          const respTokens = this._estimateTokens(truncated);
+          if (tokenCount + respTokens > historyTokenBudget) {
+            break;
+          }
+          messages.push(vscode.LanguageModelChatMessage.Assistant(truncated));
+          tokenCount += respTokens;
         }
       }
     }
 
-    for (const resource of Object.values(this.latestResource)) {
-      const resourceInfo: string = `You have recently worked with the following AWS resource: Type=${resource.type} Name=${resource.name}` + (resource.arn ? `, ARN=${resource.arn}` : '');
-      messages.push(vscode.LanguageModelChatMessage.User(resourceInfo));
-    }
+    // Add summarized resources
+    const resourceMessages = this._summarizeResources();
+    messages.push(...resourceMessages);
 
     messages.push(vscode.LanguageModelChatMessage.User(request.prompt));
     return messages;
@@ -245,12 +343,12 @@ export class AIHandler {
   }
 
   private renderCloudWatchButton(stream: vscode.ChatResponseStream): void {
-    if (!this.latestResource["CloudWatch Log Group"]) {
+    if (!this.latestResources["CloudWatch Log Group"]) {
       return;
     }
 
-    const logGroup = this.latestResource["CloudWatch Log Group"].name;
-    const logStream = this.latestResource["CloudWatch Log Stream"]?.name;
+    const logGroup = this.latestResources["CloudWatch Log Group"].name;
+    const logStream = this.latestResources["CloudWatch Log Stream"]?.name;
     
     stream.markdown("\n\n");
     stream.button({
@@ -261,11 +359,11 @@ export class AIHandler {
   }
 
   private renderS3Button(stream: vscode.ChatResponseStream): void {
-    if (!this.latestResource["S3 Bucket"]) {
+    if (!this.latestResources["S3 Bucket"]) {
       return;
     }
 
-    const bucket = this.latestResource["S3 Bucket"].name;
+    const bucket = this.latestResources["S3 Bucket"].name;
     stream.markdown("\n\n");
     stream.button({
       command: 'aws-ai-assistant.OpenS3ExplorerView',
