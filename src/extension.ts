@@ -27,6 +27,7 @@ import { CloudWatchLogView } from './cloudwatch/CloudWatchLogView';
 import { S3Explorer } from './s3/S3Explorer';
 import { CommandHistoryView } from './common/CommandHistoryView';
 import { ServiceAccessView } from './common/ServiceAccessView';
+import { EMRTool } from './emr/EMRTool';
 
 export function activate(context: vscode.ExtensionContext) {
 	ui.logToOutput('Aws AI Assistant is now active!');
@@ -64,7 +65,8 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.lm.registerTool('stepfunc', new StepFuncTool()),
 		vscode.lm.registerTool('glue', new GlueTool()),
 		vscode.lm.registerTool('iam', new IAMTool()),
-		vscode.lm.registerTool('dynamodb', new DynamoDBTool())
+		vscode.lm.registerTool('dynamodb', new DynamoDBTool()),
+		vscode.lm.registerTool('emr', new EMRTool())
 	);
 
 	ui.logToOutput('Language model tools registered');

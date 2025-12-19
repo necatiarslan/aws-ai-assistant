@@ -11,6 +11,7 @@ Goggles is a Visual Studio Code extension that brings AWS management into your c
 - EC2
 - Lambda
 - Step Functions
+- EMR
 - CloudWatch Logs
 - CloudFormation
 - RDS
@@ -28,6 +29,7 @@ Click [here](README_AWS_SERVICES.md) for the full list of supported AWS services
 - **SQS & SNS**: list queues/topics, send/receive/delete messages, get queue URLs.
 - **EC2**: describe instances, images, VPCs, security groups, console output.
 - **Lambda & Step Functions**: invoke functions, list state machines and executions.
+- **EMR**: describe clusters, steps, studios, notebook executions, and scaling policies.
 - **CloudWatch Logs**: search and retrieve log events.
 - **CloudFormation**: list stacks, describe stack resources and events.
 - **RDS & RDS Data**: list DB instances/clusters; run SQL via RDS Data API.

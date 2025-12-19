@@ -1681,6 +1681,174 @@
         }
       },
       {
+        "name": "emr",
+        "toolReferenceName": "emr",
+        "displayName": "EMR Tool",
+        "modelDescription": "Describe and list EMR clusters, steps, studios, notebook executions, release labels, and security settings. Commands are read-only: DescribeCluster, DescribeJobFlows, DescribeNotebookExecution, DescribePersistentAppUI, DescribeReleaseLabel, DescribeSecurityConfiguration, DescribeStep, DescribeStudio, GetAutoTerminationPolicy, GetBlockPublicAccessConfiguration, GetClusterSessionCredentials, GetManagedScalingPolicy, GetOnClusterAppUIPresignedURL, GetPersistentAppUIPresignedURL, GetStudioSessionMapping, ListBootstrapActions, ListClusters, ListInstanceFleets, ListInstanceGroups, ListInstances, ListNotebookExecutions, ListReleaseLabels, ListSecurityConfigurations, ListSteps, ListStudios, ListStudioSessionMappings, ListSupportedInstanceTypes.",
+        "userDescription": "Inspect EMR clusters, notebooks, steps, studios, and related configurations",
+        "tags": [
+          "aws",
+          "emr",
+          "hadoop",
+          "spark",
+          "cluster"
+        ],
+        "canBeReferencedInPrompt": true,
+        "icon": "$(server-process)",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "command",
+            "params"
+          ],
+          "properties": {
+            "command": {
+              "type": "string",
+              "enum": [
+                "DescribeCluster",
+                "DescribeJobFlows",
+                "DescribeNotebookExecution",
+                "DescribePersistentAppUI",
+                "DescribeReleaseLabel",
+                "DescribeSecurityConfiguration",
+                "DescribeStep",
+                "DescribeStudio",
+                "GetAutoTerminationPolicy",
+                "GetBlockPublicAccessConfiguration",
+                "GetClusterSessionCredentials",
+                "GetManagedScalingPolicy",
+                "GetOnClusterAppUIPresignedURL",
+                "GetPersistentAppUIPresignedURL",
+                "GetStudioSessionMapping",
+                "ListBootstrapActions",
+                "ListClusters",
+                "ListInstanceFleets",
+                "ListInstanceGroups",
+                "ListInstances",
+                "ListNotebookExecutions",
+                "ListReleaseLabels",
+                "ListSecurityConfigurations",
+                "ListSteps",
+                "ListStudios",
+                "ListStudioSessionMappings",
+                "ListSupportedInstanceTypes"
+              ],
+              "description": "The EMR command to execute"
+            },
+            "params": {
+              "type": "object",
+              "description": "REQUIRED parameters object. Always include this even if empty. Provide ClusterId, StudioId, ReleaseLabel, or other identifiers as needed.",
+              "properties": {
+                "ClusterId": {
+                  "type": "string",
+                  "description": "EMR cluster ID (for describe/get/list operations scoped to a cluster)"
+                },
+                "StepId": {
+                  "type": "string",
+                  "description": "Step ID (for DescribeStep)"
+                },
+                "JobFlowIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Job flow IDs filter (optional for DescribeJobFlows)"
+                },
+                "NotebookExecutionId": {
+                  "type": "string",
+                  "description": "Notebook execution ID (for DescribeNotebookExecution)"
+                },
+                "StudioId": {
+                  "type": "string",
+                  "description": "Studio ID (for DescribeStudio, GetStudioSessionMapping, ListStudioSessionMappings)"
+                },
+                "ReleaseLabel": {
+                  "type": "string",
+                  "description": "Release label (for DescribeReleaseLabel, ListSupportedInstanceTypes)"
+                },
+                "SecurityConfigurationName": {
+                  "type": "string",
+                  "description": "Security configuration name (for DescribeSecurityConfiguration)"
+                },
+                "ApplicationId": {
+                  "type": "string",
+                  "description": "Application ID for UI presigned URL commands"
+                },
+                "IdentityType": {
+                  "type": "string",
+                  "description": "Identity type (USER or GROUP) for studio session mappings"
+                },
+                "IdentityId": {
+                  "type": "string",
+                  "description": "Identity ID for studio session mappings"
+                },
+                "InstanceFleetId": {
+                  "type": "string",
+                  "description": "Instance fleet ID (for ListInstances)"
+                },
+                "InstanceGroupId": {
+                  "type": "string",
+                  "description": "Instance group ID (for ListInstances)"
+                },
+                "InstanceStates": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Instance states filter (optional for ListInstances)"
+                },
+                "StepStates": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Step states filter (optional for ListSteps)"
+                },
+                "ClusterStates": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Cluster state filters (optional for ListClusters)"
+                },
+                "CreatedAfter": {
+                  "type": "string",
+                  "description": "ISO date string to filter clusters or job flows created after this time"
+                },
+                "CreatedBefore": {
+                  "type": "string",
+                  "description": "ISO date string to filter clusters or job flows created before this time"
+                },
+                "MaxResults": {
+                  "type": "number",
+                  "description": "Maximum items to return where supported"
+                },
+                "NextToken": {
+                  "type": "string",
+                  "description": "Pagination token for list APIs"
+                },
+                "Marker": {
+                  "type": "string",
+                  "description": "Pagination marker where supported"
+                },
+                "CredentialType": {
+                  "type": "string",
+                  "description": "Credential type for GetClusterSessionCredentials"
+                },
+                "ExecutionRoleArn": {
+                  "type": "string",
+                  "description": "Execution role ARN for session credentials"
+                },
+                "DurationSeconds": {
+                  "type": "number",
+                  "description": "Lifetime for session credentials (seconds)"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
         "name": "iam",
         "toolReferenceName": "iam",
         "displayName": "IAM Tool",
@@ -1989,6 +2157,7 @@
     "@aws-sdk/client-cloudwatch-logs": "^3.948.0",
     "@aws-sdk/client-dynamodb": "^3.948.0",
     "@aws-sdk/client-ec2": "^3.948.0",
+    "@aws-sdk/client-emr": "^3.955.0",
     "@aws-sdk/client-glue": "^3.948.0",
     "@aws-sdk/client-iam": "^3.948.0",
     "@aws-sdk/client-lambda": "^3.948.0",

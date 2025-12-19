@@ -120,6 +120,33 @@ This document provides a comprehensive reference of all AWS language model tools
 | **Glue** | ListTriggers | List Glue triggers | "List Glue triggers" |
 | **Glue** | GetTrigger | Get trigger details | "Show trigger my-trigger" |
 | **Glue** | CreateJob | Create new Glue job | "Create Glue job with script s3://bucket/script.py" |
+| **EMR** | DescribeCluster | Get details for an EMR cluster | "Describe EMR cluster j-ABC123" |
+| **EMR** | DescribeJobFlows | Describe legacy job flows | "Describe job flows created last week" |
+| **EMR** | DescribeNotebookExecution | Describe a notebook execution | "Describe notebook execution exe-123" |
+| **EMR** | DescribePersistentAppUI | Show persistent application UI settings | "Describe persistent app UI for cluster j-ABC123" |
+| **EMR** | DescribeReleaseLabel | Get details for an EMR release label | "Describe release label emr-6.15.0" |
+| **EMR** | DescribeSecurityConfiguration | Show EMR security configuration | "Show security configuration my-sec-config" |
+| **EMR** | DescribeStep | Describe a step on a cluster | "Describe step s-XYZ on cluster j-ABC123" |
+| **EMR** | DescribeStudio | Get details for an EMR Studio | "Describe EMR Studio st-123456" |
+| **EMR** | GetAutoTerminationPolicy | Get auto termination policy for a cluster | "Get auto termination policy for cluster j-ABC123" |
+| **EMR** | GetBlockPublicAccessConfiguration | Show block public access configuration | "Show EMR block public access configuration" |
+| **EMR** | GetClusterSessionCredentials | Get cluster session credentials | "Get session credentials for cluster j-ABC123" |
+| **EMR** | GetManagedScalingPolicy | Show managed scaling policy | "Show managed scaling policy for cluster j-ABC123" |
+| **EMR** | GetOnClusterAppUIPresignedURL | Get presigned URL for on-cluster app UI | "Get on-cluster app UI URL for cluster j-ABC123" |
+| **EMR** | GetPersistentAppUIPresignedURL | Get presigned URL for persistent app UI | "Get persistent app UI URL for cluster j-ABC123" |
+| **EMR** | GetStudioSessionMapping | Get studio session mapping for a user/group | "Get studio session mapping for user alice in studio st-123" |
+| **EMR** | ListBootstrapActions | List bootstrap actions for a cluster | "List bootstrap actions for cluster j-ABC123" |
+| **EMR** | ListClusters | List EMR clusters | "List EMR clusters created after 2024-01-01" |
+| **EMR** | ListInstanceFleets | List instance fleets for a cluster | "List instance fleets for cluster j-ABC123" |
+| **EMR** | ListInstanceGroups | List instance groups for a cluster | "List instance groups for cluster j-ABC123" |
+| **EMR** | ListInstances | List cluster instances | "List core nodes in cluster j-ABC123" |
+| **EMR** | ListNotebookExecutions | List notebook executions | "List EMR notebook executions" |
+| **EMR** | ListReleaseLabels | List available EMR release labels | "List EMR release labels" |
+| **EMR** | ListSecurityConfigurations | List EMR security configurations | "List security configurations" |
+| **EMR** | ListSteps | List steps for a cluster | "List running steps on cluster j-ABC123" |
+| **EMR** | ListStudios | List EMR Studios | "List EMR Studios" |
+| **EMR** | ListStudioSessionMappings | List studio session mappings | "List session mappings for studio st-123" |
+| **EMR** | ListSupportedInstanceTypes | List supported instance types for a release label | "List supported instance types for emr-6.15.0" |
 | **API Gateway** | GetRestApis | List REST APIs | "List API Gateway APIs", "Show all REST APIs" |
 | **API Gateway** | GetResources | List API resources | "Show resources for API abc123" |
 | **API Gateway** | GetStages | List API stages | "Show stages for API abc123" |

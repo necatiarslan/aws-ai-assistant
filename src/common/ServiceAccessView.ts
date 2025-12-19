@@ -55,6 +55,18 @@ const TOOL_REGISTRY: ToolDefinition[] = [
                   "DescribeRouteTables", "DescribeInternetGateways", "DescribeNatGateways"]
     },
     {
+        name: "EMRTool",
+        displayName: "EMR (Elastic MapReduce)",
+        commands: ["DescribeCluster", "DescribeJobFlows", "DescribeNotebookExecution", "DescribePersistentAppUI",
+                  "DescribeReleaseLabel", "DescribeSecurityConfiguration", "DescribeStep", "DescribeStudio",
+                  "GetAutoTerminationPolicy", "GetBlockPublicAccessConfiguration", "GetClusterSessionCredentials",
+                  "GetManagedScalingPolicy", "GetOnClusterAppUIPresignedURL", "GetPersistentAppUIPresignedURL",
+                  "GetStudioSessionMapping", "ListBootstrapActions", "ListClusters", "ListInstanceFleets",
+                  "ListInstanceGroups", "ListInstances", "ListNotebookExecutions", "ListReleaseLabels",
+                  "ListSecurityConfigurations", "ListSteps", "ListStudios", "ListStudioSessionMappings",
+                  "ListSupportedInstanceTypes"]
+    },
+    {
         name: "LambdaTool",
         displayName: "Lambda",
         commands: ["ListFunctions", "GetFunction", "GetFunctionConfiguration", "Invoke",
