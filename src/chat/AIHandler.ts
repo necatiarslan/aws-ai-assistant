@@ -12,7 +12,6 @@ export class AIHandler {
   public static Current: AIHandler;
 
   private latestResource: { [type: string]: { type: string; name: string; arn?: string } } = {};
-  private latestResponse: string = '';
   private paginationContext: { toolName: string; command: string; params: any; paginationToken: string; tokenType: string } | null = null;
 
   constructor() {
@@ -53,7 +52,7 @@ export class AIHandler {
 
     try {
       const tools: vscode.LanguageModelChatTool[] = this.getToolsFromPackageJson();
-      const messages: vscode.LanguageModelChatMessage[] = this.buildInitialMessages(request);
+      const messages: vscode.LanguageModelChatMessage[] = this.buildInitialMessages(request, context);
       const usedAppreciated = request.prompt.toLowerCase().includes('thank');
       const defaultPromptUsed = request.prompt === DEFAULT_PROMPT;
 
@@ -80,18 +79,37 @@ export class AIHandler {
     }
   }
 
-  private buildInitialMessages(request: vscode.ChatRequest): vscode.LanguageModelChatMessage[] {
+  private buildInitialMessages(request: vscode.ChatRequest, chatContext: vscode.ChatContext): vscode.LanguageModelChatMessage[] {
     const messages: vscode.LanguageModelChatMessage[] = [
       vscode.LanguageModelChatMessage.User(
         `You are an expert in Amazon Web Services (AWS). You have access to tools to perform various AWS operations. Use the available tools when appropriate to help the user.
-        Don't provide JSON responses unless specifically asked. Always format your responses in markdown.
-        Previous Response: ${this.latestResponse || 'N/A'}`
+        Don't provide JSON responses unless specifically asked. Always format your responses in markdown.'}`
       )
     ];
 
     if (Session.Current) {
       const contextInfo = `Context:\nAWS Profile: ${Session.Current.AwsProfile || 'N/A'}\nAWS Region: ${Session.Current.AwsRegion || 'N/A'}\nAWS Endpoint: ${Session.Current.AwsEndPoint || 'default'}`;
       messages.push(vscode.LanguageModelChatMessage.User(contextInfo));
+    }
+
+    // Loop through the latest 6 entries from context.history (only previous @aws interactions)
+    const recentHistory = chatContext.history.slice(-8);
+    for (const turn of recentHistory) {
+      if (turn instanceof vscode.ChatRequestTurn) {
+        messages.push(vscode.LanguageModelChatMessage.User(turn.prompt));
+        continue;
+      }
+
+      if (turn instanceof vscode.ChatResponseTurn) {
+        const responseContent = turn.response
+          .filter((part): part is vscode.ChatResponseMarkdownPart => part instanceof vscode.ChatResponseMarkdownPart)
+          .map((part: vscode.ChatResponseMarkdownPart) => part.value.value)
+          .join('\n');
+
+        if (responseContent) {
+          messages.push(vscode.LanguageModelChatMessage.Assistant(responseContent));
+        }
+      }
     }
 
     for (const resource of Object.values(this.latestResource)) {
@@ -163,7 +181,6 @@ export class AIHandler {
         );
 
         const resultText = this.extractResultText(result);
-        this.latestResponse = resultText;
         this.checkForPaginationToken(resultText, toolCall);
         
         messages.push(
