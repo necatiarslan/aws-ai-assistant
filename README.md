@@ -1,6 +1,6 @@
 # Goggles: AWS AI Assistant
 
-![screenshoot](media/readme/movie.gif)
+![screenshoot](docs/readme/movie.gif)
 
 Goggles is a Visual Studio Code extension that brings AWS management into your chat experience. Use natural language to inspect and operate AWS resources with your existing credentials. The extension exposes AWS-aware tools that execute actions directly on your behalf.
 
@@ -74,11 +74,11 @@ Click [here](README_AWS_SERVICES.md) for the full list of supported AWS services
 
 | | | |
 |---|---|---|
-| ![Screenshot 1](media/readme/1.png) | ![Screenshot 2](media/readme/2.png) | ![Screenshot 3](media/readme/3.png) |
-| ![Screenshot 4](media/readme/4.png) | ![Screenshot 5](media/readme/5.png) | ![Screenshot 6](media/readme/6.png) |
-| ![Screenshot 7](media/readme/7.png) | ![Screenshot 8](media/readme/8.png) | ![Screenshot 9](media/readme/9.png) |
-| ![Screenshot 10](media/readme/10.png) | ![Screenshot 11](media/readme/11.png) | ![Screenshot 12](media/readme/12.png) |
-| ![Screenshot 13](media/readme/13.png) | ![Screenshot 14](media/readme/14.png) | ![Screenshot 15](media/readme/15.png) |
+| ![Screenshot 1](docs/readme/1.png) | ![Screenshot 2](docs/readme/2.png) | ![Screenshot 3](docs/readme/3.png) |
+| ![Screenshot 4](docs/readme/4.png) | ![Screenshot 5](docs/readme/5.png) | ![Screenshot 6](docs/readme/6.png) |
+| ![Screenshot 7](docs/readme/7.png) | ![Screenshot 8](docs/readme/8.png) | ![Screenshot 9](docs/readme/9.png) |
+| ![Screenshot 10](docs/readme/10.png) | ![Screenshot 11](docs/readme/11.png) | ![Screenshot 12](docs/readme/12.png) |
+| ![Screenshot 13](docs/readme/13.png) | ![Screenshot 14](docs/readme/14.png) | ![Screenshot 15](docs/readme/15.png) |
 
 
 ## ⚙️ Prerequisites

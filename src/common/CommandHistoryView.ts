@@ -49,19 +49,22 @@ export class CommandHistoryView {
             let rowNumber = history.length;
             for (const entry of history) {
                 const timeString = new Date(entry.timestamp).toLocaleTimeString();
-                const paramsStr = JSON.stringify(entry.params);
-                const responseStr = JSON.stringify(entry.response);
+                const paramsStr = JSON.stringify(entry.params || {});
+                const responseStr = JSON.stringify(entry.response || {});
                 const statusColor = entry.success ? "var(--vscode-charts-green)" : "var(--vscode-charts-red)";
+                const toolName = entry.toolName || 'Unknown';
+                const command = entry.command || 'Unknown';
+                const durationMs = entry.durationMs || 0;
                 
                 historyRows += `
                     <tr>
                         <td>${rowNumber}</td>
                         <td style="white-space:nowrap;">${timeString}</td>
-                        <td>${entry.toolName}</td>
-                        <td>${entry.command}</td>
+                        <td>${toolName}</td>
+                        <td>${command}</td>
                         <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${paramsStr.replace(/"/g, '&quot;')}">${paramsStr}</td>
                         <td style="color: ${statusColor}">${entry.success ? "Success" : "Failed"}</td>
-                        <td>${entry.durationMs}ms</td>
+                        <td>${durationMs}ms</td>
                     </tr>
                 `;
                 rowNumber--;
