@@ -3,6 +3,7 @@ package:
     mv *.vsix ./vsix/
 
 build:
+    node -e "const fs=require('fs');const p='package.json';const pkg=JSON.parse(fs.readFileSync(p,'utf8'));const [a,b,c]=pkg.version.split('.').map(Number);pkg.version=[a,b,c+1].join('.');fs.writeFileSync(p, JSON.stringify(pkg, null, 2)+'\n');"
     vsce package
     mv *.vsix ./vsix/
 
