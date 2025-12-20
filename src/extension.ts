@@ -49,28 +49,33 @@ export function activate(context: vscode.ExtensionContext) {
 		{ dispose: () => ui.dispose() }
 	);
 
-	// Register language model tools
-	context.subscriptions.push(
-		vscode.lm.registerTool('testAwsConnection', new TestAwsConnectionTool()),
-		vscode.lm.registerTool('sts', new STSTool()),
-		vscode.lm.registerTool('sqs', new SQSTool()),
-		vscode.lm.registerTool('ec2', new EC2Tool()),
-		vscode.lm.registerTool('s3', new S3Tool()),
-		vscode.lm.registerTool('sns', new SNSTool()),
-		vscode.lm.registerTool('apigateway', new APIGatewayTool()),
-		vscode.lm.registerTool('rds', new RDSTool()),
-		vscode.lm.registerTool('rdsdata', new RDSDataTool()),
-		vscode.lm.registerTool('cloudformation', new CloudFormationTool()),
-		vscode.lm.registerTool('fileOperations', new FileOperationsTool()),
-		vscode.lm.registerTool('session', new SessionTool()),
-		vscode.lm.registerTool('cloudWatchLogs', new CloudWatchLogTool()),
-		vscode.lm.registerTool('lambda', new LambdaTool()),
-		vscode.lm.registerTool('stepfunc', new StepFuncTool()),
-		vscode.lm.registerTool('glue', new GlueTool()),
-		vscode.lm.registerTool('iam', new IAMTool()),
-		vscode.lm.registerTool('dynamodb', new DynamoDBTool()),
-		vscode.lm.registerTool('emr', new EMRTool())
-	);
+	if (vscode.env.appName.includes('Visual Studio Code')) {
+		// Register language model tools
+		context.subscriptions.push(
+			vscode.lm.registerTool('testAwsConnection', new TestAwsConnectionTool()),
+			vscode.lm.registerTool('sts', new STSTool()),
+			vscode.lm.registerTool('sqs', new SQSTool()),
+			vscode.lm.registerTool('ec2', new EC2Tool()),
+			vscode.lm.registerTool('s3', new S3Tool()),
+			vscode.lm.registerTool('sns', new SNSTool()),
+			vscode.lm.registerTool('apigateway', new APIGatewayTool()),
+			vscode.lm.registerTool('rds', new RDSTool()),
+			vscode.lm.registerTool('rdsdata', new RDSDataTool()),
+			vscode.lm.registerTool('cloudformation', new CloudFormationTool()),
+			vscode.lm.registerTool('fileOperations', new FileOperationsTool()),
+			vscode.lm.registerTool('session', new SessionTool()),
+			vscode.lm.registerTool('cloudWatchLogs', new CloudWatchLogTool()),
+			vscode.lm.registerTool('lambda', new LambdaTool()),
+			vscode.lm.registerTool('stepfunc', new StepFuncTool()),
+			vscode.lm.registerTool('glue', new GlueTool()),
+			vscode.lm.registerTool('iam', new IAMTool()),
+			vscode.lm.registerTool('dynamodb', new DynamoDBTool()),
+			vscode.lm.registerTool('emr', new EMRTool())
+		);
+	}
+	else {
+		ui.logToOutput(`Language model tools registration skipped for ${vscode.env.appName}`);
+	}
 
 	ui.logToOutput('Language model tools registered');
 
