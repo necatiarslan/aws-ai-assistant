@@ -96,6 +96,13 @@ Click [here](README_AWS_SERVICES.md) for the full list of supported AWS services
    - Publish a message to my SNS topic
 4. **Review results**: The assistant will call the appropriate tool, stream results, and suggest follow-up actions.
 
+## 🛰️ MCP Access (Local Only)
+
+- Start a local MCP stdio session with the Command Palette: **Goggles: Start MCP Server**. Each session opens in a dedicated terminal and speaks newline-delimited JSON (methods: `list_tools`, `call_tool`).
+- Up to 3 concurrent MCP sessions run at once by default; additional start requests queue until a slot is free. Configure the cap and per-service disablement via Settings (`aws-ai-assistant.mcp.*`).
+- Stop all active MCP sessions with **Goggles: Stop MCP Servers**.
+- Mutating actions still prompt for confirmation; MCP enablement/disablement is independent from the Service Access UI.
+
 ## 👮 Authentication & Security
 
 - **Credentials**: Resolved via the AWS SDK provider chain. The selected profile is stored in VS Code global state and reapplied across sessions.

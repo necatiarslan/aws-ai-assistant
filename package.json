@@ -22,6 +22,9 @@
     "onStartupFinished"
   ],
   "main": "./out/extension.js",
+  "bin": {
+    "aws-ai-assistant-mcp": "./out/mcp/cli.js"
+  },
   "contributes": {
     "chatParticipants": [
       {
@@ -2086,6 +2089,51 @@
         }
       }
     ],
+    "configuration": {
+      "title": "Goggles: MCP",
+      "properties": {
+        "aws-ai-assistant.mcp.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable the MCP stdio host. When disabled, MCP sessions cannot be started."
+        },
+        "aws-ai-assistant.mcp.sessionCap": {
+          "type": "number",
+          "default": 3,
+          "minimum": 1,
+          "description": "Maximum concurrent MCP stdio sessions. Additional requests queue until a slot is free."
+        },
+        "aws-ai-assistant.mcp.disabledTools": {
+          "type": "array",
+          "description": "List of tool names to disable for MCP sessions (independent from Service Access settings).",
+          "items": {
+            "type": "string",
+            "enum": [
+              "TestAwsConnectionTool",
+              "STSTool",
+              "S3Tool",
+              "SNSTool",
+              "SQSTool",
+              "EC2Tool",
+              "FileOperationsTool",
+              "SessionTool",
+              "CloudWatchLogTool",
+              "LambdaTool",
+              "StepFuncTool",
+              "GlueTool",
+              "IAMTool",
+              "DynamoDBTool",
+              "APIGatewayTool",
+              "RDSTool",
+              "RDSDataTool",
+              "CloudFormationTool",
+              "EMRTool"
+            ]
+          },
+          "default": []
+        }
+      }
+    },
     "commands": [
       {
         "command": "aws-ai-assistant.RefreshCredentials",
@@ -2126,6 +2174,14 @@
       {
         "command": "aws-ai-assistant.OpenServiceAccessView",
         "title": "Goggles:Service Access Settings"
+      },
+      {
+        "command": "aws-ai-assistant.StartMcpServer",
+        "title": "Goggles:Start MCP Server"
+      },
+      {
+        "command": "aws-ai-assistant.StopMcpServers",
+        "title": "Goggles:Stop MCP Servers"
       }
     ]
   },

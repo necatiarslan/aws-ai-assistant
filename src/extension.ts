@@ -28,6 +28,7 @@ import { S3Explorer } from './s3/S3Explorer';
 import { CommandHistoryView } from './common/CommandHistoryView';
 import { ServiceAccessView } from './common/ServiceAccessView';
 import { EMRTool } from './emr/EMRTool';
+import { McpManager } from './mcp/McpManager';
 
 export function activate(context: vscode.ExtensionContext) {
 	ui.logToOutput('Aws AI Assistant is now active!');
@@ -37,12 +38,14 @@ export function activate(context: vscode.ExtensionContext) {
 	new AIHandler();
 	const statusBar = new StatusBarItem();
 	const clientManager = ClientManager.Instance;
+	const mcpManager = new McpManager(context);
 
 	// Register disposables
 	context.subscriptions.push(
 		session,
 		statusBar,
 		clientManager,
+		mcpManager,
 		{ dispose: () => ui.dispose() }
 	);
 
@@ -136,6 +139,19 @@ export function activate(context: vscode.ExtensionContext) {
             }
             ServiceAccessView.Render(Session.Current.ExtensionUri);
         }),
+
+		vscode.commands.registerCommand('aws-ai-assistant.StartMcpServer', async () => {
+			if (!Session.Current) {
+				ui.showErrorMessage('Session not initialized', new Error('No session'));
+				return;
+			}
+			await mcpManager.startSession();
+		}),
+
+		vscode.commands.registerCommand('aws-ai-assistant.StopMcpServers', () => {
+			mcpManager.stopAll();
+			ui.showInfoMessage('All MCP sessions stopped.');
+		}),
 
 		vscode.commands.registerCommand('aws-ai-assistant.LoadMoreResults', async (paginationContext: any) => {
 			if (!paginationContext) {
