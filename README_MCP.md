@@ -1,119 +1,31 @@
 # Model Context Protocol (MCP) Server Guide
 
-The MCP server in this repository allows external tools, AI agents (like Antigravity), or other VS Code instances to leverage the AWS AI capabilities built into the **Goggles: AWS AI Assistant** extension.
-
----
+The MCP server in this repository allows external tools, AI agents (like Antigravity, Windsurf), or other VS Code instances to leverage the AWS AI capabilities built into the **Goggles: AWS AI Assistant** extension.
 
 ## 1. Prerequisites
 
-*   **Extensions**: [Goggles: AWS AI Assistant](https://marketplace.visualstudio.com/items?itemName=NecatiARSLAN.aws-ai-assistant) installed and active in VS Code.
-*   **AWS Setup**: Credentials configured locally (via `~/.aws/credentials`) or active in the current shell environment.
+*   **Extensions**: [Goggles: AWS AI Assistant](https://marketplace.visualstudio.com/items?itemName=NecatiARSLAN.aws-ai-assistant) installed and active.
+*   **AWS Setup**: Credentials configured locally (via `~/.aws/credentials` or environment variables) with permissions to perform desired AWS operations.
 *   **Runtime**: [Node.js](https://nodejs.org/) installed on your machine.
 
----
+## 2. Starting the Server
 
-## 2. Enabling and Starting the Server
-
-### Step 1: Enable in Settings
-1.  Open VS Code Settings (`Cmd+,`).
-2.  Search for `Goggles: MCP`.
-3.  Ensure **Enabled** is checked.
-4.  *(Optional)* Adjust the **Session Cap** (default is 3 concurrent sessions).
-
-### Step 2: Start the Server
 1.  Open the Command Palette (`Cmd+Shift+P`).
 2.  Run the command: `Goggles: Start MCP Server`.
-3.  A new VS Code terminal labeled `MCP 1` will appear.
+3.  A new terminal labeled `Aws AI Assistant MCP 1` will appear.
 4.  The extension will start a TCP bridge listening on `127.0.0.1:37114`.
 
----
+## 3. MCP Server Manager (GUI)
 
-## 3. Connecting External Clients
+Prefer a UI? Open the Command Palette and run `Goggles: MCP Management` to launch the MCP Server Manager view. From there you can:
 
-The MCP bridge acts as a TCP gateway. You can interact with it via the provided CLI tool or direct TCP connection.
+* Start, stop, or check the MCP bridge status.
+* Set the bridge host and port without touching environment variables.
+* Copy a ready-made `mcp_config.json` snippet that includes your configured endpoint.
 
-### Using the CLI (Recommended)
-The CLI tool handles the TCP communication and provides a standard `stdio` interface for MCP clients.
+## 4. MCP Configuration (Example: Antigravity)
 
-```bash
-# From the root of this repository
-node ./out/mcp/cli.js
-```
-
-### Direct TCP Connection
-For custom integrations, connect via TCP to:
-*   **Host**: `127.0.0.1`
-*   **Port**: `37114`
-
----
-
-## 4. Supported Protocol
-
-This server is compliant with **JSON-RPC 2.0** and the **Model Context Protocol (MCP)** specification.
-
-### Standard MCP Methods
-
-#### `tools/list`
-Returns a list of all enabled AWS service tools with their JSON schemas.
-**Request:**
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "tools/list"
-}
-```
-
-#### `tools/call`
-Executes an AWS command.
-**Request:**
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 2,
-  "method": "tools/call",
-  "params": {
-    "name": "S3Tool",
-    "arguments": {
-      "command": "ListBuckets",
-      "params": {}
-    }
-  }
-}
-```
-
-### Legacy Aliases
-For backward compatibility, the server also supports:
-*   `list_tools` (Alias for `tools/list`)
-*   `call_tool` (Alias for `tools/call`)
-
----
-
-## 5. Configuration (Environment Variables)
-
-Override the bridge settings by defining these variables before starting VS Code or in your shell:
-
-| Variable | Default | Description |
-| :--- | :--- | :--- |
-| `AWS_AI_ASSISTANT_MCP_PORT` | `37114` | TCP port for the bridge server |
-| `AWS_AI_ASSISTANT_MCP_HOST` | `127.0.0.1` | Network host for the bridge server |
-
----
-
-## 6. Security and Manual Confirmations
-
-To prevent accidental destructive actions, certain AWS commands (e.g., `DeleteBucket`, `TerminateInstances`) require **manual confirmation** within the VS Code UI.
-
-If a client sends a destructive command:
-1.  The MCP request will hang temporarily.
-2.  A notification will appear in VS Code asking you to **Proceed** or **Cancel**.
-3.  The MCP response will be returned only after you interact with the UI.
-
----
-
-## 7. Client Configuration (Example: Antigravity)
-
-To use this server with an MCP-compatible client like Antigravity, add this to your `mcp_config.json`:
+To use this server with an MCP-compatible client like Antigravity, Windsurf, etc. add this to your `mcp_config.json`:
 
 ```json
 {
@@ -132,4 +44,23 @@ To use this server with an MCP-compatible client like Antigravity, add this to y
 }
 ```
 
-> **Note**: Ensure the absolute path to `cli.js` is correct for your local machine. The VS Code extension must be running for the bridge to accept connections.
+> **Note**: Ensure the absolute path to `cli.js` is correct for your local machine. The extension must be running for the bridge to accept connections.
+
+## 5. Configuration (Environment Variables)
+
+Override the bridge settings by defining these variables before starting the MCP server:
+
+| Variable | Default | Description |
+| :--- | :--- | :--- |
+| `AWS_AI_ASSISTANT_MCP_PORT` | `37114` | TCP port for the bridge server |
+| `AWS_AI_ASSISTANT_MCP_HOST` | `127.0.0.1` | Network host for the bridge server |
+
+## 6. Security and Manual Confirmations
+
+To prevent accidental destructive actions, certain AWS commands (e.g., `DeleteBucket`, `TerminateInstances`) require **manual confirmation** within the UI.
+
+If a client sends a destructive command:
+1.  The MCP request will hang temporarily.
+2.  A notification will appear in the UI asking you to **Proceed** or **Cancel**.
+3.  The MCP response will be returned only after you interact with the UI.
+

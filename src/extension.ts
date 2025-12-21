@@ -29,6 +29,7 @@ import { CommandHistoryView } from './common/CommandHistoryView';
 import { ServiceAccessView } from './common/ServiceAccessView';
 import { EMRTool } from './emr/EMRTool';
 import { McpManager } from './mcp/McpManager';
+import { McpManageView } from './mcp/McpManageView';
 
 export function activate(context: vscode.ExtensionContext) {
 	ui.logToOutput('Aws AI Assistant is now active!');
@@ -156,6 +157,10 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand('aws-ai-assistant.StopMcpServers', () => {
 			mcpManager.stopAll();
 			ui.showInfoMessage('All MCP sessions stopped.');
+		}),
+
+		vscode.commands.registerCommand('aws-ai-assistant.OpenMcpManageView', () => {
+			McpManageView.Render(context.extensionUri, mcpManager);
 		}),
 
 		vscode.commands.registerCommand('aws-ai-assistant.LoadMoreResults', async (paginationContext: any) => {

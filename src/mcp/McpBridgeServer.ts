@@ -14,9 +14,10 @@ export class McpBridgeServer implements vscode.Disposable {
         private readonly getEnabledTools: () => Set<string>,
         private readonly getCap: () => number,
         private readonly getActiveSessionCount: () => number,
+        options?: { host?: string; port?: number },
     ) {
-        this.port = parseInt(process.env.AWS_AI_ASSISTANT_MCP_PORT || '37114', 10);
-        this.host = process.env.AWS_AI_ASSISTANT_MCP_HOST || '127.0.0.1';
+        this.port = options?.port ?? (parseInt(process.env.AWS_AI_ASSISTANT_MCP_PORT || '37114', 10) || 37114);
+        this.host = options?.host || process.env.AWS_AI_ASSISTANT_MCP_HOST || '127.0.0.1';
     }
 
     start(): void {
@@ -36,10 +37,23 @@ export class McpBridgeServer implements vscode.Disposable {
                 try { s.destroy(); } catch {}
             }
             this.queued = [];
+            this.active = 0;
         } finally {
             this.server = undefined;
             this.running = false;
         }
+    }
+
+    public isRunning(): boolean {
+        return this.running;
+    }
+
+    public getAddress(): { host: string; port: number } {
+        return { host: this.host, port: this.port };
+    }
+
+    public getMetrics(): { active: number; queued: number; cap: number } {
+        return { active: this.active, queued: this.queued.length, cap: Math.max(1, this.getCap()) };
     }
 
     notifyCapacityChange(): void {

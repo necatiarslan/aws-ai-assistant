@@ -4,13 +4,19 @@ interface McpState {
     enabled: boolean;
     sessionCap: number;
     disabledTools: string[];
+    host: string;
+    port: number;
 }
 
 const STATE_KEY = 'aws-ai-assistant.mcp.state';
+const DEFAULT_HOST = process.env.AWS_AI_ASSISTANT_MCP_HOST || '127.0.0.1';
+const DEFAULT_PORT = parseInt(process.env.AWS_AI_ASSISTANT_MCP_PORT || '37114', 10) || 37114;
 const DEFAULT_STATE: McpState = {
     enabled: false,
     sessionCap: 3,
-    disabledTools: []
+    disabledTools: [],
+    host: DEFAULT_HOST,
+    port: DEFAULT_PORT
 };
 
 export class McpConfig {
@@ -24,7 +30,9 @@ export class McpConfig {
         return {
             enabled: stored.enabled ?? DEFAULT_STATE.enabled,
             sessionCap: stored.sessionCap ?? DEFAULT_STATE.sessionCap,
-            disabledTools: stored.disabledTools ?? []
+            disabledTools: stored.disabledTools ?? [],
+            host: stored.host || DEFAULT_STATE.host,
+            port: this.normalizePort(stored.port) ?? DEFAULT_STATE.port
         };
     }
 
@@ -41,5 +49,35 @@ export class McpConfig {
     public async updateDisabledTools(disabledTools: string[]): Promise<void> {
         const current = this.load();
         await this.memento.update(STATE_KEY, { ...current, disabledTools });
+    }
+
+    public async updateHost(host: string): Promise<void> {
+        const current = this.load();
+        await this.memento.update(STATE_KEY, { ...current, host: host || DEFAULT_HOST });
+    }
+
+    public async updatePort(port: number): Promise<void> {
+        const current = this.load();
+        await this.memento.update(STATE_KEY, { ...current, port: this.normalizePort(port) ?? DEFAULT_PORT });
+    }
+
+    public async updateEndpoint(host: string, port: number): Promise<void> {
+        const current = this.load();
+        await this.memento.update(STATE_KEY, {
+            ...current,
+            host: host || DEFAULT_HOST,
+            port: this.normalizePort(port) ?? DEFAULT_PORT
+        });
+    }
+
+    private normalizePort(port: number | undefined): number | undefined {
+        if (port === undefined || port === null) {
+            return undefined;
+        }
+        const parsed = Number(port);
+        if (!Number.isInteger(parsed) || parsed <= 0 || parsed > 65535) {
+            return undefined;
+        }
+        return parsed;
     }
 }

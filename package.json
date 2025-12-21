@@ -2097,6 +2097,18 @@
           "default": false,
           "description": "Enable the MCP stdio host. When disabled, MCP sessions cannot be started."
         },
+        "aws-ai-assistant.mcp.host": {
+          "type": "string",
+          "default": "127.0.0.1",
+          "description": "Host interface for the MCP bridge server."
+        },
+        "aws-ai-assistant.mcp.port": {
+          "type": "number",
+          "default": 37114,
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "TCP port for the MCP bridge server."
+        },
         "aws-ai-assistant.mcp.sessionCap": {
           "type": "number",
           "default": 3,
@@ -2182,6 +2194,10 @@
       {
         "command": "aws-ai-assistant.StopMcpServers",
         "title": "Goggles:Stop MCP Servers"
+      },
+      {
+        "command": "aws-ai-assistant.OpenMcpManageView",
+        "title": "Goggles:MCP Management"
       }
     ]
   },
