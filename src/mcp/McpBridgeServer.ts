@@ -59,7 +59,7 @@ export class McpBridgeServer implements vscode.Disposable {
         if (this.totalActive() >= cap) {
             // Queue the connection and inform client it's queued
             this.queued.push(socket);
-            socket.write(JSON.stringify({ id: 'init', result: { status: 'queued', cap, message: 'Queued until capacity frees' } }) + '\n');
+            socket.write(JSON.stringify({ jsonrpc: '2.0', id: 'init', result: { status: 'queued', cap, message: 'Queued until capacity frees' } }) + '\n');
             socket.on('close', () => this.removeQueued(socket));
             socket.on('end', () => this.removeQueued(socket));
             return;
@@ -101,14 +101,16 @@ export class McpBridgeServer implements vscode.Disposable {
                 try {
                     req = JSON.parse(trimmed);
                 } catch (e: any) {
-                    writeLine({ error: { message: 'Invalid JSON', data: e?.message } });
+                    writeLine({ jsonrpc: '2.0', error: { message: 'Invalid JSON', data: e?.message } });
                     continue;
                 }
                 try {
                     const res = await dispatcher.handle(req);
-                    writeLine(res);
+                    if (res) {
+                        writeLine(res);
+                    }
                 } catch (e: any) {
-                    writeLine({ id: req?.id, error: { message: e?.message || 'Unexpected error', code: 500 } });
+                    writeLine({ jsonrpc: '2.0', id: req?.id || null, error: { message: e?.message || 'Internal error', code: -32603 } });
                 }
             }
         });
@@ -122,7 +124,6 @@ export class McpBridgeServer implements vscode.Disposable {
         socket.on('close', close);
         socket.on('end', close);
 
-        // Initial banner
-        writeLine({ id: 'init', result: { status: 'ready', message: 'Send JSON per line: methods list_tools, call_tool' } });
+        // No initial banner - real MCP clients start with initialize request
     }
 }

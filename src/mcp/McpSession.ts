@@ -61,8 +61,10 @@ export class McpSession implements vscode.Pseudoterminal {
     }
 
     private async dispatch(request: McpRequest): Promise<void> {
-        const response: McpResponse = await this.dispatcher.handle(request);
-        this.writeLine(JSON.stringify(response));
+        const response = await this.dispatcher.handle(request);
+        if (response) {
+            this.writeLine(JSON.stringify(response));
+        }
     }
 
     private writeLine(text: string): void {

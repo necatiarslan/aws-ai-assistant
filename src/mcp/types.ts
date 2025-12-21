@@ -1,12 +1,14 @@
 import { Readable, Writable } from 'stream';
 
 export interface McpRequest {
-    id: string | number;
+    jsonrpc?: '2.0';
+    id?: string | number;
     method: string;
     params?: Record<string, any>;
 }
 
 export interface McpResponse {
+    jsonrpc: '2.0';
     id: string | number;
     result?: any;
     error?: {

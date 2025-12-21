@@ -6,10 +6,11 @@ const PORT = parseInt(process.env.AWS_AI_ASSISTANT_MCP_PORT || '37114', 10);
 const HOST = process.env.AWS_AI_ASSISTANT_MCP_HOST || '127.0.0.1';
 
 function fail(message: string) {
-  process.stdout.write(JSON.stringify({ id: 'init', error: { message } }) + '\n');
+  process.stdout.write(JSON.stringify({ jsonrpc: '2.0', id: 'init', error: { message } }) + '\n');
   process.exit(1);
 }
 
+let socketBuffer = '';
 const socket = net.createConnection({ host: HOST, port: PORT }, () => {
   const rl = readline.createInterface({ input: process.stdin });
   rl.on('line', (line) => {
@@ -20,10 +21,14 @@ const socket = net.createConnection({ host: HOST, port: PORT }, () => {
 });
 
 socket.on('data', (data) => {
-  const text = data.toString('utf-8');
-  const lines = text.split(/\r?\n/).filter(Boolean);
+  socketBuffer += data.toString('utf-8');
+  const lines = socketBuffer.split(/\r?\n/);
+  socketBuffer = lines.pop() || '';
   for (const l of lines) {
-    process.stdout.write(l + '\n');
+    const trimmed = l.trim();
+    if (trimmed) {
+      process.stdout.write(trimmed + '\n');
+    }
   }
 });
 

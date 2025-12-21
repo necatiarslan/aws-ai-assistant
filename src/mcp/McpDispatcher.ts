@@ -62,38 +62,83 @@ export class McpDispatcher {
         }
     }
 
-    public listTools(): string[] {
-        return Array.from(this.tools.keys());
+    public listTools(): any[] {
+        return Array.from(this.tools.keys()).map(name => ({
+            name,
+            description: `AWS ${name.replace('Tool', '')} Operations`,
+            inputSchema: {
+                type: 'object',
+                properties: {
+                    command: { type: 'string', description: 'The AWS command to execute' },
+                    params: { type: 'object', description: 'The parameters for the command' }
+                },
+                required: ['command', 'params']
+            }
+        }));
     }
 
-    public async handle(request: McpRequest): Promise<McpResponse> {
+    public async handle(request: McpRequest): Promise<McpResponse | undefined> {
         try {
-            if (request.method === 'list_tools') {
-                return { id: request.id, result: { tools: this.listTools() } };
+            if (request.method === 'initialize') {
+                return {
+                    id: request.id!,
+                    jsonrpc: '2.0',
+                    result: {
+                        protocolVersion: '2024-11-05',
+                        capabilities: {
+                            tools: {},
+                            resources: {},
+                            prompts: {}
+                        },
+                        serverInfo: {
+                            name: 'aws-ai-assistant',
+                            version: '1.0.3'
+                        }
+                    }
+                };
             }
 
-            if (request.method === 'call_tool') {
-                const toolName = request.params?.tool as string;
-                const command = request.params?.command as string;
-                const params = (request.params?.params as Record<string, any>) || {};
+            if (request.method === 'notifications/initialized' || request.method === 'initialized') {
+                return undefined;
+            }
+
+            if (request.id === undefined || request.id === null) {
+                return undefined;
+            }
+
+            if (request.method === 'list_tools' || request.method === 'tools/list') {
+                return { 
+                    id: request.id!, 
+                    jsonrpc: '2.0', 
+                    result: { 
+                        tools: this.listTools()
+                    } 
+                };
+            }
+
+            if (request.method === 'call_tool' || request.method === 'tools/call') {
+                const toolName = (request.params?.tool || request.params?.name) as string;
+                const args = (request.params?.params || request.params?.arguments) as Record<string, any> || {};
+                const command = (request.params?.command || args?.command) as string;
+                const params = (args?.params || args) as Record<string, any>;
 
                 if (!toolName || !command) {
-                    return { id: request.id, error: { message: 'tool and command are required', code: 400 } };
+                    return { id: request.id!, jsonrpc: '2.0', error: { message: 'tool and command (or name and arguments) are required', code: -32602 } };
                 }
 
                 const tool = this.tools.get(toolName);
                 if (!tool) {
-                    return { id: request.id, error: { message: `Tool ${toolName} is not enabled for MCP`, code: 404 } };
+                    return { id: request.id!, jsonrpc: '2.0', error: { message: `Tool ${toolName} is not enabled for MCP`, code: -32601 } };
                 }
 
                 if (!Session.Current) {
-                    return { id: request.id, error: { message: 'Session not initialized', code: 500 } };
+                    return { id: request.id!, jsonrpc: '2.0', error: { message: 'Session not initialized in VS Code', code: -32000 } };
                 }
 
                 if (needsConfirmation(command)) {
                     const ok = await confirmProceed(command);
                     if (!ok) {
-                        return { id: request.id, error: { message: 'User cancelled action command', code: 499 } };
+                        return { id: request.id!, jsonrpc: '2.0', error: { message: 'User cancelled action command', code: -32000 } };
                     }
                 }
 
@@ -119,7 +164,7 @@ export class McpDispatcher {
                     }
 
                     if (!text) {
-                        return { id: request.id, result: raw };
+                        return { id: request.id!, jsonrpc: '2.0', result: { content: [{ type: 'text', text: JSON.stringify(raw) }] } };
                     }
 
                     let parsed: any = text;
@@ -129,16 +174,22 @@ export class McpDispatcher {
                         parsed = text;
                     }
 
-                    return { id: request.id, result: parsed };
+                    return { 
+                        id: request.id!, 
+                        jsonrpc: '2.0', 
+                        result: { 
+                            content: [{ type: 'text', text: typeof parsed === 'string' ? parsed : JSON.stringify(parsed, null, 2) }] 
+                        } 
+                    };
                 } finally {
                     s.DisabledTools = originalDisabledTools;
                     s.DisabledCommands = originalDisabledCommands;
                 }
             }
 
-            return { id: request.id, error: { message: `Unknown method ${request.method}`, code: 404 } };
+            return { id: request.id!, jsonrpc: '2.0', error: { message: `Method not found: ${request.method}`, code: -32601 } };
         } catch (error: any) {
-            return { id: request.id, error: { message: error?.message || 'Unexpected error', code: 500, data: error?.stack } };
+            return { id: request.id!, jsonrpc: '2.0', error: { message: error?.message || 'Internal error', code: -32603, data: error?.stack } };
         }
     }
 }
