@@ -37,8 +37,8 @@
     ],
     "languageModelTools": [
       {
-        "name": "testAwsConnection",
-        "toolReferenceName": "testAwsConnection",
+        "name": "TestAwsConnectionTool",
+        "toolReferenceName": "TestAwsConnectionTool",
         "displayName": "Test AWS Connection",
         "modelDescription": "Tests AWS connectivity using STS GetCallerIdentity. Returns true if the connection is successful.",
         "userDescription": "Test your AWS connectivity with current session credentials",
@@ -61,8 +61,8 @@
         }
       },
       {
-        "name": "session",
-        "toolReferenceName": "session",
+        "name": "SessionTool",
+        "toolReferenceName": "SessionTool",
         "displayName": "Session Tool",
         "modelDescription": "Get or set AWS session values (AwsProfile, AwsEndPoint, AwsRegion), list available profiles, or refresh cached credentials. Use GetSession to read current values. Use SetSession with params to update any of AwsProfile, AwsEndPoint, AwsRegion. Use ListProfiles to return profile names detected from AWS config/credentials files. Use RefreshCredentials to clear and reload cached credentials.",
         "userDescription": "Manage session (profile/region/endpoint), list profiles, refresh credentials",
@@ -113,8 +113,8 @@
         }
       },
       {
-        "name": "sts",
-        "toolReferenceName": "sts",
+        "name": "STSTool",
+        "toolReferenceName": "STSTool",
         "displayName": "STS Tool",
         "modelDescription": "Execute AWS STS (Security Token Service) commands. ALWAYS provide params object. Examples: GetCallerIdentity {command:'GetCallerIdentity', params:{}}. GetAccessKeyInfo {command:'GetAccessKeyInfo', params:{AccessKeyId:'AKIA...'}}. GetSessionToken {command:'GetSessionToken', params:{DurationSeconds:3600}}. GetFederationToken {command:'GetFederationToken', params:{Name:'session-name'}}. GetWebIdentityToken {command:'GetWebIdentityToken', params:{RoleArn:'arn:aws:iam::...', RoleSessionName:'session', WebIdentityToken:'token'}}.",
         "userDescription": "Get temporary security credentials and caller identity information from AWS STS",
@@ -216,8 +216,8 @@
         }
       },
       {
-        "name": "sqs",
-        "toolReferenceName": "sqs",
+        "name": "SQSTool",
+        "toolReferenceName": "SQSTool",
         "displayName": "SQS Tool",
         "modelDescription": "Execute AWS SQS (Simple Queue Service) commands. ALWAYS provide params object. Examples: ListQueues {command:'ListQueues', params:{}}. GetQueueUrl {command:'GetQueueUrl', params:{QueueName:'my-queue'}}. SendMessage {command:'SendMessage', params:{QueueUrl:'https://...', MessageBody:'text'}}. ReceiveMessage {command:'ReceiveMessage', params:{QueueUrl:'https://...', MaxNumberOfMessages:10}}. DeleteMessage {command:'DeleteMessage', params:{QueueUrl:'https://...', ReceiptHandle:'handle'}}.",
         "userDescription": "Manage SQS queues and send/receive messages",
@@ -335,8 +335,8 @@
         }
       },
       {
-        "name": "ec2",
-        "toolReferenceName": "ec2",
+        "name": "EC2Tool",
+        "toolReferenceName": "EC2Tool",
         "displayName": "EC2 Tool",
         "modelDescription": "Execute AWS EC2 read-only and info commands. ALWAYS provide params object. Examples: DescribeInstances {command:'DescribeInstances', params:{InstanceIds:['i-123']}}. DescribeImages {command:'DescribeImages', params:{Owners:['self']}}. GetConsoleOutput {command:'GetConsoleOutput', params:{InstanceId:'i-123'}}.",
         "userDescription": "Query EC2 instances, images, networking, and console data",
@@ -434,8 +434,8 @@
         }
       },
       {
-        "name": "apigateway",
-        "toolReferenceName": "apigateway",
+        "name": "APIGatewayTool",
+        "toolReferenceName": "APIGatewayTool",
         "displayName": "API Gateway Tool",
         "modelDescription": "Execute AWS API Gateway REST API commands. ALWAYS provide params object. Examples: GetRestApis {command:'GetRestApis', params:{limit:25}}. GetResources {command:'GetResources', params:{restApiId:'abc'}}. GetMethod {command:'GetMethod', params:{restApiId:'abc', resourceId:'xyz', httpMethod:'GET'}}.",
         "userDescription": "Inspect API Gateway REST APIs, resources, stages, usage, and more",
@@ -559,8 +559,8 @@
         }
       },
       {
-        "name": "rds",
-        "toolReferenceName": "rds",
+        "name": "RDSTool",
+        "toolReferenceName": "RDSTool",
         "displayName": "RDS Tool",
         "modelDescription": "Execute AWS RDS describe and log commands. ALWAYS provide params object. Examples: DescribeDBInstances {command:'DescribeDBInstances', params:{DBInstanceIdentifier:'my-db'}}. DescribeDBClusters {command:'DescribeDBClusters', params:{}}.",
         "userDescription": "Inspect Amazon RDS: instances, clusters, snapshots, parameters, logs",
@@ -683,8 +683,8 @@
         }
       },
       {
-        "name": "rdsdata",
-        "toolReferenceName": "rdsdata",
+        "name": "RDSDataTool",
+        "toolReferenceName": "RDSDataTool",
         "displayName": "RDS Data Tool",
         "modelDescription": "Execute Amazon RDS Data API commands for Aurora Serverless and RDS with Data API enabled. ALWAYS provide params object. Examples: ExecuteStatement {command:'ExecuteStatement', params:{resourceArn:'arn:aws:rds:...', secretArn:'arn:aws:secretsmanager:...', database:'db', sql:'SELECT 1'}}.",
         "userDescription": "Run SQL and manage transactions via the RDS Data API",
@@ -785,8 +785,8 @@
         }
       },
       {
-        "name": "cloudformation",
-        "toolReferenceName": "cloudformation",
+        "name": "CloudFormationTool",
+        "toolReferenceName": "CloudFormationTool",
         "displayName": "CloudFormation Tool",
         "modelDescription": "Execute AWS CloudFormation describe, list, get, and drift detection commands. ALWAYS provide params object.",
         "userDescription": "Inspect stacks, resources, changesets, types, and drift",
@@ -891,8 +891,8 @@
         }
       },
       {
-        "name": "sns",
-        "toolReferenceName": "sns",
+        "name": "SNSTool",
+        "toolReferenceName": "SNSTool",
         "displayName": "SNS Tool",
         "modelDescription": "Execute AWS SNS (Simple Notification Service) commands. ALWAYS provide params object. Examples: ListTopics {command:'ListTopics', params:{}}. GetTopicAttributes {command:'GetTopicAttributes', params:{TopicArn:'arn:...'}}. Publish {command:'Publish', params:{TopicArn:'arn:...', Message:'hello'}}.",
         "userDescription": "Manage SNS topics, subscriptions, endpoints and publishing",
@@ -996,8 +996,8 @@
         }
       },
       {
-        "name": "s3",
-        "toolReferenceName": "s3Generic",
+        "name": "S3Tool",
+        "toolReferenceName": "S3Tool",
         "displayName": "S3 Tool",
         "modelDescription": "Execute S3 commands. ALWAYS provide params object. Examples: ListObjectsV2 {command:'ListObjectsV2', params:{Bucket:'bucket-name'}}. PutObject {command:'PutObject', params:{Bucket:'name', Key:'path', Body:'content'}}. DeleteObject {command:'DeleteObject', params:{Bucket:'name', Key:'path'}}. CopyObject {command:'CopyObject', params:{Bucket:'name', CopySource:'/bucket/key', Key:'new-path'}}. OpenS3Explorer {command:'OpenS3Explorer', params:{Bucket:'bucket-name', Key:'optional/path/'}}.",
         "userDescription": "Execute S3 commands including read, write, delete operations, and open S3 Explorer view",
@@ -1134,8 +1134,8 @@
         }
       },
       {
-        "name": "fileOperations",
-        "toolReferenceName": "fileOperations",
+        "name": "FileOperationsTool",
+        "toolReferenceName": "FileOperationsTool",
         "displayName": "File Operations Tool",
         "modelDescription": "Perform file operations: ReadFile to read file content, ReadFileStream to get file metadata, ReadFileAsBase64 to read as Base64, GetFileInfo to get file statistics, ListFiles to list directory contents, ZipTextFile to create a zip archive of a file or directory.",
         "userDescription": "Read and manage files with various encoding and format options",
@@ -1198,8 +1198,8 @@
         }
       },
       {
-        "name": "cloudWatchLogs",
-        "toolReferenceName": "cloudWatchLogs",
+        "name": "CloudWatchLogTool",
+        "toolReferenceName": "CloudWatchLogTool",
         "displayName": "CloudWatch Logs Tool",
         "modelDescription": "Execute CloudWatch Logs commands. ALWAYS provide params object. Examples: DescribeLogGroups {command:'DescribeLogGroups', params:{logGroupNamePrefix:'app'}}. DescribeLogStreams {command:'DescribeLogStreams', params:{logGroupName:'my-group'}}. GetLogEvents {command:'GetLogEvents', params:{logGroupName:'my-group', logStreamName:'stream', limit:50}}. OpenCloudWatchLogView {command:'OpenCloudWatchLogView', params:{logGroupName:'my-group', logStreamName:'optional-stream'}}.",
         "userDescription": "Query CloudWatch log groups, streams, events, and open log viewer",
@@ -1286,8 +1286,8 @@
         }
       },
       {
-        "name": "lambda",
-        "toolReferenceName": "lambda",
+        "name": "LambdaTool",
+        "toolReferenceName": "LambdaTool",
         "displayName": "Lambda Tool",
         "modelDescription": "Execute AWS Lambda commands. ALWAYS provide params object. Examples: ListFunctions {command:'ListFunctions', params:{MaxItems:10}}. GetFunction {command:'GetFunction', params:{FunctionName:'my-function'}}. Invoke {command:'Invoke', params:{FunctionName:'my-function', Payload:'{\"key\":\"value\"}'}}",
         "userDescription": "Manage and invoke AWS Lambda functions",
@@ -1434,8 +1434,8 @@
         }
       },
       {
-        "name": "stepfunc",
-        "toolReferenceName": "stepFunc",
+        "name": "StepFuncTool",
+        "toolReferenceName": "StepFuncTool",
         "displayName": "Step Functions Tool",
         "modelDescription": "Execute AWS Step Functions commands. ALWAYS provide params object. Examples: ListStateMachines {command:'ListStateMachines', params:{maxResults:10}}. StartExecution {command:'StartExecution', params:{stateMachineArn:'arn:aws:states:...', input:'{\\\"key\\\":\\\"value\\\"}'}}. DescribeExecution {command:'DescribeExecution', params:{executionArn:'arn:aws:states:...'}}.",
         "userDescription": "Manage and run AWS Step Functions state machines",
@@ -1539,8 +1539,8 @@
         }
       },
       {
-        "name": "glue",
-        "toolReferenceName": "glue",
+        "name": "GlueTool",
+        "toolReferenceName": "GlueTool",
         "displayName": "Glue Tool",
         "modelDescription": "Execute AWS Glue commands. ALWAYS provide params object. Examples: ListJobs {command:'ListJobs', params:{MaxResults:10}}. CreateJob {command:'CreateJob', params:{Name:'my-job', Role:'arn:aws:iam::...:role/...', Command:{Name:'glueetl'}}}. StartJobRun {command:'StartJobRun', params:{JobName:'my-job'}}.",
         "userDescription": "Manage and run AWS Glue ETL jobs and triggers",
@@ -1684,8 +1684,8 @@
         }
       },
       {
-        "name": "emr",
-        "toolReferenceName": "emr",
+        "name": "EMRTool",
+        "toolReferenceName": "EMRTool",
         "displayName": "EMR Tool",
         "modelDescription": "Describe and list EMR clusters, steps, studios, notebook executions, release labels, and security settings. Commands are read-only: DescribeCluster, DescribeJobFlows, DescribeNotebookExecution, DescribePersistentAppUI, DescribeReleaseLabel, DescribeSecurityConfiguration, DescribeStep, DescribeStudio, GetAutoTerminationPolicy, GetBlockPublicAccessConfiguration, GetClusterSessionCredentials, GetManagedScalingPolicy, GetOnClusterAppUIPresignedURL, GetPersistentAppUIPresignedURL, GetStudioSessionMapping, ListBootstrapActions, ListClusters, ListInstanceFleets, ListInstanceGroups, ListInstances, ListNotebookExecutions, ListReleaseLabels, ListSecurityConfigurations, ListSteps, ListStudios, ListStudioSessionMappings, ListSupportedInstanceTypes.",
         "userDescription": "Inspect EMR clusters, notebooks, steps, studios, and related configurations",
@@ -1852,8 +1852,8 @@
         }
       },
       {
-        "name": "iam",
-        "toolReferenceName": "iam",
+        "name": "IAMTool",
+        "toolReferenceName": "IAMTool",
         "displayName": "IAM Tool",
         "modelDescription": "Execute AWS IAM commands. ALWAYS provide params object. Examples: GetRole {command:'GetRole', params:{RoleName:'my-role'}}. ListAttachedRolePolicies {command:'ListAttachedRolePolicies', params:{RoleName:'my-role'}}. GetPolicyVersion {command:'GetPolicyVersion', params:{PolicyArn:'arn:aws:iam::123:policy/p', VersionId:'v1'}}.",
         "userDescription": "Inspect IAM roles and policies",
@@ -1947,8 +1947,8 @@
         }
       },
       {
-        "name": "dynamodb",
-        "toolReferenceName": "dynamodb",
+        "name": "DynamoDBTool",
+        "toolReferenceName": "DynamoDBTool",
         "displayName": "DynamoDB Tool",
         "modelDescription": "Execute DynamoDB commands. ALWAYS provide params object. Examples: ListTables {command:'ListTables', params:{Limit:10}}. DescribeTable {command:'DescribeTable', params:{TableName:'my-table'}}. Query {command:'Query', params:{TableName:'my-table', KeyConditionExpression:'pk = :pk', ExpressionAttributeValues:{':pk':{'S':'id'}}}}.",
         "userDescription": "Manage DynamoDB tables and items",
@@ -2111,7 +2111,7 @@
         },
         "aws-ai-assistant.mcp.sessionCap": {
           "type": "number",
-          "default": 3,
+          "default": 1,
           "minimum": 1,
           "description": "Maximum concurrent MCP stdio sessions. Additional requests queue until a slot is free."
         },

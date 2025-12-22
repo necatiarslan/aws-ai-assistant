@@ -53,25 +53,25 @@ export function activate(context: vscode.ExtensionContext) {
 	if (vscode.env.appName.includes('Visual Studio Code')) {
 		// Register language model tools
 		context.subscriptions.push(
-			vscode.lm.registerTool('testAwsConnection', new TestAwsConnectionTool()),
-			vscode.lm.registerTool('sts', new STSTool()),
-			vscode.lm.registerTool('sqs', new SQSTool()),
-			vscode.lm.registerTool('ec2', new EC2Tool()),
-			vscode.lm.registerTool('s3', new S3Tool()),
-			vscode.lm.registerTool('sns', new SNSTool()),
-			vscode.lm.registerTool('apigateway', new APIGatewayTool()),
-			vscode.lm.registerTool('rds', new RDSTool()),
-			vscode.lm.registerTool('rdsdata', new RDSDataTool()),
-			vscode.lm.registerTool('cloudformation', new CloudFormationTool()),
-			vscode.lm.registerTool('fileOperations', new FileOperationsTool()),
+			vscode.lm.registerTool('TestAwsConnectionTool', new TestAwsConnectionTool()),
+			vscode.lm.registerTool('STSTool', new STSTool()),
+			vscode.lm.registerTool('SQSTool', new SQSTool()),
+			vscode.lm.registerTool('EC2Tool', new EC2Tool()),
+			vscode.lm.registerTool('S3Tool', new S3Tool()),
+			vscode.lm.registerTool('SNSTool', new SNSTool()),
+			vscode.lm.registerTool('APIGatewayTool', new APIGatewayTool()),
+			vscode.lm.registerTool('RDSTool', new RDSTool()),
+			vscode.lm.registerTool('RDSDataTool', new RDSDataTool()),
+			vscode.lm.registerTool('CloudFormationTool', new CloudFormationTool()),
+			vscode.lm.registerTool('FileOperationsTool', new FileOperationsTool()),
 			vscode.lm.registerTool('session', new SessionTool()),
-			vscode.lm.registerTool('cloudWatchLogs', new CloudWatchLogTool()),
-			vscode.lm.registerTool('lambda', new LambdaTool()),
-			vscode.lm.registerTool('stepfunc', new StepFuncTool()),
-			vscode.lm.registerTool('glue', new GlueTool()),
-			vscode.lm.registerTool('iam', new IAMTool()),
-			vscode.lm.registerTool('dynamodb', new DynamoDBTool()),
-			vscode.lm.registerTool('emr', new EMRTool())
+			vscode.lm.registerTool('CloudWatchLogTool', new CloudWatchLogTool()),
+			vscode.lm.registerTool('LambdaTool', new LambdaTool()),
+			vscode.lm.registerTool('StepFuncTool', new StepFuncTool()),
+			vscode.lm.registerTool('GlueTool', new GlueTool()),
+			vscode.lm.registerTool('IAMTool', new IAMTool()),
+			vscode.lm.registerTool('DynamoDBTool', new DynamoDBTool()),
+			vscode.lm.registerTool('EMRTool', new EMRTool())
 		);
 	}
 	else {
