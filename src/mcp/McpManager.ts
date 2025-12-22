@@ -39,7 +39,7 @@ export class McpManager implements vscode.Disposable {
 
         this.ensureBridge(state);
 
-        const cap = Math.max(1, state.sessionCap || 3);
+        const cap = Math.max(1, state.sessionCap || 20);
 
         if (this.activeSessions.size >= cap) {
             return new Promise<McpSession | undefined>((resolve, reject) => {
@@ -123,7 +123,7 @@ export class McpManager implements vscode.Disposable {
         const host = state.host || '127.0.0.1';
         const port = state.port || 37114;
         const running = !!this.bridge?.isRunning();
-        const metrics = this.bridge?.getMetrics() || { active: 0, queued: 0, cap: Math.max(1, state.sessionCap || 3) };
+        const metrics = this.bridge?.getMetrics() || { active: 0, queued: 0, cap: Math.max(1, state.sessionCap || 20) };
         const activeSessions = this.getActiveSessionCount() + (metrics.active || 0);
         const reachable = await this.tryProbe(host, port);
         let message: string | undefined;
@@ -140,7 +140,7 @@ export class McpManager implements vscode.Disposable {
             port,
             activeSessions,
             queuedConnections: metrics.queued,
-            sessionCap: Math.max(1, state.sessionCap || 3),
+            sessionCap: Math.max(1, state.sessionCap || 20),
             message
         };
     }
@@ -211,7 +211,7 @@ export class McpManager implements vscode.Disposable {
 
         this.bridge = new McpBridgeServer(
             () => new Set(this.enabledTools()),
-            () => Math.max(1, this.effectiveState().sessionCap || 3),
+            () => Math.max(1, this.effectiveState().sessionCap || 20),
             () => this.getActiveSessionCount(),
             { host, port }
         );

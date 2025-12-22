@@ -13,7 +13,7 @@ const DEFAULT_HOST = process.env.AWS_AI_ASSISTANT_MCP_HOST || '127.0.0.1';
 const DEFAULT_PORT = parseInt(process.env.AWS_AI_ASSISTANT_MCP_PORT || '37114', 10) || 37114;
 const DEFAULT_STATE: McpState = {
     enabled: false,
-    sessionCap: 3,
+    sessionCap: 20,
     disabledTools: [],
     host: DEFAULT_HOST,
     port: DEFAULT_PORT

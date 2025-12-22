@@ -1,4 +1,6 @@
 import * as vscode from 'vscode';
+import * as fs from 'fs';
+import * as path from 'path';
 import { BaseTool } from '../common/BaseTool';
 import { Session } from '../common/Session';
 import { McpRequest, McpResponse } from './types';
@@ -30,9 +32,18 @@ interface ToolRecord {
 
 export class McpDispatcher {
     private readonly tools: Map<string, ToolRecord>;
+    private readonly toolMetadata: Map<string, any>;
 
     constructor(enabledTools: Set<string>) {
         this.tools = new Map<string, ToolRecord>();
+        this.toolMetadata = new Map<string, any>();
+        
+        try {
+            this.loadToolsFromPackageJson();
+        } catch (error: any) {
+            throw new Error(`Failed to load MCP tool definitions: ${error.message}`);
+        }
+        
         const allTools: ToolRecord[] = [
             { name: 'TestAwsConnectionTool', instance: new TestAwsConnectionTool() as BaseTool<any> },
             { name: 'STSTool', instance: new STSTool() as BaseTool<any> },
@@ -63,18 +74,49 @@ export class McpDispatcher {
     }
 
     public listTools(): any[] {
-        return Array.from(this.tools.keys()).map(name => ({
-            name,
-            description: `AWS ${name.replace('Tool', '')} Operations`,
-            inputSchema: {
-                type: 'object',
-                properties: {
-                    command: { type: 'string', description: 'The AWS command to execute' },
-                    params: { type: 'object', description: 'The parameters for the command' }
-                },
-                required: ['command', 'params']
+        return Array.from(this.tools.keys())
+            .map(name => {
+                const metadata = this.toolMetadata.get(name);
+                if (!metadata) {
+                    return null; // Skip tools without metadata
+                }
+                return {
+                    name: metadata.name,
+                    description: metadata.modelDescription || metadata.userDescription || '',
+                    inputSchema: metadata.inputSchema || { type: 'object' }
+                };
+            })
+            .filter(tool => tool !== null);
+    }
+
+    private loadToolsFromPackageJson(): void {
+        const packageJsonPath = path.join(__dirname, '../../package.json');
+        
+        if (!fs.existsSync(packageJsonPath)) {
+            throw new Error('package.json not found');
+        }
+
+        let packageJson: any;
+        try {
+            const raw = fs.readFileSync(packageJsonPath, 'utf8');
+            packageJson = JSON.parse(raw);
+        } catch (error: any) {
+            if (error instanceof SyntaxError) {
+                throw new Error('Invalid JSON in package.json');
             }
-        }));
+            throw error;
+        }
+
+        const languageModelTools = packageJson?.contributes?.languageModelTools;
+        if (!Array.isArray(languageModelTools)) {
+            throw new Error('languageModelTools section missing in package.json');
+        }
+
+        for (const tool of languageModelTools) {
+            if (tool.name) {
+                this.toolMetadata.set(tool.name, tool);
+            }
+        }
     }
 
     public async handle(request: McpRequest): Promise<McpResponse | undefined> {

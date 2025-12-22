@@ -2111,7 +2111,7 @@
         },
         "aws-ai-assistant.mcp.sessionCap": {
           "type": "number",
-          "default": 1,
+          "default": 3,
           "minimum": 1,
           "description": "Maximum concurrent MCP stdio sessions. Additional requests queue until a slot is free."
         },
