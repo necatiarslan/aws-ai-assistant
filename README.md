@@ -2,7 +2,7 @@
 
 ![screenshoot](docs/readme/movie.gif)
 
-Goggles is a Visual Studio Code extension that brings AWS management into your chat experience. Use natural language to inspect and operate AWS resources with your existing credentials. The extension exposes AWS-aware tools that execute actions directly on your behalf.
+Goggles is a Visual Studio Code (and forks including Google Antigravity, Windsurf etc.) extension that brings AWS management into your chat experience. Use natural language to inspect and operate AWS resources with your existing credentials. The extension exposes AWS-aware tools that execute actions directly on your behalf.
 
 ## 🔑 Supported AWS Services
 - S3

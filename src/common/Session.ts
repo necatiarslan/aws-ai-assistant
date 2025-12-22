@@ -15,6 +15,7 @@ export class Session implements vscode.Disposable {
     public CurrentCredentials: AwsCredentialIdentity | undefined;
     public DisabledTools: Set<string> = new Set<string>();
     public DisabledCommands: Map<string, Set<string>> = new Map<string, Set<string>>();
+    public HostAppName: string = '';
 
     private _onDidChangeSession = new vscode.EventEmitter<void>();
     public readonly onDidChangeSession = this._onDidChangeSession.event;
@@ -25,6 +26,12 @@ export class Session implements vscode.Disposable {
         this.ExtensionUri = context.extensionUri;
         this.LoadState();
         this.GetCredentials();
+        this.HostAppName = vscode.env.appName;
+    }
+
+    public IsHostSupportLanguageTools(): boolean {
+        const supportedHosts = ['Visual Studio Code', 'Visual Studio Code - Insiders', 'VSCodium'];
+        return supportedHosts.includes(this.HostAppName);
     }
 
     public SaveState() {

@@ -50,7 +50,7 @@ export function activate(context: vscode.ExtensionContext) {
 		{ dispose: () => ui.dispose() }
 	);
 
-	if (vscode.env.appName.includes('Visual Studio Code')) {
+	if (Session.Current?.IsHostSupportLanguageTools()) {
 		// Register language model tools
 		context.subscriptions.push(
 			vscode.lm.registerTool('TestAwsConnectionTool', new TestAwsConnectionTool()),
@@ -75,7 +75,7 @@ export function activate(context: vscode.ExtensionContext) {
 		);
 	}
 	else {
-		ui.logToOutput(`Language model tools registration skipped for ${vscode.env.appName}`);
+		ui.logToOutput(`Language model tools registration skipped for ${Session.Current?.HostAppName}`);
 	}
 
 	ui.logToOutput('Language model tools registered');

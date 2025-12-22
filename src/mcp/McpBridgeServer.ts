@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as net from 'net';
 import { McpDispatcher } from './McpDispatcher';
+import * as ui from '../common/UI';
 
 export class McpBridgeServer implements vscode.Disposable {
     private server?: net.Server;
@@ -24,7 +25,7 @@ export class McpBridgeServer implements vscode.Disposable {
         if (this.running) return;
         this.server = net.createServer((socket) => this.handleConnection(socket));
         this.server.listen(this.port, this.host, () => {
-            vscode.window.showInformationMessage(`MCP bridge listening on ${this.host}:${this.port}`);
+            ui.showInfoMessage(`MCP bridge listening on ${this.host}:${this.port}`);
         });
         this.running = true;
     }
@@ -73,7 +74,7 @@ export class McpBridgeServer implements vscode.Disposable {
         if (this.totalActive() >= cap) {
             // Queue the connection and inform client it's queued
             this.queued.push(socket);
-            console.log(`MCP bridge: capacity reached (${cap}). Queuing connection.`);
+            ui.logToOutput(`MCP bridge: capacity reached (${cap}). Queuing connection.`);
             socket.write(JSON.stringify({ jsonrpc: '2.0', method: 'notifications/status', params: { status: 'queued', cap, message: 'Queued until capacity frees' } }) + '\n');
             socket.on('close', () => this.removeQueued(socket));
             socket.on('end', () => this.removeQueued(socket));
@@ -98,7 +99,7 @@ export class McpBridgeServer implements vscode.Disposable {
 
     private beginSession(socket: net.Socket): void {
         this.active++;
-        console.log(`MCP bridge: session started. Total active: ${this.totalActive()}`);
+        ui.logToOutput(`MCP bridge: session started. Total active: ${this.totalActive()}`);
         const dispatcher = new McpDispatcher(this.getEnabledTools());
         let buffer = '';
 

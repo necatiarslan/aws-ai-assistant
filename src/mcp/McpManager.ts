@@ -4,6 +4,7 @@ import { McpConfig } from './McpConfig';
 import { McpDispatcher } from './McpDispatcher';
 import { McpSession } from './McpSession';
 import { McpBridgeServer } from './McpBridgeServer';
+import * as ui from '../common/UI';
 
 interface QueuedRequest {
     resolve: (value: McpSession | undefined) => void;
@@ -44,7 +45,7 @@ export class McpManager implements vscode.Disposable {
         if (this.activeSessions.size >= cap) {
             return new Promise<McpSession | undefined>((resolve, reject) => {
                 this.queue.push({ resolve, reject });
-                vscode.window.showInformationMessage(`MCP sessions at capacity (${cap}). Request queued.`);
+                ui.showInfoMessage(`MCP sessions at capacity (${cap}). Request queued.`);
             });
         }
 
@@ -55,7 +56,7 @@ export class McpManager implements vscode.Disposable {
         const terminal = vscode.window.createTerminal({ name: `Aws AI Assistant MCP ${sessionId}`, pty });
         this.activeSessions.set(sessionId, { terminal, session });
         terminal.show(false);
-        vscode.window.showInformationMessage(`MCP session ${sessionId} started.`);
+        //ui.showInformationMessage(`MCP session ${sessionId} started.`);
         return session;
     }
 

@@ -158,7 +158,7 @@ export class CommandHistoryView {
         try {
             const history = CommandHistoryManager.Instance.getHistory();
             if (history.length === 0) {
-                vscode.window.showInformationMessage("No command history to export.");
+                ui.showInfoMessage("No command history to export.");
                 return;
             }
 
@@ -176,10 +176,10 @@ export class CommandHistoryView {
 
             const content = JSON.stringify(history, null, 2);
             await vscode.workspace.fs.writeFile(targetUri, new TextEncoder().encode(content));
-            vscode.window.showInformationMessage(`Command history exported to ${targetUri.fsPath}`);
+            ui.showInfoMessage(`Command history exported to ${targetUri.fsPath}`);
         } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
-            vscode.window.showErrorMessage(`Failed to export command history: ${message}`);
+            ui.showErrorMessage(`Failed to export command history: ${message}`);
         }
     }
 
@@ -187,7 +187,7 @@ export class CommandHistoryView {
         try {
             const chatHistory = AIHandler.Current?.getChatHistory() || [];
             if (chatHistory.length === 0) {
-                vscode.window.showInformationMessage("No chat history to export.");
+                ui.showInfoMessage("No chat history to export.");
                 return;
             }
 
@@ -215,10 +215,10 @@ export class CommandHistoryView {
 
             const content = JSON.stringify(exportData, null, 2);
             await vscode.workspace.fs.writeFile(targetUri, new TextEncoder().encode(content));
-            vscode.window.showInformationMessage(`Chat history exported to ${targetUri.fsPath}`);
+            ui.showInfoMessage(`Chat history exported to ${targetUri.fsPath}`);
         } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
-            vscode.window.showErrorMessage(`Failed to export chat history: ${message}`);
+            ui.showErrorMessage(`Failed to export chat history: ${message}`);
         }
     }
 
