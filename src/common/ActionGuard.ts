@@ -23,9 +23,16 @@ export function needsConfirmation(command: string): boolean {
   );
 }
 
-export async function confirmProceed(command: string): Promise<boolean> {
+export async function confirmProceed(command: string, params?: Record<string, any>): Promise<boolean> {
+  let message = `Confirm to execute action command: ${command}`;
+  if (params && Object.keys(params).length > 0) {
+    message += '\n\nParameters:\n';
+    for (const [key, value] of Object.entries(params)) {
+      message += `${key}: ${value}\n`;
+    }
+  }
   const selection = await vscode.window.showWarningMessage(
-    `Confirm to execute action command: ${command}`,
+    message,
     { modal: true },
     'Proceed',
     'Cancel'

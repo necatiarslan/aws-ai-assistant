@@ -178,7 +178,7 @@ export class McpDispatcher {
                 }
 
                 if (needsConfirmation(command)) {
-                    const ok = await confirmProceed(command);
+                    const ok = await confirmProceed(command, params);
                     if (!ok) {
                         return { id: request.id!, jsonrpc: '2.0', error: { message: 'User cancelled action command', code: -32000 } };
                     }
@@ -191,10 +191,11 @@ export class McpDispatcher {
                 s.DisabledTools = new Set();
                 s.DisabledCommands = new Map();
 
+                const tokenSource = new vscode.CancellationTokenSource();
                 try {
                     const result = await tool.instance.invoke({
                         input: { command, params }
-                    } as any, new vscode.CancellationTokenSource().token);
+                    } as any, tokenSource.token);
 
                     const raw = (result as any).output ?? (result as any).content ?? result;
                     const content = Array.isArray(raw?.content) ? raw.content : Array.isArray(raw) ? raw : undefined;
@@ -224,6 +225,7 @@ export class McpDispatcher {
                         } 
                     };
                 } finally {
+                    tokenSource.dispose();
                     s.DisabledTools = originalDisabledTools;
                     s.DisabledCommands = originalDisabledCommands;
                 }

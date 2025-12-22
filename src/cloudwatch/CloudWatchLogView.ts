@@ -528,6 +528,7 @@ export class CloudWatchLogView {
 
     public dispose() {
         ui.logToOutput('CloudWatchLogView.dispose Started');
+        this.StopTimer(); // Ensure timer is cleaned up to prevent memory leak
         CloudWatchLogView.Current = undefined;
 
         this._panel.dispose();
@@ -576,13 +577,17 @@ export class CloudWatchLogView {
         {
             const fileName = this.LogStream.replace(/[^a-zA-Z0-9]/g, "_");
             const tmpFile = tmp.fileSync({ mode: 0o644, prefix: fileName, postfix: '.log' });
-            fs.appendFileSync(tmpFile.name, this.Region + "/" + this.LogGroup + "/" + this.LogStream);
+            
+            // Build content as a string first, then write once (async to avoid blocking)
+            let content = this.Region + "/" + this.LogGroup + "/" + this.LogStream;
             for(const message of this.LogEvents)
             {
-                fs.appendFileSync(tmpFile.name, "\n" + "----------------------------------------------------------");
-                fs.appendFileSync(tmpFile.name, "\n" + message.message);
+                content += "\n" + "----------------------------------------------------------";
+                content += "\n" + message.message;
             }
-            fs.appendFileSync(tmpFile.name, "\n" + "---------------------------END OF LOGS--------------------");
+            content += "\n" + "---------------------------END OF LOGS--------------------";
+            
+            await fs.promises.writeFile(tmpFile.name, content);
             ui.openFile(tmpFile.name);    
         } 
         catch (error: unknown) 

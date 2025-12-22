@@ -28,15 +28,15 @@ export class TestAwsConnectionTool extends BaseTool<TestAwsConnectionInput> {
     // No specific resource to update for connection test
   }
 
-  protected async executeCommand(command: string, params: Record<string, any>): Promise<any> {
+  protected async executeCommand(_command: string, params: Record<string, any>): Promise<any> {
       // Get region from params or session defaults
       const region = params?.region || Session.Current?.AwsRegion || 'us-east-1';
       ui.logToOutput(`TestAwsConnection: Testing AWS connectivity (region=${region})`);
 
       try {
         const client = await this.getClient(region);
-        const command = new GetCallerIdentityCommand({});
-        await client.send(command);
+        const identityCommand = new GetCallerIdentityCommand({});
+        await client.send(identityCommand);
 
         ui.logToOutput("TestAwsConnection: AWS connectivity test successful.");
         return {

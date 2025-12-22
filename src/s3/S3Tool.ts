@@ -1,3 +1,4 @@
+import * as ui from '../common/UI';
 import { Session } from '../common/Session';
 import { BaseTool, BaseToolInput } from '../common/BaseTool';
 import { ClientManager } from '../common/ClientManager';
@@ -154,11 +155,11 @@ export class S3Tool extends BaseTool<S3ToolInput> {
     };
 
     if (params.DownloadToTemp) {
-      // Download to temp folder
+      // Download to temp folder (async to avoid blocking extension host)
       const tempDir = os.tmpdir();
       const fileName = path.basename(params.Key);
       const filePath = path.join(tempDir, fileName);
-      fs.writeFileSync(filePath, bodyBuffer);
+      await fs.promises.writeFile(filePath, bodyBuffer);
 
       return {
         ...metadata,
@@ -240,10 +241,16 @@ export class S3Tool extends BaseTool<S3ToolInput> {
   }
 
   private async streamToBuffer(stream: any): Promise<Buffer> {
+    if (!stream) {
+      return Buffer.alloc(0);
+    }
     const chunks: Buffer[] = [];
     return new Promise((resolve, reject) => {
       stream.on('data', (chunk: Buffer) => chunks.push(chunk));
-      stream.on('error', reject);
+      stream.on('error', (err: Error) => {
+        ui.logToOutput('S3Tool: Stream error while reading object', err);
+        reject(err);
+      });
       stream.on('end', () => resolve(Buffer.concat(chunks)));
     });
   }

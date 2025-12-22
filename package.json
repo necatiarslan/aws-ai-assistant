@@ -15,8 +15,7 @@
   "categories": [
     "Other",
     "AI",
-    "Chat",
-    "Azure"
+    "Chat"
   ],
   "activationEvents": [
     "onStartupFinished"

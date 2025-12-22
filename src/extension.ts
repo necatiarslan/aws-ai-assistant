@@ -141,7 +141,7 @@ export function activate(context: vscode.ExtensionContext) {
 				ui.showErrorMessage('Session not initialized', new Error('No session'));
 				return;
 			}
-			if(Session.Current!.IsHostSupportLanguageTools()) {
+			if(Session.Current.IsHostSupportLanguageTools()) {
 				ui.showInfoMessage('MCP server is not required in this environment.');
 				return;
 			}
@@ -149,7 +149,8 @@ export function activate(context: vscode.ExtensionContext) {
 		}),
 
 		vscode.commands.registerCommand('aws-ai-assistant.StopMcpServers', () => {
-			if(Session.Current!.IsHostSupportLanguageTools()) {
+			if(!Session.Current) { return; }
+			if(Session.Current.IsHostSupportLanguageTools()) {
 				ui.showInfoMessage('MCP server is not required in this environment.');
 				return;
 			}
@@ -158,7 +159,8 @@ export function activate(context: vscode.ExtensionContext) {
 		}),
 
 		vscode.commands.registerCommand('aws-ai-assistant.OpenMcpManageView', () => {
-			if(Session.Current!.IsHostSupportLanguageTools()) {
+			if(!Session.Current) { return; }
+			if(Session.Current.IsHostSupportLanguageTools()) {
 				ui.showInfoMessage('MCP server is not required in this environment.');
 				return;
 			}

@@ -73,7 +73,7 @@ export abstract class BaseTool<TInput extends BaseToolInput> implements vscode.L
                 }
 
                 if (needsConfirmation(command)) {
-                    const ok = await confirmProceed(command);
+                    const ok = await confirmProceed(command, params);
                     if (!ok) {
                         const cancelled = { success: false, command, message: 'User cancelled action command' };
                         responseData = cancelled;
