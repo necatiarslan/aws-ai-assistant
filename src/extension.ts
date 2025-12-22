@@ -82,25 +82,15 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// Register Commands
 	context.subscriptions.push(
-		vscode.commands.registerCommand('aws-ai-assistant.SetAwsEndpoint', async () => {
-			Session.Current?.SetAwsEndpoint();
-		}),
+		vscode.commands.registerCommand('aws-ai-assistant.SetAwsEndpoint', async () => { Session.Current?.SetAwsEndpoint(); }),
 
-		vscode.commands.registerCommand('aws-ai-assistant.SetDefaultRegion', async () => {
-			Session.Current?.SetAwsRegion();
-		}),
+		vscode.commands.registerCommand('aws-ai-assistant.SetDefaultRegion', async () => { Session.Current?.SetAwsRegion(); }),
 
-		vscode.commands.registerCommand('aws-ai-assistant.RefreshCredentials', () => {
-			Session.Current?.RefreshCredentials();
-		}),
+		vscode.commands.registerCommand('aws-ai-assistant.RefreshCredentials', () => { Session.Current?.RefreshCredentials(); }),
 
-		vscode.commands.registerCommand('aws-ai-assistant.ListAwsProfiles', () => {
-			StatusBarItem.Current.ListAwsProfiles();
-		}),
+		vscode.commands.registerCommand('aws-ai-assistant.ListAwsProfiles', () => { StatusBarItem.Current.ListAwsProfiles(); }),
 
-		vscode.commands.registerCommand('aws-ai-assistant.SetAwsProfile', () => {
-			StatusBarItem.Current.SetAwsProfile();
-		}),
+		vscode.commands.registerCommand('aws-ai-assistant.SetAwsProfile', () => { StatusBarItem.Current.SetAwsProfile(); }),
 
 		vscode.commands.registerCommand('aws-ai-assistant.TestAwsConnectivity', async () => {
 			const result = await stsAPI.TestAwsConnection();
@@ -151,15 +141,27 @@ export function activate(context: vscode.ExtensionContext) {
 				ui.showErrorMessage('Session not initialized', new Error('No session'));
 				return;
 			}
+			if(Session.Current!.IsHostSupportLanguageTools()) {
+				ui.showInfoMessage('MCP server is not required in this environment.');
+				return;
+			}
 			await mcpManager.startSession();
 		}),
 
 		vscode.commands.registerCommand('aws-ai-assistant.StopMcpServers', () => {
+			if(Session.Current!.IsHostSupportLanguageTools()) {
+				ui.showInfoMessage('MCP server is not required in this environment.');
+				return;
+			}
 			mcpManager.stopAll();
 			ui.showInfoMessage('All MCP sessions stopped.');
 		}),
 
 		vscode.commands.registerCommand('aws-ai-assistant.OpenMcpManageView', () => {
+			if(Session.Current!.IsHostSupportLanguageTools()) {
+				ui.showInfoMessage('MCP server is not required in this environment.');
+				return;
+			}
 			McpManageView.Render(context.extensionUri, mcpManager);
 		}),
 

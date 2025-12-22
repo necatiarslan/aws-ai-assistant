@@ -17,5 +17,5 @@ export function StartAwsCommand(){
 }
 
 export function EndAwsCommand(){
-    // todo: implement if needed
+    StatusBarItem.Current?.EndAwsCommand();
 }

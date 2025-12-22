@@ -270,7 +270,6 @@ export class AIHandler {
       stream.progress(`Calling : ${toolCall.name}`);
       ui.logToOutput(`AIHandler: Invoking tool ${toolCall.name} with input: ${JSON.stringify(toolCall.input)}`);
 
-      MessageHub.StartAwsCommand();
       try {
         const result = await vscode.lm.invokeTool(
           toolCall.name,

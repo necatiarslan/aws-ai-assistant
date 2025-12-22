@@ -26,12 +26,7 @@ export class StatusBarItem implements vscode.Disposable {
         StatusBarItem.Current = this;
 
         const statusBarClickedCommand = 'aws-ai-assistant.statusBarClicked';
-        // Note: We don't push to Session.Current.Context.subscriptions here to avoid double registration issues or dependency loops.
-        // Instead, the extension.ts handles the main disposal, or we explicitly dispose here.
-        // Ideally, commands should be registered in extension.ts, but for now we keep this structure but ensure cleanup.
-        
-        // We register the command and store the disposable if we want to dispose it, 
-        // but typically commands are global. Since this is a singleton, it's acceptable.
+
          if (Session.Current) {
             Session.Current.Context.subscriptions.push(vscode.commands.registerCommand(statusBarClickedCommand, StatusBarItem.StatusBarClicked));
          }
@@ -138,6 +133,11 @@ export class StatusBarItem implements vscode.Disposable {
         this.awsAssistantStatusBarItem.text = StatusBarItem.ExecutingAwsCommandText;
     }
 
+    public EndAwsCommand() {
+        ui.logToOutput('StatusBarItem.EndAwsCommand Started');
+        this.RefreshText();
+    }
+
     public RefreshText() {
         ui.logToOutput('StatusBarItem.RefreshText Started');
         
@@ -171,8 +171,15 @@ export class StatusBarItem implements vscode.Disposable {
 
     public static async StatusBarClicked() {
         ui.logToOutput('StatusBarItem.StatusBarClicked Started');
-        //StatusBarItem.OpenCommandPalette();
-        AIHandler.Current.askAI();
+        if (Session.Current?.IsHostSupportLanguageTools()) 
+        {
+            AIHandler.Current.askAI();
+        }
+        else 
+        {
+            StatusBarItem.OpenCommandPalette();
+        }
+        
     }
 
     public static async RefreshButtonClicked() {
@@ -186,7 +193,7 @@ export class StatusBarItem implements vscode.Disposable {
     }
 
     public static OpenCommandPalette() {
-        const extensionPrefix = 'Aws AI Assistant';
+        const extensionPrefix = 'Goggles:';
         vscode.commands.executeCommand('workbench.action.quickOpen', `> ${extensionPrefix}`);
     }
 
