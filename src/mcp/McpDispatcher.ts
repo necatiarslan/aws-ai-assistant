@@ -133,7 +133,7 @@ export class McpDispatcher {
                             prompts: {}
                         },
                         serverInfo: {
-                            name: 'aws-ai-assistant',
+                            name: 'awsflow',
                             version: '1.0.3'
                         }
                     }

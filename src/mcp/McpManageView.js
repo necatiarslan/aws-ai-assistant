@@ -1,22 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.McpManageView = void 0;
 /* eslint-disable @typescript-eslint/naming-convention */
-import * as vscode from 'vscode';
-import * as path from 'path';
-import * as ui from '../common/UI';
-import { McpManager } from './McpManager';
-
-interface McpManageSnapshot {
-    host: string;
-    port: number;
-}
-
-export class McpManageView {
-    public static Current: McpManageView | undefined;
-    private readonly _panel: vscode.WebviewPanel;
-    private readonly _disposables: vscode.Disposable[] = [];
-    private readonly extensionUri: vscode.Uri;
-    private readonly manager: McpManager;
-
-    private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, manager: McpManager) {
+const vscode = require("vscode");
+const path = require("path");
+const ui = require("../common/UI");
+class McpManageView {
+    constructor(panel, extensionUri, manager) {
+        this._disposables = [];
         this.extensionUri = extensionUri;
         this.manager = manager;
         this._panel = panel;
@@ -24,40 +15,31 @@ export class McpManageView {
         this._setWebviewMessageListener(this._panel.webview);
         void this.RenderHtml();
     }
-
-    public static Render(extensionUri: vscode.Uri, manager: McpManager) {
+    static Render(extensionUri, manager) {
         if (McpManageView.Current) {
             McpManageView.Current._panel.reveal(vscode.ViewColumn.One);
             void McpManageView.Current.RenderHtml();
-        } else {
-            const panel = vscode.window.createWebviewPanel(
-                'McpManageView',
-                'MCP Server Manager',
-                vscode.ViewColumn.One,
-                {
-                    enableScripts: true,
-                }
-            );
-
+        }
+        else {
+            const panel = vscode.window.createWebviewPanel('McpManageView', 'MCP Server Manager', vscode.ViewColumn.One, {
+                enableScripts: true,
+            });
             McpManageView.Current = new McpManageView(panel, extensionUri, manager);
         }
     }
-
-    public async RenderHtml() {
+    async RenderHtml() {
         const settings = this.getSnapshot();
         const snippet = this.buildConfigSnippet(settings);
         this._panel.webview.html = this._getWebviewContent(this._panel.webview, settings, snippet);
     }
-
-    private getSnapshot(): McpManageSnapshot {
+    getSnapshot() {
         const snapshot = this.manager.getSettingsSnapshot();
         return {
             host: snapshot.host || '127.0.0.1',
             port: snapshot.port || 37114,
         };
     }
-
-    private buildConfigSnippet(snapshot: McpManageSnapshot): string {
+    buildConfigSnippet(snapshot) {
         const cliPath = path.join(this.extensionUri.fsPath, 'out', 'mcp', 'cli.js');
         const normalizedPath = cliPath.replace(/\\/g, '/');
         const config = {
@@ -74,14 +56,12 @@ export class McpManageView {
         };
         return JSON.stringify(config, null, 2);
     }
-
-    private _getWebviewContent(webview: vscode.Webview, snapshot: McpManageSnapshot, configSnippet: string) {
+    _getWebviewContent(webview, snapshot, configSnippet) {
         const vscodeElementsUri = ui.getUri(webview, this.extensionUri, ['node_modules', '@vscode-elements', 'elements', 'dist', 'bundled.js']);
         const codiconsUri = webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'node_modules', '@vscode', 'codicons', 'dist', 'codicon.css'));
         const escapedSnippet = this.escapeHtml(configSnippet);
         const hostValue = this.escapeHtml(snapshot.host);
         const portValue = snapshot.port;
-
         return /*html*/ `
         <!DOCTYPE html>
         <html lang="en">
@@ -357,43 +337,38 @@ export class McpManageView {
         </html>
         `;
     }
-
-    private _setWebviewMessageListener(webview: vscode.Webview) {
-        webview.onDidReceiveMessage(
-            async (message: any) => {
-                try {
-                    switch (message.command) {
-                        case 'start':
-                            await this.manager.startBridge();
-                            if (this.manager.getActiveSessionCount() === 0) {
-                                await this.manager.startSession();
-                            }
-                            await this.postStatus();
-                            return;
-                        case 'stop':
-                            this.manager.stopAll();
-                            await this.postStatus();
-                            return;
-                        case 'check':
-                            await this.postStatus();
-                            return;
-                        case 'saveEndpoint':
-                            await this.handleSaveEndpoint(message.host, message.port);
-                            return;
-                        case 'copyConfig':
-                            await this.handleCopyConfig();
-                            return;
-                    }
-                } catch (error: any) {
-                    ui.showErrorMessage('MCP Manager error', error);
+    _setWebviewMessageListener(webview) {
+        webview.onDidReceiveMessage(async (message) => {
+            try {
+                switch (message.command) {
+                    case 'start':
+                        await this.manager.startBridge();
+                        if (this.manager.getActiveSessionCount() === 0) {
+                            await this.manager.startSession();
+                        }
+                        await this.postStatus();
+                        return;
+                    case 'stop':
+                        this.manager.stopAll();
+                        await this.postStatus();
+                        return;
+                    case 'check':
+                        await this.postStatus();
+                        return;
+                    case 'saveEndpoint':
+                        await this.handleSaveEndpoint(message.host, message.port);
+                        return;
+                    case 'copyConfig':
+                        await this.handleCopyConfig();
+                        return;
                 }
-            },
-            undefined,
-            this._disposables
-        );
+            }
+            catch (error) {
+                ui.showErrorMessage('MCP Manager error', error);
+            }
+        }, undefined, this._disposables);
     }
-
-    private async handleSaveEndpoint(host: string, port: number) {
+    async handleSaveEndpoint(host, port) {
         const sanitizedHost = (host || '').trim() || '127.0.0.1';
         const parsedPort = Number(port);
         if (!Number.isInteger(parsedPort) || parsedPort <= 0 || parsedPort > 65535) {
@@ -406,28 +381,24 @@ export class McpManageView {
         await this.postStatus();
         ui.showInfoMessage(`MCP endpoint set to ${sanitizedHost}:${parsedPort}`);
     }
-
-    private async handleCopyConfig() {
+    async handleCopyConfig() {
         const snippet = this.buildConfigSnippet(this.getSnapshot());
         const result = ui.CopyToClipboard(snippet);
         if (result.isSuccessful) {
             ui.showInfoMessage('mcp_config.json snippet copied to clipboard');
         }
     }
-
-    private async postStatus() {
+    async postStatus() {
         const status = await this.manager.checkStatus();
         this._panel.webview.postMessage({ type: 'status', payload: status });
     }
-
-    private escapeHtml(value: string): string {
+    escapeHtml(value) {
         return value
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;');
     }
-
-    public dispose() {
+    dispose() {
         McpManageView.Current = undefined;
         this._panel.dispose();
         while (this._disposables.length) {
@@ -438,3 +409,5 @@ export class McpManageView {
         }
     }
 }
+exports.McpManageView = McpManageView;
+//# sourceMappingURL=McpManageView.js.map

@@ -1,12 +1,12 @@
 {
-  "name": "aws-ai-assistant",
-  "displayName": "Goggles: AWS AI Assistant",
-  "description": "Access AWS services through AI chat and tools within VS Code.",
-  "version": "1.0.4",
+  "name": "awsflow",
+  "displayName": "Awsflow: AWS AI Assistant",
+  "description": "Master AWS, stay in your flow. Access AWS services through AI chat and interactive tools directly within VS Code.",
+  "version": "1.0.5",
   "publisher": "NecatiARSLAN",
   "repository": {
     "type": "git",
-    "url": "https://github.com/necatiarslan/aws-ai-assistant"
+    "url": "https://github.com/necatiarslan/awsflow"
   },
   "icon": "media/extension/extension-icon.png",
   "engines": {
@@ -22,14 +22,14 @@
   ],
   "main": "./out/extension.js",
   "bin": {
-    "aws-ai-assistant-mcp": "./out/mcp/cli.js"
+    "awsflow-mcp": "./out/mcp/cli.js"
   },
   "contributes": {
     "chatParticipants": [
       {
-        "id": "aws-ai-assistant.chat",
+        "id": "awsflow.chat",
         "name": "aws",
-        "fullName": "Aws Assistant",
+        "fullName": "Awsflow: Aws Assistant",
         "description": "Access AWS services through chat",
         "isSticky": true
       }
@@ -2089,32 +2089,32 @@
       }
     ],
     "configuration": {
-      "title": "Goggles: MCP",
+      "title": "Awsflow: MCP",
       "properties": {
-        "aws-ai-assistant.mcp.enabled": {
+        "awsflow.mcp.enabled": {
           "type": "boolean",
           "default": false,
           "description": "Enable the MCP stdio host. When disabled, MCP sessions cannot be started."
         },
-        "aws-ai-assistant.mcp.host": {
+        "awsflow.mcp.host": {
           "type": "string",
           "default": "127.0.0.1",
           "description": "Host interface for the MCP bridge server."
         },
-        "aws-ai-assistant.mcp.port": {
+        "awsflow.mcp.port": {
           "type": "number",
           "default": 37114,
           "minimum": 1,
           "maximum": 65535,
           "description": "TCP port for the MCP bridge server."
         },
-        "aws-ai-assistant.mcp.sessionCap": {
+        "awsflow.mcp.sessionCap": {
           "type": "number",
           "default": 3,
           "minimum": 1,
           "description": "Maximum concurrent MCP stdio sessions. Additional requests queue until a slot is free."
         },
-        "aws-ai-assistant.mcp.disabledTools": {
+        "awsflow.mcp.disabledTools": {
           "type": "array",
           "description": "List of tool names to disable for MCP sessions (independent from Service Access settings).",
           "items": {
@@ -2147,56 +2147,56 @@
     },
     "commands": [
       {
-        "command": "aws-ai-assistant.RefreshCredentials",
-        "title": "Goggles:Refresh Credentials"
+        "command": "awsflow.RefreshCredentials",
+        "title": "Awsflow:Refresh Credentials"
       },
       {
-        "command": "aws-ai-assistant.ListAwsProfiles",
-        "title": "Goggles:List Profiles"
+        "command": "awsflow.ListAwsProfiles",
+        "title": "Awsflow:List Profiles"
       },
       {
-        "command": "aws-ai-assistant.SetAwsProfile",
-        "title": "Goggles:Set Active Profile"
+        "command": "awsflow.SetAwsProfile",
+        "title": "Awsflow:Set Active Profile"
       },
       {
-        "command": "aws-ai-assistant.TestAwsConnectivity",
-        "title": "Goggles:Test Aws Connectivity"
+        "command": "awsflow.TestAwsConnectivity",
+        "title": "Awsflow:Test Aws Connectivity"
       },
       {
-        "command": "aws-ai-assistant.SetAwsEndpoint",
-        "title": "Goggles:Set AWS Endpoint"
+        "command": "awsflow.SetAwsEndpoint",
+        "title": "Awsflow:Set AWS Endpoint"
       },
       {
-        "command": "aws-ai-assistant.SetDefaultRegion",
-        "title": "Goggles:Set Default AWS Region"
+        "command": "awsflow.SetDefaultRegion",
+        "title": "Awsflow:Set Default AWS Region"
       },
       {
-        "command": "aws-ai-assistant.OpenCloudWatchView",
-        "title": "Goggles:Open CloudWatch Log View"
+        "command": "awsflow.OpenCloudWatchView",
+        "title": "Awsflow:Open CloudWatch Log View"
       },
       {
-        "command": "aws-ai-assistant.OpenS3ExplorerView",
-        "title": "Goggles:Open S3 Explorer View"
+        "command": "awsflow.OpenS3ExplorerView",
+        "title": "Awsflow:Open S3 Explorer View"
       },
       {
-        "command": "aws-ai-assistant.ShowCommandHistory",
-        "title": "Goggles:Show Command History"
+        "command": "awsflow.ShowCommandHistory",
+        "title": "Awsflow:Show Command History"
       },
       {
-        "command": "aws-ai-assistant.OpenServiceAccessView",
-        "title": "Goggles:Service Access Settings"
+        "command": "awsflow.OpenServiceAccessView",
+        "title": "Awsflow:Service Access Settings"
       },
       {
-        "command": "aws-ai-assistant.StartMcpServer",
-        "title": "Goggles:Start MCP Server"
+        "command": "awsflow.StartMcpServer",
+        "title": "Awsflow:Start MCP Server"
       },
       {
-        "command": "aws-ai-assistant.StopMcpServers",
-        "title": "Goggles:Stop MCP Servers"
+        "command": "awsflow.StopMcpServers",
+        "title": "Awsflow:Stop MCP Servers"
       },
       {
-        "command": "aws-ai-assistant.OpenMcpManageView",
-        "title": "Goggles:MCP Management"
+        "command": "awsflow.OpenMcpManageView",
+        "title": "Awsflow:MCP Management"
       }
     ]
   },

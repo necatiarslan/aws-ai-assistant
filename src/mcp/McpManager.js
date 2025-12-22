@@ -1,66 +1,53 @@
-import * as vscode from 'vscode';
-import * as net from 'net';
-import { McpConfig } from './McpConfig';
-import { McpDispatcher } from './McpDispatcher';
-import { McpSession } from './McpSession';
-import { McpBridgeServer } from './McpBridgeServer';
-import * as ui from '../common/UI';
-
-interface QueuedRequest {
-    resolve: (value: McpSession | undefined) => void;
-    reject: (reason?: any) => void;
-}
-
-export class McpManager implements vscode.Disposable {
-    private readonly config: McpConfig;
-    private nextSessionId = 1;
-    private activeSessions: Map<number, { terminal: vscode.Terminal; session: McpSession }> = new Map();
-    private queue: QueuedRequest[] = [];
-    private disposed = false;
-    private bridge?: McpBridgeServer;
-
-    constructor(private readonly context: vscode.ExtensionContext) {
-        this.config = new McpConfig(context.globalState);
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.McpManager = void 0;
+const vscode = require("vscode");
+const net = require("net");
+const McpConfig_1 = require("./McpConfig");
+const McpDispatcher_1 = require("./McpDispatcher");
+const McpSession_1 = require("./McpSession");
+const McpBridgeServer_1 = require("./McpBridgeServer");
+const ui = require("../common/UI");
+class McpManager {
+    constructor(context) {
+        this.context = context;
+        this.nextSessionId = 1;
+        this.activeSessions = new Map();
+        this.queue = [];
+        this.disposed = false;
+        this.config = new McpConfig_1.McpConfig(context.globalState);
     }
-
-    public dispose(): void {
+    dispose() {
         this.disposed = true;
         this.stopAll();
     }
-
-    public async startSession(): Promise<McpSession | undefined> {
+    async startSession() {
         if (this.disposed) {
             return undefined;
         }
-
         const state = this.effectiveState();
         if (!state.enabled) {
             await this.config.updateEnabled(true);
         }
-
         this.ensureBridge(state);
-
         const cap = Math.max(1, state.sessionCap || 20);
-
         if (this.activeSessions.size >= cap) {
-            return new Promise<McpSession | undefined>((resolve, reject) => {
+            return new Promise((resolve, reject) => {
                 this.queue.push({ resolve, reject });
                 ui.showInfoMessage(`MCP sessions at capacity (${cap}). Request queued.`);
             });
         }
-
         const sessionId = this.nextSessionId++;
-        const dispatcher = new McpDispatcher(new Set(this.enabledTools()));
-        const session = new McpSession(sessionId, dispatcher, (id) => this.onSessionClosed(id));
-        const pty: vscode.Pseudoterminal = session;
+        const dispatcher = new McpDispatcher_1.McpDispatcher(new Set(this.enabledTools()));
+        const session = new McpSession_1.McpSession(sessionId, dispatcher, (id) => this.onSessionClosed(id));
+        const pty = session;
         const terminal = vscode.window.createTerminal({ name: `Awsflow MCP ${sessionId}`, pty });
         this.activeSessions.set(sessionId, { terminal, session });
         terminal.show(false);
         //ui.showInformationMessage(`MCP session ${sessionId} started.`);
         return session;
     }
-
-    public async startBridge(): Promise<void> {
+    async startBridge() {
         if (this.disposed) {
             return;
         }
@@ -70,8 +57,7 @@ export class McpManager implements vscode.Disposable {
         }
         this.ensureBridge(state);
     }
-
-    public stopAll(): void {
+    stopAll() {
         for (const entry of this.activeSessions.values()) {
             entry.terminal.dispose();
         }
@@ -83,20 +69,16 @@ export class McpManager implements vscode.Disposable {
         this.bridge?.stop();
         this.bridge = undefined;
     }
-
-    public async setEnabled(enabled: boolean): Promise<void> {
+    async setEnabled(enabled) {
         await this.config.updateEnabled(enabled);
     }
-
-    public async setSessionCap(cap: number): Promise<void> {
+    async setSessionCap(cap) {
         await this.config.updateSessionCap(cap);
     }
-
-    public async setDisabledTools(disabledTools: string[]): Promise<void> {
+    async setDisabledTools(disabledTools) {
         await this.config.updateDisabledTools(disabledTools);
     }
-
-    public async updateEndpoint(host: string, port: number): Promise<void> {
+    async updateEndpoint(host, port) {
         await this.config.updateEndpoint(host, port);
         if (this.bridge) {
             this.bridge.stop();
@@ -105,21 +87,16 @@ export class McpManager implements vscode.Disposable {
             this.ensureBridge(state);
         }
     }
-
-    public loadState() {
+    loadState() {
         return this.config.load();
     }
-
-    public getSettingsSnapshot() {
+    getSettingsSnapshot() {
         return this.effectiveState();
     }
-
-    public getActiveSessionCount(): number {
+    getActiveSessionCount() {
         return this.activeSessions.size;
     }
-
-    public async checkStatus(): Promise<{ running: boolean; reachable: boolean; host: string; port: number; activeSessions: number; queuedConnections: number; sessionCap: number; message?: string; }>
-    {
+    async checkStatus() {
         const state = this.effectiveState();
         const host = state.host || '127.0.0.1';
         const port = state.port || 37114;
@@ -127,13 +104,13 @@ export class McpManager implements vscode.Disposable {
         const metrics = this.bridge?.getMetrics() || { active: 0, queued: 0, cap: Math.max(1, state.sessionCap || 20) };
         const activeSessions = this.getActiveSessionCount() + (metrics.active || 0);
         const reachable = await this.tryProbe(host, port);
-        let message: string | undefined;
+        let message;
         if (!running) {
             message = 'Bridge is not started yet. Use Start Server to launch it.';
-        } else if (running && !reachable) {
+        }
+        else if (running && !reachable) {
             message = 'Bridge is running but not reachable on the configured host/port.';
         }
-
         return {
             running,
             reachable,
@@ -145,8 +122,7 @@ export class McpManager implements vscode.Disposable {
             message
         };
     }
-
-    private enabledTools(): string[] {
+    enabledTools() {
         const state = this.effectiveState();
         const disabled = new Set(state.disabledTools || []);
         const allToolNames = [
@@ -170,22 +146,19 @@ export class McpManager implements vscode.Disposable {
             'CloudFormationTool',
             'EMRTool'
         ];
-
         return allToolNames.filter(name => !disabled.has(name));
     }
-
-    private effectiveState() {
+    effectiveState() {
         const stored = this.config.load();
         const config = vscode.workspace.getConfiguration('awsflow.mcp');
-        const enabled = config.get<boolean>('enabled', stored.enabled);
-        const sessionCap = config.get<number>('sessionCap', stored.sessionCap);
-        const disabledTools = config.get<string[]>('disabledTools', stored.disabledTools);
-        const host = config.get<string>('host', stored.host);
-        const port = config.get<number>('port', stored.port);
+        const enabled = config.get('enabled', stored.enabled);
+        const sessionCap = config.get('sessionCap', stored.sessionCap);
+        const disabledTools = config.get('disabledTools', stored.disabledTools);
+        const host = config.get('host', stored.host);
+        const port = config.get('port', stored.port);
         return { enabled, sessionCap, disabledTools, host, port };
     }
-
-    private onSessionClosed(sessionId: number): void {
+    onSessionClosed(sessionId) {
         this.activeSessions.delete(sessionId);
         if (this.queue.length > 0) {
             const queued = this.queue.shift();
@@ -195,12 +168,10 @@ export class McpManager implements vscode.Disposable {
         }
         this.bridge?.notifyCapacityChange();
     }
-
-    private ensureBridge(state?: { host?: string; port?: number; sessionCap?: number; enabled?: boolean; disabledTools?: string[] }): void {
+    ensureBridge(state) {
         const effective = state ?? this.effectiveState();
         const host = effective.host || '127.0.0.1';
         const port = effective.port || 37114;
-
         if (this.bridge) {
             const address = this.bridge.getAddress();
             if (address.host === host && address.port === port && this.bridge.isRunning()) {
@@ -209,17 +180,10 @@ export class McpManager implements vscode.Disposable {
             this.bridge.stop();
             this.bridge = undefined;
         }
-
-        this.bridge = new McpBridgeServer(
-            () => new Set(this.enabledTools()),
-            () => Math.max(1, this.effectiveState().sessionCap || 20),
-            () => this.getActiveSessionCount(),
-            { host, port }
-        );
+        this.bridge = new McpBridgeServer_1.McpBridgeServer(() => new Set(this.enabledTools()), () => Math.max(1, this.effectiveState().sessionCap || 20), () => this.getActiveSessionCount(), { host, port });
         this.bridge.start();
     }
-
-    private tryProbe(host: string, port: number): Promise<boolean> {
+    tryProbe(host, port) {
         return new Promise((resolve) => {
             const socket = net.createConnection({ host, port }, () => {
                 socket.destroy();
@@ -227,7 +191,10 @@ export class McpManager implements vscode.Disposable {
             });
             socket.setTimeout(1200);
             const handleFail = () => {
-                try { socket.destroy(); } catch {}
+                try {
+                    socket.destroy();
+                }
+                catch { }
                 resolve(false);
             };
             socket.on('error', handleFail);
@@ -235,3 +202,5 @@ export class McpManager implements vscode.Disposable {
         });
     }
 }
+exports.McpManager = McpManager;
+//# sourceMappingURL=McpManager.js.map

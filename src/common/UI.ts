@@ -8,9 +8,9 @@ let logsOutputChannel: vscode.OutputChannel | undefined;
 
 const NEW_LINE: string = "\n\n";
 
-export function showOutputMessage(message: any, popupMessage: string = "Results are printed to OUTPUT / AwsAssistant-Extension", clearPrevMessages: boolean = true): void {
+export function showOutputMessage(message: any, popupMessage: string = "Results are printed to OUTPUT / Awsflow-Extension", clearPrevMessages: boolean = true): void {
   if (!outputChannel) {
-    outputChannel = vscode.window.createOutputChannel("AwsAssistant-Extension");
+    outputChannel = vscode.window.createOutputChannel("Awsflow-Extension");
   }
 
   if (clearPrevMessages) {
@@ -34,7 +34,7 @@ export function logToOutput(message: any, error?: Error): void {
   const now = new Date().toLocaleString();
 
   if (!logsOutputChannel) {
-    logsOutputChannel = vscode.window.createOutputChannel("AwsAssistant-Log");
+    logsOutputChannel = vscode.window.createOutputChannel("Awsflow-Log");
   }
 
   if (typeof message === "object") {

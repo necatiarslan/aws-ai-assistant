@@ -1,23 +1,23 @@
 # Model Context Protocol (MCP) Server Guide
 
-The MCP server in this repository allows external tools, AI agents (like Antigravity, Windsurf), or other VS Code instances to leverage the AWS AI capabilities built into the **Goggles: AWS AI Assistant** extension.
+The MCP server in this repository allows external tools, AI agents (like Antigravity, Windsurf), or other VS Code instances to leverage the AWS AI capabilities built into the **Awsflow: AWS AI Assistant** extension.
 
 ## 1. Prerequisites
 
-*   **Extensions**: [Goggles: AWS AI Assistant](https://marketplace.visualstudio.com/items?itemName=NecatiARSLAN.aws-ai-assistant) installed and active.
+*   **Extensions**: [Awsflow: AWS AI Assistant](https://marketplace.visualstudio.com/items?itemName=NecatiARSLAN.awsflow) installed and active.
 *   **AWS Setup**: Credentials configured locally (via `~/.aws/credentials` or environment variables) with permissions to perform desired AWS operations.
 *   **Runtime**: [Node.js](https://nodejs.org/) installed on your machine.
 
 ## 2. Starting the Server
 
 1.  Open the Command Palette (`Cmd+Shift+P`).
-2.  Run the command: `Goggles: Start MCP Server`.
-3.  A new terminal labeled `Aws AI Assistant MCP 1` will appear.
+2.  Run the command: `Awsflow: Start MCP Server`.
+3.  A new terminal labeled `Awsflow MCP 1` will appear.
 4.  The extension will start a TCP bridge listening on `127.0.0.1:37114`.
 
 ## 3. MCP Server Manager (GUI)
 
-Prefer a UI? Open the Command Palette and run `Goggles: MCP Management` to launch the MCP Server Manager view. From there you can:
+Prefer a UI? Open the Command Palette and run `Awsflow: MCP Management` to launch the MCP Server Manager view. From there you can:
 
 * Start, stop, or check the MCP bridge status.
 * Set the bridge host and port without touching environment variables.
@@ -30,10 +30,10 @@ To use this server with an MCP-compatible client like Antigravity, Windsurf, etc
 ```json
 {
   "mcpServers": {
-    "aws-ai-assistant": {
+    "awsflow": {
       "command": "node",
       "args": [
-        "/Users/necatiarslan/github/aws-ai-assistant/out/mcp/cli.js"
+        "/Users/necatiarslan/github/awsflow/out/mcp/cli.js"
       ],
       "env": {
         "AWS_AI_ASSISTANT_MCP_PORT": "37114",

@@ -36,7 +36,7 @@ socket.on('data', (data) => {
 });
 
 socket.on('error', (err) => {
-  fail(`Cannot connect to MCP bridge at ${HOST}:${PORT}. Start it in VS Code via 'Goggles:Start MCP Server'. Detail: ${err.message}`);
+  fail(`Cannot connect to MCP bridge at ${HOST}:${PORT}. Start it in VS Code via 'Awsflow: Start MCP Server'. Detail: ${err.message}`);
 });
 
 socket.on('close', () => process.exit(0));

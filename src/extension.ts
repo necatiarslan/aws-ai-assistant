@@ -32,7 +32,7 @@ import { McpManager } from './mcp/McpManager';
 import { McpManageView } from './mcp/McpManageView';
 
 export function activate(context: vscode.ExtensionContext) {
-	ui.logToOutput('Aws AI Assistant is now active!');
+	ui.logToOutput('Awsflow is now active!');
 
 	// Initialize Core Services
 	const session = new Session(context);
@@ -82,17 +82,17 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// Register Commands
 	context.subscriptions.push(
-		vscode.commands.registerCommand('aws-ai-assistant.SetAwsEndpoint', async () => { Session.Current?.SetAwsEndpoint(); }),
+		vscode.commands.registerCommand('awsflow.SetAwsEndpoint', async () => { Session.Current?.SetAwsEndpoint(); }),
 
-		vscode.commands.registerCommand('aws-ai-assistant.SetDefaultRegion', async () => { Session.Current?.SetAwsRegion(); }),
+		vscode.commands.registerCommand('awsflow.SetDefaultRegion', async () => { Session.Current?.SetAwsRegion(); }),
 
-		vscode.commands.registerCommand('aws-ai-assistant.RefreshCredentials', () => { Session.Current?.RefreshCredentials(); }),
+		vscode.commands.registerCommand('awsflow.RefreshCredentials', () => { Session.Current?.RefreshCredentials(); }),
 
-		vscode.commands.registerCommand('aws-ai-assistant.ListAwsProfiles', () => { StatusBarItem.Current.ListAwsProfiles(); }),
+		vscode.commands.registerCommand('awsflow.ListAwsProfiles', () => { StatusBarItem.Current.ListAwsProfiles(); }),
 
-		vscode.commands.registerCommand('aws-ai-assistant.SetAwsProfile', () => { StatusBarItem.Current.SetAwsProfile(); }),
+		vscode.commands.registerCommand('awsflow.SetAwsProfile', () => { StatusBarItem.Current.SetAwsProfile(); }),
 
-		vscode.commands.registerCommand('aws-ai-assistant.TestAwsConnectivity', async () => {
+		vscode.commands.registerCommand('awsflow.TestAwsConnectivity', async () => {
 			const result = await stsAPI.TestAwsConnection();
 			if (result.isSuccessful) {
 				ui.showInfoMessage('AWS connectivity test successful.');
@@ -101,7 +101,7 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		}),
 
-		vscode.commands.registerCommand('aws-ai-assistant.OpenCloudWatchView', async (logGroup: string, logStream?: string) => {
+		vscode.commands.registerCommand('awsflow.OpenCloudWatchView', async (logGroup: string, logStream?: string) => {
 			if (!Session.Current) {
 				ui.showErrorMessage('Session not initialized', new Error('No session'));
 				return;
@@ -112,7 +112,7 @@ export function activate(context: vscode.ExtensionContext) {
 		}),
 
 
-		vscode.commands.registerCommand('aws-ai-assistant.OpenS3ExplorerView', async (bucket: string, key?: string) => {
+		vscode.commands.registerCommand('awsflow.OpenS3ExplorerView', async (bucket: string, key?: string) => {
 			if (!Session.Current) {
 				ui.showErrorMessage('Session not initialized', new Error('No session'));
 				return;
@@ -120,7 +120,7 @@ export function activate(context: vscode.ExtensionContext) {
 			S3Explorer.Render(Session.Current.ExtensionUri, bucket, key);
 		}),
 
-        vscode.commands.registerCommand('aws-ai-assistant.ShowCommandHistory', () => {
+        vscode.commands.registerCommand('awsflow.ShowCommandHistory', () => {
             if (!Session.Current) {
                 ui.showErrorMessage('Session not initialized', new Error('No session'));
                 return;
@@ -128,7 +128,7 @@ export function activate(context: vscode.ExtensionContext) {
             CommandHistoryView.Render(Session.Current.ExtensionUri);
         }),
 
-        vscode.commands.registerCommand('aws-ai-assistant.OpenServiceAccessView', () => {
+        vscode.commands.registerCommand('awsflow.OpenServiceAccessView', () => {
             if (!Session.Current) {
                 ui.showErrorMessage('Session not initialized', new Error('No session'));
                 return;
@@ -136,7 +136,7 @@ export function activate(context: vscode.ExtensionContext) {
             ServiceAccessView.Render(Session.Current.ExtensionUri);
         }),
 
-		vscode.commands.registerCommand('aws-ai-assistant.StartMcpServer', async () => {
+		vscode.commands.registerCommand('awsflow.StartMcpServer', async () => {
 			if (!Session.Current) {
 				ui.showErrorMessage('Session not initialized', new Error('No session'));
 				return;
@@ -148,7 +148,7 @@ export function activate(context: vscode.ExtensionContext) {
 			await mcpManager.startSession();
 		}),
 
-		vscode.commands.registerCommand('aws-ai-assistant.StopMcpServers', () => {
+		vscode.commands.registerCommand('awsflow.StopMcpServers', () => {
 			if(!Session.Current) { return; }
 			if(Session.Current.IsHostSupportLanguageTools()) {
 				ui.showInfoMessage('MCP server is not required in this environment.');
@@ -158,7 +158,7 @@ export function activate(context: vscode.ExtensionContext) {
 			ui.showInfoMessage('All MCP sessions stopped.');
 		}),
 
-		vscode.commands.registerCommand('aws-ai-assistant.OpenMcpManageView', () => {
+		vscode.commands.registerCommand('awsflow.OpenMcpManageView', () => {
 			if(!Session.Current) { return; }
 			if(Session.Current.IsHostSupportLanguageTools()) {
 				ui.showInfoMessage('MCP server is not required in this environment.');
@@ -167,7 +167,7 @@ export function activate(context: vscode.ExtensionContext) {
 			McpManageView.Render(context.extensionUri, mcpManager);
 		}),
 
-		vscode.commands.registerCommand('aws-ai-assistant.LoadMoreResults', async (paginationContext: any) => {
+		vscode.commands.registerCommand('awsflow.LoadMoreResults', async (paginationContext: any) => {
 			if (!paginationContext) {
 				ui.showErrorMessage('Pagination context not available', new Error('No pagination context'));
 				return;
@@ -191,6 +191,6 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate() {
-	ui.logToOutput('Aws AI Assistant is now de-active!');
+	ui.logToOutput('Awsflow is now de-active!');
 }
 

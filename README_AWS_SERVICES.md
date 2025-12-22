@@ -1,11 +1,11 @@
 # AWS Language Model Tools Reference
 
-This document provides a comprehensive reference of all AWS language model tools available in Goggles.
+This document provides a comprehensive reference of all AWS language model tools available in Awsflow.
 
 ## MCP Access
 
-- Local-only MCP stdio sessions can be started via **Goggles: Start MCP Server** (Command Palette). Up to 3 concurrent sessions are allowed; further requests queue until a session ends.
-- MCP tool availability is controlled separately from the Service Access view via settings (`aws-ai-assistant.mcp.disabledTools`).
+- Local-only MCP stdio sessions can be started via **Awsflow: Start MCP Server** (Command Palette). Up to 3 concurrent sessions are allowed; further requests queue until a session ends.
+- MCP tool availability is controlled separately from the Service Access view via settings (`awsflow.mcp.disabledTools`).
 - Mutating operations still require confirmation before execution.
 
 ## Available Tools

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as ui from '../common/UI';
-import * as stsAPI from '../sts/API';
+import * as stsAPI from './API';
 import { BaseTool, BaseToolInput } from '../common/BaseTool';
 import { ClientManager } from '../common/ClientManager';
 import { STSClient, GetCallerIdentityCommand } from '@aws-sdk/client-sts';

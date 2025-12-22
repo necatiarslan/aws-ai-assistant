@@ -6,7 +6,7 @@ import * as path from 'path';
 import * as MessageHub from '../common/MessageHub';
 import { encodingForModel } from 'js-tiktoken';
 
-const PARTICIPANT_ID = 'aws-ai-assistant.chat';
+const PARTICIPANT_ID = 'awsflow.chat';
 const DEFAULT_PROMPT = "How can I assist you with AWS today?";
 const MAX_HISTORY_TOKENS = 2000;
 const MAX_RESPONSE_LENGTH = 500;
@@ -351,7 +351,7 @@ export class AIHandler {
     
     stream.markdown("\n\n");
     stream.button({
-      command: 'aws-ai-assistant.OpenCloudWatchView',
+      command: 'awsflow.OpenCloudWatchView',
       title: 'Open Log View',
       arguments: logStream ? [logGroup, logStream] : [logGroup]
     });
@@ -365,7 +365,7 @@ export class AIHandler {
     const bucket = this.latestResources["S3 Bucket"].name;
     stream.markdown("\n\n");
     stream.button({
-      command: 'aws-ai-assistant.OpenS3ExplorerView',
+      command: 'awsflow.OpenS3ExplorerView',
       title: 'Open S3 View',
       arguments: [bucket]
     });
@@ -378,7 +378,7 @@ export class AIHandler {
 
     stream.markdown("\n\n");
     stream.button({
-      command: 'aws-ai-assistant.LoadMoreResults',
+      command: 'awsflow.LoadMoreResults',
       title: 'Load More',
       arguments: [this.paginationContext]
     });
@@ -387,7 +387,7 @@ export class AIHandler {
   private renderAppreciationMessage(stream: vscode.ChatResponseStream): void {
     stream.markdown("\n\n\n");
     stream.markdown("\n🙏 [Donate](https://github.com/sponsors/necatiarslan) if you found me useful!");
-    stream.markdown("\n🤔 [New Feature](https://github.com/necatiarslan/aws-ai-assistant/issues/new) Request");
+    stream.markdown("\n🤔 [New Feature](https://github.com/necatiarslan/awsflow/issues/new) Request");
   }
 
   private handleError(err: unknown, stream: vscode.ChatResponseStream): void {
@@ -396,7 +396,7 @@ export class AIHandler {
     } else {
       stream.markdown("I'm sorry, I couldn't connect to the AI model.");
     }
-    stream.markdown("\n🪲 Please [Report an Issue](https://github.com/necatiarslan/aws-ai-assistant/issues/new)");
+    stream.markdown("\n🪲 Please [Report an Issue](https://github.com/necatiarslan/awsflow/issues/new)");
   }
 
   public async isChatCommandAvailable(): Promise<boolean> {

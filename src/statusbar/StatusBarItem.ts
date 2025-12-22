@@ -12,7 +12,7 @@ export class StatusBarItem implements vscode.Disposable {
     public static ExecutingAwsCommandText: string = "$(plug) Aws $(loading~spin)";
     public static Current: StatusBarItem;
 
-    public awsAssistantStatusBarItem: vscode.StatusBarItem;
+    public statusBarItem: vscode.StatusBarItem;
 
     public Text: string = StatusBarItem.WorkingText;
     public ToolTip: string = "Loading ...";
@@ -25,17 +25,17 @@ export class StatusBarItem implements vscode.Disposable {
         ui.logToOutput('StatusBarItem.constructor Started');
         StatusBarItem.Current = this;
 
-        const statusBarClickedCommand = 'aws-ai-assistant.statusBarClicked';
+        const statusBarClickedCommand = 'awsflow.statusBarClicked';
 
          if (Session.Current) {
             Session.Current.Context.subscriptions.push(vscode.commands.registerCommand(statusBarClickedCommand, StatusBarItem.StatusBarClicked));
          }
 
-        this.awsAssistantStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 3);
-        this.awsAssistantStatusBarItem.command = statusBarClickedCommand;
-        this.awsAssistantStatusBarItem.text = StatusBarItem.WorkingText;
-        this.awsAssistantStatusBarItem.tooltip = this.ToolTip;
-        this.awsAssistantStatusBarItem.show();
+        this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 3);
+        this.statusBarItem.command = statusBarClickedCommand;
+        this.statusBarItem.text = StatusBarItem.WorkingText;
+        this.statusBarItem.tooltip = this.ToolTip;
+        this.statusBarItem.show();
 
         this.StartWorking();
 
@@ -120,7 +120,7 @@ export class StatusBarItem implements vscode.Disposable {
 
     public StartWorking() {
         ui.logToOutput('StatusBarItem.StartWorking Started');
-        this.awsAssistantStatusBarItem.text = StatusBarItem.WorkingText;
+        this.statusBarItem.text = StatusBarItem.WorkingText;
     }
 
     public EndWorking() {
@@ -130,7 +130,7 @@ export class StatusBarItem implements vscode.Disposable {
 
     public StartAwsCommand() {
         ui.logToOutput('StatusBarItem.StartAwsCommand Started');
-        this.awsAssistantStatusBarItem.text = StatusBarItem.ExecutingAwsCommandText;
+        this.statusBarItem.text = StatusBarItem.ExecutingAwsCommandText;
     }
 
     public EndAwsCommand() {
@@ -141,7 +141,7 @@ export class StatusBarItem implements vscode.Disposable {
     public RefreshText() {
         ui.logToOutput('StatusBarItem.RefreshText Started');
         
-        this.ToolTip = "Goggles: @Aws AI Assistant";
+        this.ToolTip = "Awsflow: @Awsflow";
         if (!Session.Current?.CurrentCredentials) {
             this.ToolTip += "\nNo Aws Credentials Found !!!";
             this.Text = "$(plug) Aws No Credentials";
@@ -155,8 +155,8 @@ export class StatusBarItem implements vscode.Disposable {
         this.ToolTip += "\nRegion: " + (Session.Current?.AwsRegion || "us-east-1");
         this.ToolTip += "\nEndPoint: " + (Session.Current?.AwsEndPoint || "aws default");
 
-        this.awsAssistantStatusBarItem.tooltip = this.ToolTip;
-        this.awsAssistantStatusBarItem.text = this.Text;
+        this.statusBarItem.tooltip = this.ToolTip;
+        this.statusBarItem.text = this.Text;
     }
 
     public GetBoolChar(value: boolean) {
@@ -193,11 +193,11 @@ export class StatusBarItem implements vscode.Disposable {
     }
 
     public static OpenCommandPalette() {
-        const extensionPrefix = 'Goggles:';
+        const extensionPrefix = 'Awsflow:';
         vscode.commands.executeCommand('workbench.action.quickOpen', `> ${extensionPrefix}`);
     }
 
     public dispose() {
-        this.awsAssistantStatusBarItem.dispose();
+        this.statusBarItem.dispose();
     }
 }
